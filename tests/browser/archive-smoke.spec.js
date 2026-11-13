@@ -1,0 +1,100 @@
+// End-to-end Playwright smoke checks for archive views and --as-* token loading at 1440x900 and 375x812.
+import { expect, test } from '@playwright/test';
+
+test.describe('archive baseline & token contract smoke', () => {
+  test('loads immutable thread-level-midnight --as-* tokens alongside existing theme', async ({ page }) => {
+    await page.goto('/');
+
+    const darkTokens = await page.evaluate(() => {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        bgBase: styles.getPropertyValue('--as-bg-base').trim(),
+        accentPrimary: styles.getPropertyValue('--as-accent-primary').trim(),
+        accentFg: styles.getPropertyValue('--as-accent-fg').trim(),
+      };
+    });
+    expect(darkTokens).toEqual({
+      bgBase: '#0a0a0c',
+      accentPrimary: '#84cc16',
+      accentFg: '#84cc16',
+    });
+
+    const lightTokens = await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'light');
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        bgBase: styles.getPropertyValue('--as-bg-base').trim(),
+        accentFg: styles.getPropertyValue('--as-accent-fg').trim(),
+      };
+    });
+    expect(lightTokens).toEqual({
+      bgBase: '#f4f4f6',
+      accentFg: '#3f6212',
+    });
+
+    const restoredDark = await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        bgBase: styles.getPropertyValue('--as-bg-base').trim(),
+        accentFg: styles.getPropertyValue('--as-accent-fg').trim(),
+      };
+    });
+    expect(restoredDark).toEqual({
+      bgBase: '#0a0a0c',
+      accentFg: '#84cc16',
+    });
+  });
+
+  test('preserves archive behavior across Overview, Artists, Songs, Episodes, and Search', async ({ page }) => {
+    await page.goto('/');
+
+    // Overview KPI totals and artist dialog
+    await expect(page.locator('#kpi-episodes')).toHaveText('1,317');
+    await expect(page.locator('#kpi-plays')).toHaveText('36,902');
+    await expect(page.locator('#kpi-artists')).toHaveText('1,891');
+    await expect(page.locator('#kpi-songs')).toHaveText('16,782');
+
+    const topArtistBtn = page.locator('#top-artist-1');
+    await expect(topArtistBtn).toContainText('Todd Snider');
+    await topArtistBtn.click();
+
+    const artistDialog = page.getByRole('dialog');
+    await expect(artistDialog).toBeVisible();
+    await expect(artistDialog.getByRole('heading', { name: 'Todd Snider' })).toBeVisible();
+    await expect(artistDialog.locator('#artist-songs-table tbody tr').first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(artistDialog).toBeHidden();
+
+    // Artists view + search
+    await page.getByRole('button', { name: 'Artists' }).click();
+    await expect(page.getByRole('heading', { name: 'Artist Directory' })).toBeVisible();
+    await expect(page.locator('#artists-table')).toContainText('Todd Snider');
+    await page.getByRole('searchbox', { name: 'Search artists' }).fill('Lucinda');
+    await expect(page.locator('#artists-table')).toContainText('Lucinda Williams');
+
+    // Songs view + search
+    await page.getByRole('button', { name: 'Songs' }).click();
+    await expect(page.getByRole('heading', { name: 'Song Library' })).toBeVisible();
+    await expect(page.locator('#songs-table')).toContainText('50s French Movie');
+    await page.getByRole('searchbox', { name: 'Search songs' }).fill('Hobo Lady');
+    await expect(page.locator('#songs-table')).toContainText('McKendree Spring');
+
+    // Episodes view + playlist dialog
+    await page.getByRole('button', { name: 'Episodes' }).click();
+    await expect(page.getByRole('heading', { name: 'Show Playlist Archive' })).toBeVisible();
+    await expect(page.locator('#episodes-table')).toContainText('2026-08-08');
+    await page.locator('#episodes-table tbody tr').first().click();
+
+    const episodeDialog = page.getByRole('dialog');
+    await expect(episodeDialog).toBeVisible();
+    await expect(episodeDialog.locator('.track-item').first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(episodeDialog).toBeHidden();
+
+    // Search view
+    await page.getByRole('button', { name: 'Search' }).click();
+    await page.getByRole('searchbox', { name: 'Search the catalog' }).fill('Prine');
+    await expect(page.getByRole('button', { name: /^John Prine \d+ plays$/ })).toBeVisible();
+  });
+});

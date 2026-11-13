@@ -29,6 +29,7 @@ export default function Header({ activeTab, setActiveTab, dataSource, theme, onT
             id={`nav-${tab.id}`}
             className={`nav-btn ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
+            aria-label={tab.label}
             aria-current={activeTab === tab.id ? 'page' : undefined}
           >
             <Icon name={tab.icon} size="sm" />

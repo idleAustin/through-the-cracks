@@ -23,7 +23,7 @@ async function fetchWithFallback(apiEndpoint, staticJsonPath) {
       const data = await response.json();
       return { data, source: 'express-api' };
     }
-  } catch (_err) {
+  } catch {
     // API server unreachable or timed out -> fallback to static JSON
   }
 
