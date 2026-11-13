@@ -120,19 +120,15 @@ function fakeQuery(sql, params = {}) {
   if (sql.includes('FROM `test-proj.test_ds.song_plays`') && sql.includes('WHERE episode_id = @id')) {
     return [{ position: 1, artist: 'Todd Snider', song_title: 'Alright Guy', album: 'Songs for the Daily Planet', raw_line: 'Todd Snider - Alright Guy' }];
   }
-  if (sql.includes('FROM `test-proj.test_ds.episodes`') && sql.includes('ORDER BY air_date DESC')) {
+  if (sql.includes('FROM `test-proj.test_ds.episodes`') && sql.includes('ORDER BY e.air_date DESC, e.id DESC')) {
     return [{
       id: 'ep-1',
-      title: 'Episode #1316',
       air_date: { value: '2026-08-01' },
-      day_of_week: 'Saturday',
-      episode_number: 1316,
-      published_at: { value: '2026-08-01T12:00:00Z' },
       url: 'https://example.com/ep-1',
       song_count: 24,
     }];
   }
-  if (sql.includes('SELECT COUNT(1) as total FROM `test-proj.test_ds.episodes`')) {
+  if (sql.includes('SELECT COUNT(1) AS total') && sql.includes('FROM `test-proj.test_ds.episodes`')) {
     return [{ total: 1 }];
   }
   if (sql.includes('artist AS name') && sql.includes('COUNT(1) AS total_plays')) {

@@ -5,7 +5,7 @@ const ROUTES = [
   { label: 'Overview', path: '/', heading: null },
   { label: 'Artists', path: '/artists', heading: 'Artist Directory' },
   { label: 'Songs', path: '/songs', heading: 'Song Library' },
-  { label: 'Episodes', path: '/episodes', heading: 'Episode Playlist Archive' },
+  { label: 'Episodes', path: '/episodes', heading: 'Episodes' },
   { label: 'Search', path: '/search', heading: 'Global Catalog Search' },
 ];
 

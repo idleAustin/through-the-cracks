@@ -1,7 +1,6 @@
 import { BigQuery } from '@google-cloud/bigquery';
 
 const GCP_PROJECT = process.env.GCP_PROJECT_ID || 'through-the-cracks';
-const BQ_DATASET = process.env.BQ_DATASET || 'through_the_cracks';
 
 let bqClient = null;
 

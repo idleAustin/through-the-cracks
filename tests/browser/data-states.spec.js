@@ -64,7 +64,7 @@ test.describe('archive data states and unknown route recovery', () => {
     await page.route('**/api/episodes*', (route) =>
       route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unavailable"}' }),
     );
-    await page.route('**/data/episodes.json', async (route) => {
+    await page.route('**/data/episodes-index.json', async (route) => {
       episodeJsonAttempts += 1;
       if (episodeJsonAttempts === 1) {
         await route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unavailable"}' });
@@ -83,7 +83,7 @@ test.describe('archive data states and unknown route recovery', () => {
 
     await retryBtn.click();
     await expect(alert).toBeHidden();
-    await expect(page.locator('#episodes-table')).toContainText('2026-08-08');
+    await expect(page.locator('main')).toContainText('Aug 8, 2026');
   });
 
   test('renders deadpan unknown route recovery and returns to Overview', async ({ page }) => {
@@ -132,9 +132,12 @@ test.describe('archive data states and unknown route recovery', () => {
     expect((await smBtn.boundingBox()).height).toBeGreaterThanOrEqual(44);
 
     await page.goto('/episodes');
-    const episodeBtn = page.locator('#episodes-table .btn-sm').first();
-    await expect(episodeBtn).toBeVisible();
-    expect((await episodeBtn.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    const yearSelect = page.locator('.year-select');
+    await expect(yearSelect).toBeVisible();
+    expect((await yearSelect.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    const episodeCard = page.locator('.m-card').first();
+    await expect(episodeCard).toBeVisible();
+    expect((await episodeCard.boundingBox()).height).toBeGreaterThanOrEqual(44);
 
     await page.goto('/unknown-archive-path');
     const recoveryBtn = page.locator('.btn').first();
@@ -146,11 +149,11 @@ test.describe('archive data states and unknown route recovery', () => {
       ['/', '#kpi-plays'],
       ['/artists', '#artists-table'],
       ['/songs', '#songs-table'],
-      ['/episodes', '#episodes-table'],
+      ['/episodes', '.m-card'],
       ['/search', '#global-search-input'],
     ]) {
       await page.goto(path);
-      await expect(page.locator(readySelector)).toBeVisible();
+      await expect(page.locator(readySelector).first()).toBeVisible();
       const overflow = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: window.innerWidth,

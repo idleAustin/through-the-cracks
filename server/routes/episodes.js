@@ -2,42 +2,92 @@
 import express from 'express';
 import { parsePageParams, unwrapBqValue } from './queryUtils.js';
 
+function mapEpisodeRow(row) {
+  const airDate = unwrapBqValue(row.air_date);
+  const songCount = Number(row.song_count);
+  return {
+    id: row.id,
+    air_date: airDate,
+    airDate,
+    song_count: songCount,
+    songCount,
+    url: row.url || null,
+  };
+}
+
+function buildEpisodesFilter(queryParams, project, dataset) {
+  const conditions = [];
+  const spConditions = [];
+  const params = {};
+
+  const rawYear = typeof queryParams.year === 'string' ? queryParams.year.trim() : '';
+  if (/^\d{4}$/.test(rawYear)) {
+    conditions.push('EXTRACT(YEAR FROM e.air_date) = @year');
+    params.year = Number(rawYear);
+  }
+
+  const song = typeof queryParams.song === 'string' ? queryParams.song.trim().toLowerCase() : '';
+  if (song) {
+    spConditions.push('LOWER(TRIM(sp.song_title)) = @song');
+    params.song = song;
+  }
+
+  const artist = typeof queryParams.artist === 'string' ? queryParams.artist.trim().toLowerCase() : '';
+  if (artist) {
+    spConditions.push('LOWER(TRIM(sp.artist)) = @artist');
+    params.artist = artist;
+  }
+
+  if (spConditions.length > 0) {
+    conditions.push(
+      `e.id IN (SELECT DISTINCT sp.episode_id FROM \`${project}.${dataset}.song_plays\` sp WHERE ${spConditions.join(' AND ')})`
+    );
+  }
+
+  return {
+    whereClause: conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '',
+    params,
+  };
+}
+
 export function createEpisodesRouter({ query, project, dataset }) {
   const router = express.Router();
 
   router.get('/episodes', async (req, res) => {
     try {
       const { page, limit, offset } = parsePageParams(req.query);
+      const { whereClause, params } = buildEpisodesFilter(req.query, project, dataset);
 
       const listQuery = `
-        SELECT id, title, air_date, day_of_week, episode_number, published_at, url, song_count
-        FROM \`${project}.${dataset}.episodes\`
-        ORDER BY air_date DESC
+        SELECT e.id, e.air_date, e.url, e.song_count
+        FROM \`${project}.${dataset}.episodes\` e
+        ${whereClause}
+        ORDER BY e.air_date DESC, e.id DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
 
-      const countQuery = `SELECT COUNT(1) as total FROM \`${project}.${dataset}.episodes\``;
+      const countQuery = `
+        SELECT COUNT(1) AS total
+        FROM \`${project}.${dataset}.episodes\` e
+        ${whereClause}
+      `;
 
-      const rows = await query(listQuery);
-      const [countRow] = await query(countQuery);
+      const [rows, countRows] = await Promise.all([
+        query(listQuery, params),
+        query(countQuery, params),
+      ]);
+
+      const items = rows.map(mapEpisodeRow);
+      const total = Number(countRows[0]?.total ?? 0);
+      const totalPages = Math.ceil(total / limit);
 
       res.json({
-        episodes: rows.map(r => ({
-          id: r.id,
-          title: r.title,
-          airDate: unwrapBqValue(r.air_date),
-          dayOfWeek: r.day_of_week,
-          episodeNumber: Number(r.episode_number),
-          publishedAt: unwrapBqValue(r.published_at),
-          url: r.url,
-          songCount: Number(r.song_count)
-        })),
-        pagination: {
-          page,
-          limit,
-          total: Number(countRow.total),
-          totalPages: Math.ceil(Number(countRow.total) / limit)
-        }
+        items,
+        episodes: items,
+        total,
+        page,
+        limit,
+        pagination: { page, limit, total, totalPages },
       });
     } catch (err) {
       console.error('Error fetching episodes:', err);
@@ -49,12 +99,12 @@ export function createEpisodesRouter({ query, project, dataset }) {
     try {
       const { id } = req.params;
       const epQuery = `
-        SELECT id, title, air_date, day_of_week, episode_number, published_at, url, song_count
+        SELECT id, air_date, url, song_count
         FROM \`${project}.${dataset}.episodes\`
         WHERE id = @id
       `;
       const songsQuery = `
-        SELECT position, artist, song_title, album, raw_line
+        SELECT position, artist, song_title, album
         FROM \`${project}.${dataset}.song_plays\`
         WHERE episode_id = @id
         ORDER BY position ASC
@@ -66,24 +116,18 @@ export function createEpisodesRouter({ query, project, dataset }) {
       }
 
       const songsRows = await query(songsQuery, { id });
-      const ep = epRows[0];
+      const playlist = songsRows.map(s => ({
+        position: Number(s.position),
+        song: s.song_title,
+        songTitle: s.song_title,
+        artist: s.artist,
+        album: s.album || '',
+      }));
 
       res.json({
-        id: ep.id,
-        title: ep.title,
-        airDate: unwrapBqValue(ep.air_date),
-        dayOfWeek: ep.day_of_week,
-        episodeNumber: Number(ep.episode_number),
-        publishedAt: unwrapBqValue(ep.published_at),
-        url: ep.url,
-        songCount: Number(ep.song_count),
-        songs: songsRows.map(s => ({
-          position: Number(s.position),
-          artist: s.artist,
-          songTitle: s.song_title,
-          album: s.album,
-          rawLine: s.raw_line
-        }))
+        ...mapEpisodeRow(epRows[0]),
+        playlist,
+        songs: playlist,
       });
     } catch (err) {
       console.error('Error fetching episode details:', err);
@@ -93,4 +137,3 @@ export function createEpisodesRouter({ query, project, dataset }) {
 
   return router;
 }
-

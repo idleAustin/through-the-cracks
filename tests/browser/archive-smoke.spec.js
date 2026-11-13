@@ -81,17 +81,13 @@ test.describe('archive baseline & token contract smoke', () => {
     await page.getByRole('searchbox', { name: 'Search songs' }).fill('Hobo Lady');
     await expect(page.locator('#songs-table')).toContainText('McKendree Spring');
 
-    // Episodes view + playlist dialog
+    // Episodes view + playlist selection
     await primaryNav.getByRole('link', { name: 'Episodes' }).click();
-    await expect(page.getByRole('heading', { name: 'Episode Playlist Archive' })).toBeVisible();
-    await expect(page.locator('#episodes-table')).toContainText('2026-08-08');
-    await page.locator('#episodes-table tbody tr').first().click();
-
-    const episodeDialog = page.getByRole('dialog');
-    await expect(episodeDialog).toBeVisible();
-    await expect(episodeDialog.locator('.track-item').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Episodes', level: 1 })).toBeVisible();
+    await expect(page.locator('main')).toContainText('Aug 8, 2026');
+    await page.locator('.airdate-item, .m-card').first().click();
+    await expect(page.locator('main')).toContainText('Jonathan Byrd');
     await page.keyboard.press('Escape');
-    await expect(episodeDialog).toBeHidden();
 
     // Search view
     await primaryNav.getByRole('link', { name: 'Search' }).click();

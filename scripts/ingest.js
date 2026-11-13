@@ -20,6 +20,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { writeStaticSnapshots } from './static-snapshots.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -99,7 +100,7 @@ async function initBigQuery() {
 
 const BASE_URL = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`;
 
-async function getLatestIngestedDate() {
+async function _getLatestIngestedDate() {
   if (!bigquery || !INCREMENTAL) return null;
 
   try {
@@ -618,6 +619,7 @@ function writeJsonFiles(episodes, agg) {
   };
   writeFileSync(join(DATA_DIR, 'overview.json'), JSON.stringify(overview, null, 2));
   console.log(`   ✓ overview.json`);
+  writeStaticSnapshots(episodesData, DATA_DIR);
 }
 
 

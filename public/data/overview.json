@@ -1,10 +1,13 @@
 {
-  "lastUpdated": "2026-08-09T04:45:40.659Z",
+  "lastUpdated": "2026-11-13T08:04:13.927Z",
+  "latestEpisodeId": "492815995999333864",
   "totalEpisodes": 1317,
   "totalSongPlays": 36902,
   "uniqueArtists": 1891,
   "uniqueAlbums": 6340,
   "uniqueSongs": 16782,
+  "oneSpinArtists": 640,
+  "oneSpinSongs": 7786,
   "dateRange": {
     "earliest": "2013-06-23",
     "latest": "2026-08-08"
@@ -55,51 +58,61 @@
     {
       "artist": "Carrie Rodriguez",
       "song": "50s French Movie",
+      "album": "Seven Angels On A Bicycle",
       "plays": 15
     },
     {
       "artist": "Rice Drewry",
       "song": "Count On Me",
+      "album": "single",
       "plays": 15
     },
     {
       "artist": "Jonatha Brooke",
       "song": "Because I Told You So",
+      "album": "10 Cent Wings",
       "plays": 14
     },
     {
       "artist": "Eliza Gilkyson",
       "song": "Hard Times In Babylon",
+      "album": "Hard Times In Babylon",
       "plays": 13
     },
     {
       "artist": "Tim O'Brien",
       "song": "Where's Love Come From",
+      "album": "Chameleon",
       "plays": 13
-    },
-    {
-      "artist": "McKendree Spring",
-      "song": "Hobo Lady",
-      "plays": 12
     },
     {
       "artist": "Ashleigh Flynn",
       "song": "Dirty Hands And Dirty Feet",
+      "album": "A Million Stars",
       "plays": 12
     },
     {
-      "artist": "Davis Coen",
-      "song": "Mile After Mile",
+      "artist": "McKendree Spring",
+      "song": "Hobo Lady",
+      "album": "McKendree Spring 3",
       "plays": 12
     },
     {
       "artist": "Rebecca Almond",
       "song": "Last Night",
+      "album": "Rebecca Almond",
+      "plays": 12
+    },
+    {
+      "artist": "Davis Coen",
+      "song": "Mile After Mile",
+      "album": "Hard Luck Café",
       "plays": 12
     },
     {
       "artist": "Marcella & Her Lovers",
       "song": "Put That Bronze",
+      "album": "The Bronze Age",
       "plays": 12
     }
   ],

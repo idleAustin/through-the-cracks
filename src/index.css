@@ -5,4 +5,6 @@
 @import './styles/shell.css';
 @import './styles/mobile-shell.css';
 @import './styles/data-views.css';
+@import './styles/broadcast.css';
+@import './styles/pagination.css';
 @import './styles/overlays.css';
