@@ -1,11 +1,6 @@
 // Read-only artists, songs, artist-songs, and unified search HTTP route handlers.
 import express from 'express';
-
-function parsePageParams(query) {
-  const page = Math.max(1, parseInt(query.page) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
-  return { page, limit, offset: (page - 1) * limit };
-}
+import { escapeSqlString, parsePageParams, unwrapBqValue } from './queryUtils.js';
 
 export function createCatalogRouter({ query, project, dataset }) {
   const router = express.Router();
@@ -17,7 +12,7 @@ export function createCatalogRouter({ query, project, dataset }) {
 
       let whereClause = '';
       if (search) {
-        whereClause = `WHERE LOWER(artist) LIKE '%${search.replace(/'/g, "''")}%'`;
+        whereClause = `WHERE LOWER(artist) LIKE '%${escapeSqlString(search)}%'`;
       }
 
       const listQuery = `
@@ -50,8 +45,8 @@ export function createCatalogRouter({ query, project, dataset }) {
           totalPlays: Number(r.total_plays),
           uniqueSongs: Number(r.unique_songs),
           uniqueAlbums: Number(r.unique_albums),
-          firstAppearance: r.first_appearance?.value || r.first_appearance,
-          lastAppearance: r.last_appearance?.value || r.last_appearance,
+          firstAppearance: unwrapBqValue(r.first_appearance),
+          lastAppearance: unwrapBqValue(r.last_appearance),
         })),
         pagination: {
           page,
@@ -73,7 +68,7 @@ export function createCatalogRouter({ query, project, dataset }) {
         return res.json({ artists: [], songs: [], albums: [] });
       }
 
-      const escapedQ = q.replace(/'/g, "''");
+      const escapedQ = escapeSqlString(q);
 
       const artistQuery = `
         SELECT artist AS name, COUNT(1) AS plays
@@ -126,7 +121,7 @@ export function createCatalogRouter({ query, project, dataset }) {
 
       let whereClause = '';
       if (search) {
-        const escaped = search.replace(/'/g, "''");
+        const escaped = escapeSqlString(search);
         whereClause = `WHERE LOWER(artist) LIKE '%${escaped}%' OR LOWER(song_title) LIKE '%${escaped}%'`;
       }
 
@@ -173,8 +168,8 @@ export function createCatalogRouter({ query, project, dataset }) {
           songTitle: r.song_title,
           album: r.album || '',
           totalPlays: Number(r.total_plays),
-          firstPlayed: r.first_played?.value || r.first_played,
-          lastPlayed: r.last_played?.value || r.last_played,
+          firstPlayed: unwrapBqValue(r.first_played),
+          lastPlayed: unwrapBqValue(r.last_played),
         })),
         pagination: {
           page,
@@ -239,15 +234,15 @@ export function createCatalogRouter({ query, project, dataset }) {
           totalPlays: Number(summary.total_plays || 0),
           uniqueSongs: Number(summary.unique_songs || 0),
           uniqueAlbums: Number(summary.unique_albums || 0),
-          firstAppearance: summary.first_appearance?.value || summary.first_appearance || '',
-          lastAppearance: summary.last_appearance?.value || summary.last_appearance || '',
+          firstAppearance: unwrapBqValue(summary.first_appearance) || '',
+          lastAppearance: unwrapBqValue(summary.last_appearance) || '',
         },
         songs: rows.map(r => ({
           songTitle: r.song_title,
           album: r.album || '',
           totalPlays: Number(r.total_plays),
-          firstPlayed: r.first_played?.value || r.first_played,
-          lastPlayed: r.last_played?.value || r.last_played,
+          firstPlayed: unwrapBqValue(r.first_played),
+          lastPlayed: unwrapBqValue(r.last_played),
         }))
       });
     } catch (err) {
@@ -258,3 +253,4 @@ export function createCatalogRouter({ query, project, dataset }) {
 
   return router;
 }
+

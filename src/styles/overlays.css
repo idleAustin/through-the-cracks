@@ -1,4 +1,4 @@
-/* Overlay styles: modal dialogs, artist summary stats, and episode tracklist rows. */
+/* Overlay styles: modal dialogs, artist summary stats, and episode playlist rows. */
 
 /* ============================================================================
    Modal
@@ -199,3 +199,4 @@
 }
 
 .track-artist { color: var(--foreground); font-weight: 500; }
+

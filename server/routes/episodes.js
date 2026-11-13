@@ -1,14 +1,13 @@
 // Read-only episodes listing and episode playlist detail HTTP route handlers.
 import express from 'express';
+import { parsePageParams, unwrapBqValue } from './queryUtils.js';
 
 export function createEpisodesRouter({ query, project, dataset }) {
   const router = express.Router();
 
   router.get('/episodes', async (req, res) => {
     try {
-      const page = Math.max(1, parseInt(req.query.page) || 1);
-      const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
-      const offset = (page - 1) * limit;
+      const { page, limit, offset } = parsePageParams(req.query);
 
       const listQuery = `
         SELECT id, title, air_date, day_of_week, episode_number, published_at, url, song_count
@@ -26,10 +25,10 @@ export function createEpisodesRouter({ query, project, dataset }) {
         episodes: rows.map(r => ({
           id: r.id,
           title: r.title,
-          airDate: r.air_date?.value || r.air_date,
+          airDate: unwrapBqValue(r.air_date),
           dayOfWeek: r.day_of_week,
           episodeNumber: Number(r.episode_number),
-          publishedAt: r.published_at?.value || r.published_at,
+          publishedAt: unwrapBqValue(r.published_at),
           url: r.url,
           songCount: Number(r.song_count)
         })),
@@ -72,10 +71,10 @@ export function createEpisodesRouter({ query, project, dataset }) {
       res.json({
         id: ep.id,
         title: ep.title,
-        airDate: ep.air_date?.value || ep.air_date,
+        airDate: unwrapBqValue(ep.air_date),
         dayOfWeek: ep.day_of_week,
         episodeNumber: Number(ep.episode_number),
-        publishedAt: ep.published_at?.value || ep.published_at,
+        publishedAt: unwrapBqValue(ep.published_at),
         url: ep.url,
         songCount: Number(ep.song_count),
         songs: songsRows.map(s => ({
@@ -94,3 +93,4 @@ export function createEpisodesRouter({ query, project, dataset }) {
 
   return router;
 }
+

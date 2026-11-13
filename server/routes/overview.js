@@ -1,5 +1,6 @@
 // Read-only overview summary and leaderboard HTTP route handler.
 import express from 'express';
+import { unwrapBqValue } from './queryUtils.js';
 
 export function createOverviewRouter({ query, project, dataset }) {
   const router = express.Router();
@@ -44,8 +45,8 @@ export function createOverviewRouter({ query, project, dataset }) {
         uniqueAlbums: Number(stats.unique_albums),
         uniqueSongs: Number(stats.unique_songs),
         dateRange: {
-          earliest: stats.earliest_date?.value || stats.earliest_date,
-          latest: stats.latest_date?.value || stats.latest_date,
+          earliest: unwrapBqValue(stats.earliest_date),
+          latest: unwrapBqValue(stats.latest_date),
         },
         topArtists: topArtists.map(r => ({ name: r.artist, plays: Number(r.plays) })),
         topSongs: topSongs.map(r => ({ artist: r.artist, song: r.song_title, plays: Number(r.plays) }))
@@ -58,3 +59,4 @@ export function createOverviewRouter({ query, project, dataset }) {
 
   return router;
 }
+
