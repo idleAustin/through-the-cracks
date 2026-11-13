@@ -254,7 +254,7 @@ test.describe('Thread Level Midnight cockpit shell', () => {
         });
       });
       await page.goto('/');
-      await expect(page.locator('.cockpit-sidebar')).toContainText('WEVL 89.9 · BigQuery Live');
+      await expect(page.locator('.cockpit-sidebar')).toContainText('WEVL 89.9 · Live Archive');
       return;
     }
 

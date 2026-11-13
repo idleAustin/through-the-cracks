@@ -7,8 +7,10 @@ import {
   getEpisodes,
   getOverview,
   getSongs,
+  resolveApiBase,
   searchAll,
 } from './api.js';
+import { getStaticPath } from './api-static.js';
 import { createApp } from '../server/index.js';
 
 const STATIC_DATA = {
@@ -299,5 +301,16 @@ describe('archive client api + express route seam', () => {
     const search = await searchAll('dylan');
     expect(search.source).toBe('static-json');
     expect(search.data.albums[0].album).toBe('Highway 61 Revisited');
+  });
+
+  it('resolves subpath-aware API bases and static asset paths cleanly', () => {
+    expect(resolveApiBase({ isDev: false, baseUrl: '/through-the-cracks/' })).toBe('/through-the-cracks/api');
+    expect(resolveApiBase({ isDev: false, baseUrl: '/through-the-cracks' })).toBe('/through-the-cracks/api');
+    expect(resolveApiBase({ isDev: false, baseUrl: '/' })).toBe('/api');
+    expect(
+      resolveApiBase({ explicitApiUrl: 'https://idleamericana.com/through-the-cracks/api/', isDev: false, baseUrl: '/' }),
+    ).toBe('https://idleamericana.com/through-the-cracks/api');
+    expect(resolveApiBase({ isDev: true, baseUrl: '/through-the-cracks/' })).toBe('http://localhost:3001/api');
+    expect(getStaticPath('/data/overview.json', '/through-the-cracks/')).toBe('/through-the-cracks/data/overview.json');
   });
 });

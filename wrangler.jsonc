@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "through-the-cracks",
+  "main": "server/worker.js",
+  "compatibility_date": "2025-02-01",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "idleamericana.com/through-the-cracks*",
+      "zone_name": "idleamericana.com"
+    }
+  ],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "through-the-cracks-db",
+      "database_id": "afbc236a-df51-40f4-84c8-234bc6e003c2"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 6 * * SUN,THU"]
+  }
+}
