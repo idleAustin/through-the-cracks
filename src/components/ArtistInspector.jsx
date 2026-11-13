@@ -5,6 +5,7 @@ import { getArtistSongs } from '../api';
 import { formatAirDate, formatInt, useMediaQuery } from '../utils/format';
 import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from './DataState';
 import Icon from './Icon';
+import Tooltip from './Tooltip';
 
 export default function ArtistInspector({
   artistName,
@@ -106,14 +107,18 @@ export default function ArtistInspector({
           <p className="inspector-sub">Click any song to view its episode air dates</p>
         </div>
         {!isNarrow && (
-          <button
-            type="button"
-            className="icon-action-btn sm"
-            onClick={onClose}
-            aria-label={`Close ${artistName} inspector`}
-          >
-            <Icon name="close" size="sm" />
-          </button>
+          <div className="icon-dock">
+            <Tooltip label="Close inspector" shortcut="Esc" position="left">
+              <button
+                type="button"
+                className="icon-action-btn sm"
+                onClick={onClose}
+                aria-label={`Close ${artistName} inspector`}
+              >
+                <Icon name="close" size="sm" />
+              </button>
+            </Tooltip>
+          </div>
         )}
       </div>
 
@@ -188,7 +193,8 @@ export default function ArtistInspector({
                     <div className="m-card-top">
                       <span className="m-card-title">#{idx + 1} · {song.songTitle}</span>
                       <span className="spin-count font-mono num">
-                        {formatInt(song.totalPlays)} {song.totalPlays === 1 ? 'spin' : 'spins'} →
+                        {formatInt(song.totalPlays)} {song.totalPlays === 1 ? 'spin' : 'spins'}{' '}
+                        <Icon name="arrow-right" size={14} />
                       </span>
                     </div>
                     {song.album && (
@@ -217,7 +223,9 @@ export default function ArtistInspector({
                     >
                       <td className="col-primary">{song.songTitle}</td>
                       <td className="cell-dim">{song.album || '—'}</td>
-                      <td className="col-num cell-mono">{formatInt(song.totalPlays)} →</td>
+                      <td className="col-num cell-mono">
+                        {formatInt(song.totalPlays)} <Icon name="arrow-right" size={14} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

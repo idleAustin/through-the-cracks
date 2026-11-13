@@ -1,39 +1,4 @@
-/* Base layer: temporary legacy variable aliases mapped to --as-*, reset, typography, links, and reduced motion. */
-
-:root {
-  /* Temporary --as-* aliases for legacy views/modals until Tickets 03-07 replace them */
-  --background: var(--as-bg-base);
-  --card: var(--as-bg-surface);
-  --foreground: var(--as-text-primary);
-  --muted: var(--as-bg-elevated);
-  --muted-foreground: var(--as-text-secondary);
-  --border: var(--as-border-subtle);
-  --border-light: var(--as-border-subtle);
-  --accent-hover: var(--as-accent-fg);
-  --accent-hover-muted: var(--as-accent-muted);
-  --font-display: var(--as-font-heading);
-  --font-body: var(--as-font-body);
-  --font-mono: var(--as-font-mono);
-
-  /* Non-color layout and typography helpers for legacy data-views/overlays */
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
-  --text-lg: 1rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.75rem;
-  --text-4xl: 2.25rem;
-
-  --tracking-tighter: -0.03em;
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.02em;
-  --tracking-widest: 0.06em;
-
-  --section-gap: 24px;
-  --grid-gap: 16px;
-}
+/* Base layer: reset, typography, tabular numerals, links, and reduced motion. */
 
 .theme-switching *,
 .theme-switching *::before,
@@ -109,17 +74,19 @@ li {
 }
 
 .num,
-td,
+.mono,
+.font-mono,
 time,
 kbd,
-.kbd {
-  font-variant-numeric: tabular-nums;
-}
-
-.font-mono,
+.kbd,
 code,
 pre {
   font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+td {
+  font-variant-numeric: tabular-nums;
 }
 
 .eyebrow {

@@ -40,6 +40,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
       : page.locator('table tbody tr').filter({ hasText: 'Todd Snider' }).first();
     await toddItem.click();
 
+    await expect(page).toHaveURL(/[?&]artist=Todd(%20|\+)Snider/);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('main')).toContainText(/Annual Spins.*Todd Snider/i);
     await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText('77');
@@ -49,6 +50,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
       : page.locator('table tbody tr').filter({ hasText: 'Handsome John' }).first();
     await songItem.click();
 
+    await expect(page).toHaveURL(/[?&]song=Handsome(%20|\+)John/);
     await expect(page.locator('main')).toContainText(/Annual Spins.*Handsome John/i);
     const viewAirDates = page.getByRole('button', { name: /View Air Dates/i })
       .or(page.getByRole('link', { name: /View Air Dates/i }));
@@ -60,6 +62,11 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
     await songItem.click();
     await viewAirDates.click();
     await expect(page).toHaveURL(/\/episodes\?song=Handsome(%20|\+)John&artist=Todd(%20|\+)Snider/);
+
+    await page.goto('/?artist=Todd%20Snider');
+    await expect(page.locator('main')).toContainText(/Songs · Todd Snider/i);
+    await expect(page.locator('main')).toContainText(/Annual Spins · Todd Snider/i);
+    await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText('77');
   });
 
   test('supports Most Obscure toggle, Top cap/footer pagination, in-place Songs scoping, and Air dates action', async ({ page }, testInfo) => {

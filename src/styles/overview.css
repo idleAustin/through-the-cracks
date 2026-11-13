@@ -110,7 +110,7 @@
 }
 
 .year-col.is-peak .year-val { color: var(--as-accent-fg); font-weight: 600; }
-.year-col.is-zero .year-val { color: var(--as-text-muted); }
+.year-col.is-zero .year-val { color: var(--as-text-secondary); }
 
 .year-bar-fill {
   width: 100%;

@@ -81,9 +81,13 @@
 
 .overview-table th.col-act,
 .overview-table td.col-act {
-  width: 38px;
+  width: 50px;
   padding: 4px 10px 4px 4px;
   text-align: right;
+}
+
+.overview-songs-card .icon-dock {
+  padding: 2px;
 }
 
 .overview-songs-table th.col-song { width: 34%; }
@@ -97,43 +101,27 @@
 }
 
 .subtle-dates-btn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: var(--as-radius-sm);
-  background: transparent;
-  color: var(--as-text-secondary);
   opacity: 0.42;
-  cursor: pointer;
-  transition: opacity var(--as-duration-fast) ease,
-              color var(--as-duration-fast) ease,
-              background-color var(--as-duration-fast) ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .data-table tbody tr:hover .subtle-dates-btn { opacity: 0.85; }
-  .subtle-dates-btn:hover { opacity: 1; color: var(--as-accent-fg); background: var(--as-bg-overlay); }
-  .tooltip-wrapper.tip-left:hover .tooltip-bubble { transform: translate(0, 50%); }
+  .data-table tbody tr:hover .subtle-dates-btn { opacity: 0.9; }
+  .subtle-dates-btn:hover { opacity: 1; }
+  .overview-songs-card .tooltip-wrapper.tip-left:hover .tooltip-bubble { transform: translate(0, 50%); }
 }
 
 .subtle-dates-btn:focus-visible {
   opacity: 1;
-  color: var(--as-accent-fg);
-  outline: 2px solid var(--as-border-focus);
-  outline-offset: 1px;
 }
 
-.tooltip-wrapper.tip-left .tooltip-bubble {
+.overview-songs-card .tooltip-wrapper.tip-left .tooltip-bubble {
   bottom: 50%;
   left: auto;
   right: calc(100% + 6px);
   transform: translate(4px, 50%);
 }
 
-.tooltip-wrapper.tip-left:focus-within .tooltip-bubble { transform: translate(0, 50%); }
+.overview-songs-card .tooltip-wrapper.tip-left:focus-within .tooltip-bubble { transform: translate(0, 50%); }
 
 .overview-mobile-list { padding: 10px; }
 
@@ -146,7 +134,7 @@
   border: 0;
   background: transparent;
   color: var(--as-text-secondary);
-  font-family: var(--as-font-mono);
+  font-family: var(--as-font-body);
   font-size: 12px;
   white-space: nowrap;
   text-decoration: none;

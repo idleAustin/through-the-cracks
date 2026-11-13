@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatCompactSpins, formatInt } from '../utils/format';
 import { ArchiveErrorState, SkeletonRows } from './DataState';
+import Icon from './Icon';
 
 const DEFAULT_YEARS = [
   2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026,
@@ -65,7 +66,8 @@ export default function AnnualSpinChart({
         <div className="chart-header-actions">
           {scope === 'song' && songTitle && (
             <Link to={airDatesUrl} className="btn btn-secondary btn-sm">
-              View Air Dates →
+              View Air Dates
+              <Icon name="arrow-right" size={14} />
             </Link>
           )}
           <div className="seg-group" role="group" aria-label="Annual chart scope">
@@ -75,7 +77,7 @@ export default function AnnualSpinChart({
               aria-pressed={scope === 'all'}
               onClick={() => onScopeChange('all')}
             >
-              All Archive
+              <span className="seg-btn-text">All Archive</span>
             </button>
             <button
               type="button"
@@ -84,7 +86,7 @@ export default function AnnualSpinChart({
               aria-pressed={scope === 'artist'}
               onClick={() => onScopeChange('artist')}
             >
-              {artistName || 'Artist'}
+              <span className="seg-btn-text">{artistName || 'Artist'}</span>
             </button>
             {songTitle && (
               <button
@@ -93,7 +95,7 @@ export default function AnnualSpinChart({
                 aria-pressed={scope === 'song'}
                 onClick={() => onScopeChange('song')}
               >
-                {songTitle}
+                <span className="seg-btn-text">{songTitle}</span>
               </button>
             )}
           </div>

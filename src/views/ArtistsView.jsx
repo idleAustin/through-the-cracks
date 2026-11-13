@@ -278,11 +278,11 @@ export default function ArtistsView() {
                       </span>
                     </div>
                     <div className="m-card-meta">
-                      <span>{formatInt(item.uniqueSongs)} songs</span>
+                      <span><span className="font-mono num">{formatInt(item.uniqueSongs)}</span> songs</span>
                       <span>·</span>
-                      <span>{formatInt(item.uniqueAlbums)} albums</span>
+                      <span><span className="font-mono num">{formatInt(item.uniqueAlbums)}</span> albums</span>
                       <span>·</span>
-                      <span>Last {formatAirDate(lastSpin)}</span>
+                      <span>Last <span className="font-mono num">{formatAirDate(lastSpin)}</span></span>
                     </div>
                   </button>
                 );

@@ -135,7 +135,7 @@
 .search-row-tag {
   display: inline-block;
   margin-left: 6px;
-  font-family: var(--as-font-mono);
+  font-family: var(--as-font-body);
   font-size: 11px;
   color: var(--as-text-secondary);
 }

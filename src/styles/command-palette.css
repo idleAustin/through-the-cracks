@@ -101,6 +101,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -162,7 +163,7 @@
 }
 
 .cmd-row-meta {
-  font-family: var(--as-font-mono);
+  font-family: var(--as-font-body);
   font-size: 11px;
   color: var(--as-text-secondary);
   flex-shrink: 0;
@@ -220,6 +221,13 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  .cmd-close-btn {
+    min-width: var(--as-tap-min);
+    min-height: var(--as-tap-min);
+  }
 }
 
 @media (max-width: 480px) {

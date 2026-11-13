@@ -1,11 +1,9 @@
-// Canonical Lucide icon map and legacy Material Symbols alias table for Icon.jsx.
+// Canonical Lucide icon map for Icon.jsx.
 import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  AudioLines,
-  Ban,
   BarChart3,
   Calendar,
   ChevronLeft,
@@ -18,21 +16,19 @@ import {
   Mic,
   Moon,
   Music,
-  PlayCircle,
   Radio,
   Search,
   SlidersHorizontal,
   Sun,
-  Trophy,
   X,
 } from 'lucide-react';
 
 export const ICON_MAP = {
-  // Canonical Lucide icon keys
   overview: BarChart3,
   artists: Mic,
   songs: Music,
   episodes: Radio,
+  radio: Radio,
   search: Search,
   sun: Sun,
   moon: Moon,
@@ -50,21 +46,4 @@ export const ICON_MAP = {
   alert: AlertCircle,
   filter: SlidersHorizontal,
   compass: Compass,
-
-  // Legacy Material Symbols aliases (removed incrementally across Tickets 03-07)
-  bar_chart: BarChart3,
-  mic: Mic,
-  music_note: Music,
-  radio: Radio,
-  light_mode: Sun,
-  dark_mode: Moon,
-  chevron_left: ChevronLeft,
-  chevron_right: ChevronRight,
-  arrow_forward: ArrowRight,
-  open_in_new: ExternalLink,
-  playlist_play: ListMusic,
-  trophy: Trophy,
-  graphic_eq: AudioLines,
-  play_circle: PlayCircle,
-  music_off: Ban,
 };

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { formatInt } from '../utils/format';
 import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from './DataState';
 import Icon from './Icon';
+import Tooltip from './Tooltip';
 
 function CardFooterPager({ pagination, page, onPageChange, ariaLabel, isCompact }) {
   if (!pagination) return null;
@@ -20,7 +21,8 @@ function CardFooterPager({ pagination, page, onPageChange, ariaLabel, isCompact 
         disabled={currentPage <= 1}
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
       >
-        ← Prev
+        <Icon name="arrow-left" size={14} />
+        Prev
       </button>
       <span className="pagination-readout font-mono num">
         {currentPage} / {totalPages}
@@ -31,7 +33,8 @@ function CardFooterPager({ pagination, page, onPageChange, ariaLabel, isCompact 
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
       >
-        Next →
+        Next
+        <Icon name="arrow-right" size={14} />
       </button>
     </nav>
   );
@@ -99,9 +102,16 @@ export default function OverviewCards({
             </button>
           </div>
           <span className="lens-summary">
-            {isObscure
-              ? `Single-spin deep cuts · ${formatInt(overview.oneSpinArtists)} artists & ${formatInt(overview.oneSpinSongs)} songs played once`
-              : `Ranked by all-time spins across ${formatInt(overview.totalEpisodes)} broadcasts`}
+            {isObscure ? (
+              <>
+                Single-spin deep cuts · <span className="font-mono num">{formatInt(overview.oneSpinArtists)}</span> artists &amp;{' '}
+                <span className="font-mono num">{formatInt(overview.oneSpinSongs)}</span> songs spun once
+              </>
+            ) : (
+              <>
+                Ranked by all-time spins across <span className="font-mono num">{formatInt(overview.totalEpisodes)}</span> episodes
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -116,7 +126,8 @@ export default function OverviewCards({
                   to={`/artists?artist=${encodeURIComponent(selectedArtist)}`}
                   className="m-dates-link"
                 >
-                  Catalog ›
+                  Catalog
+                  <Icon name="chevron-right" size={14} />
                 </Link>
               )}
               <select
@@ -292,7 +303,8 @@ export default function OverviewCards({
                         }}
                       >
                         <Icon name="calendar" size={12} />
-                        Dates ›
+                        Dates
+                        <Icon name="chevron-right" size={12} />
                       </button>
                     </div>
                   </div>
@@ -344,22 +356,21 @@ export default function OverviewCards({
                         <td className="cell-dim cell-truncate" title={albumText}>{albumText} </td>
                         <td className="col-num cell-mono">{formatInt(item.totalPlays)} </td>
                         <td className="col-act">
-                          <span className="tooltip-wrapper tip-left">
-                            <button
-                              type="button"
-                              className="subtle-dates-btn"
-                              aria-label={`Air dates for ${item.songTitle}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onViewSongDates(item.songTitle, songArtist);
-                              }}
-                            >
-                              <Icon name="calendar" size={14} />
-                            </button>
-                            <span className="tooltip-bubble" role="tooltip">
-                              <span>Air dates</span>
-                            </span>
-                          </span>
+                          <div className="icon-dock">
+                            <Tooltip label="Air dates" position="left">
+                              <button
+                                type="button"
+                                className="icon-action-btn sm subtle-dates-btn"
+                                aria-label={`Air dates for ${item.songTitle}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onViewSongDates(item.songTitle, songArtist);
+                                }}
+                              >
+                                <Icon name="calendar" size="sm" />
+                              </button>
+                            </Tooltip>
+                          </div>
                         </td>
                       </tr>
                     );

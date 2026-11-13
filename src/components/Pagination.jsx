@@ -1,6 +1,7 @@
 // Responsive pagination bar supporting windowed desktop page links, compact rail mode, and 44px mobile controls.
 import React from 'react';
 import { formatInt, useMediaQuery } from '../utils/format';
+import Icon from './Icon';
 
 function buildPageNumbers(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -51,7 +52,8 @@ export default function Pagination({
           disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         >
-          ← Prev
+          <Icon name="arrow-left" size={14} />
+          Prev
         </button>
         <span className="pagination-readout font-mono num">
           {compact
@@ -65,7 +67,8 @@ export default function Pagination({
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         >
-          Next →
+          Next
+          <Icon name="arrow-right" size={14} />
         </button>
       </nav>
     );
@@ -90,7 +93,8 @@ export default function Pagination({
           disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         >
-          ← Prev
+          <Icon name="arrow-left" size={14} />
+          Prev
         </button>
 
         {compact ? (
@@ -122,7 +126,8 @@ export default function Pagination({
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         >
-          Next →
+          Next
+          <Icon name="arrow-right" size={14} />
         </button>
       </div>
     </nav>

@@ -39,10 +39,10 @@ export default function SearchResultsGrid({
               >
                 <span className="m-card-top">
                   <span className="m-card-title">{artist.name}</span>
-                  <span className="m-card-stat">{formatInt(artist.plays)} spins</span>
+                  <span className="m-card-stat font-mono num">{formatInt(artist.plays)} spins</span>
                 </span>
                 <span className="m-card-meta">
-                  {formatInt(artist.uniqueSongs)} songs · Inspect catalog
+                  <span className="font-mono num">{formatInt(artist.uniqueSongs)}</span> songs · Inspect catalog
                 </span>
               </button>
             ))}
@@ -110,7 +110,7 @@ export default function SearchResultsGrid({
               >
                 <span className="m-card-top">
                   <span className="m-card-title">{song.songTitle}</span>
-                  <span className="m-card-stat">{formatInt(song.plays)} spins</span>
+                  <span className="m-card-stat font-mono num">{formatInt(song.plays)} spins</span>
                 </span>
                 <span className="m-card-meta">
                   {song.artist}
@@ -127,7 +127,7 @@ export default function SearchResultsGrid({
               >
                 <span className="m-card-top">
                   <span className="m-card-title">{item.album}</span>
-                  <span className="m-card-stat">{formatInt(item.plays)} spins</span>
+                  <span className="m-card-stat font-mono num">{formatInt(item.plays)} spins</span>
                 </span>
                 <span className="m-card-meta">Album · {item.artist}</span>
               </button>

@@ -195,7 +195,6 @@
 
 .m-card-title {
   color: var(--as-text-primary);
-  font-family: var(--as-font-mono);
   font-size: 13px;
   font-weight: 600;
   overflow: hidden;
@@ -218,9 +217,17 @@
 .playlist-mobile-row.is-song-match { background: var(--as-accent-muted); }
 .playlist-mobile-row.is-song-match .playlist-song-btn { color: var(--as-accent-fg); }
 .playlist-pos { font-size: 12px; color: var(--as-text-secondary); padding-top: 2px; }
-.playlist-mobile-main { display: grid; gap: 4px; min-width: 0; }
+.playlist-mobile-main { display: grid; gap: 6px; min-width: 0; }
 .playlist-mobile-main .cell-link-btn { padding: 2px 0; overflow-wrap: anywhere; }
-.playlist-mobile-meta { font-size: 12px; color: var(--as-text-secondary); overflow-wrap: anywhere; }
+.playlist-mobile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 768px) {
   .year-select {
@@ -228,6 +235,20 @@
     height: var(--as-tap-min);
     font-size: 16px;
     padding: 0 12px;
+  }
+
+  .playlist-mobile-main .cell-link-btn,
+  .source-post-link {
+    min-height: var(--as-tap-min);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .m-card-meta .cell-link-btn {
+    min-height: var(--as-tap-min);
+    min-width: var(--as-tap-min);
+    display: inline-flex;
+    align-items: center;
   }
 }
 

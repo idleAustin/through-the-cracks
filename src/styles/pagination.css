@@ -11,10 +11,6 @@
   flex-wrap: wrap;
 }
 
-.ink-panel > .pagination-bar {
-  margin-top: 16px;
-}
-
 .pagination-bar.is-compact {
   padding: 10px 12px;
   justify-content: center;
@@ -63,6 +59,7 @@
   background: var(--as-bg-base);
   color: var(--as-text-secondary);
   font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -109,6 +106,7 @@
 
 .page-ellipsis {
   font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--as-text-secondary);
   padding: 0 4px;

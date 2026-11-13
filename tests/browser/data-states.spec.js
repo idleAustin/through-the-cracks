@@ -126,30 +126,45 @@ test.describe('archive data states and unknown route recovery', () => {
     await expect(searchRow).toBeVisible();
     expect((await searchRow.boundingBox()).height).toBeGreaterThanOrEqual(44);
 
+    const expectTouchTarget = async (locator) => {
+      await expect(locator).toBeVisible();
+      const box = await locator.boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+    };
+
+    await page.keyboard.press('Control+k');
+    await expectTouchTarget(page.locator('.cmd-close-btn'));
+    await page.keyboard.press('Escape');
+
     await page.goto('/artists');
-    const smBtn = page.locator('.btn-sm').first();
-    await expect(smBtn).toBeVisible();
-    expect((await smBtn.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await expectTouchTarget(page.locator('.btn-sm').first());
+    await expectTouchTarget(page.locator('.seg-btn', { hasText: 'All' }).first());
+
+    await page.goto('/songs');
+    await expectTouchTarget(page.locator('.m-card .cell-link-btn').first());
 
     await page.goto('/episodes');
     const yearSelect = page.locator('.year-select');
     await expect(yearSelect).toBeVisible();
     expect((await yearSelect.boundingBox()).height).toBeGreaterThanOrEqual(44);
-    const episodeCard = page.locator('.m-card').first();
-    await expect(episodeCard).toBeVisible();
-    expect((await episodeCard.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await expectTouchTarget(page.locator('.m-card').first());
+
+    await page.goto('/episodes?episode=492815995999333864');
+    await expectTouchTarget(page.locator('.playlist-mobile-main .cell-link-btn').first());
+    await expectTouchTarget(page.locator('.source-post-link').first());
 
     await page.goto('/unknown-archive-path');
-    const recoveryBtn = page.locator('.btn').first();
-    await expect(recoveryBtn).toBeVisible();
-    expect((await recoveryBtn.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    await expectTouchTarget(page.locator('.btn').first());
 
     await page.setViewportSize({ width: 320, height: 640 });
     for (const [path, readySelector] of [
       ['/', '#kpi-plays'],
       ['/artists', '#artists-table:visible, .m-card-stack:visible'],
+      ['/artists?artist=Todd%20Snider', '.push-view'],
       ['/songs', '#songs-table:visible, .m-card-stack:visible'],
       ['/episodes', '.m-card'],
+      ['/episodes?episode=492815995999333864', '.playlist-pane'],
       ['/search', '#global-search-input'],
     ]) {
       await page.goto(path);

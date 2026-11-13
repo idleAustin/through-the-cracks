@@ -59,6 +59,9 @@
   align-items: center;
   justify-content: center;
   min-height: 30px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: 0 10px;
   background: transparent;
   border: 1px solid transparent;
@@ -73,6 +76,13 @@
   transition: background-color var(--as-duration-fast) ease,
               color var(--as-duration-fast) ease,
               border-color var(--as-duration-fast) ease;
+}
+
+.seg-btn-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -312,6 +322,8 @@
 
   .seg-btn {
     min-height: var(--as-tap-min);
+    min-width: var(--as-tap-min);
+    max-width: 100%;
     padding: 0 12px;
   }
 

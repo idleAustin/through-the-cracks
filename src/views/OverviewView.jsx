@@ -2,30 +2,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getArtists, getArtistSongs, getSongs, getYearSpins } from '../api';
+import { sortSongs } from '../api-catalog';
 import AnnualSpinChart from '../components/AnnualSpinChart';
 import { ArchiveErrorState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 import OverviewCards from '../components/OverviewCards';
-import { formatAirDate, formatInt, useMediaQuery } from '../utils/format';
+import OverviewReadoutStrip from '../components/OverviewReadoutStrip';
+import { formatAirDate, useMediaQuery } from '../utils/format';
 
 const VALID_CAPS = new Set(['10', '25', '50', '100', 'all']);
-
-function sortScopedSongs(songs, rank) {
-  return [...songs].sort((a, b) => {
-    const playsA = Number(a.totalPlays || 0);
-    const playsB = Number(b.totalPlays || 0);
-    if (rank === 'obscure') {
-      const firstA = String(a.firstPlayed || a.firstAppearance || '');
-      const firstB = String(b.firstPlayed || b.firstAppearance || '');
-      return (
-        playsA - playsB
-        || (firstA && firstB ? firstA.localeCompare(firstB) : (firstA ? -1 : (firstB ? 1 : 0)))
-        || String(a.songTitle || '').localeCompare(String(b.songTitle || ''))
-      );
-    }
-    return playsB - playsA || String(a.songTitle || '').localeCompare(String(b.songTitle || ''));
-  });
-}
 
 function seedYearData(yearSummary) {
   if (!Array.isArray(yearSummary) || yearSummary.length === 0) return null;
@@ -49,17 +34,23 @@ export default function OverviewView({ data, loading, error, onRetry }) {
   const cap = VALID_CAPS.has(rawCap) ? rawCap : '10';
   const apage = Math.max(1, parseInt(searchParams.get('apage') || '1', 10) || 1);
   const spage = Math.max(1, parseInt(searchParams.get('spage') || '1', 10) || 1);
+  const selectedArtist = searchParams.get('artist') || null;
+  const songParam = searchParams.get('song') || '';
+  const songArtistParam = searchParams.get('songArtist') || '';
 
-  const [selectedArtist, setSelectedArtist] = useState(null);
-  const [focusedSong, setFocusedSong] = useState(null);
-  const [chartScope, setChartScope] = useState('all');
-
+  const [chartAllOverride, setChartAllOverride] = useState(false);
   const [artistsState, setArtistsState] = useState({ items: [], pagination: null, loading: true, error: '' });
   const [songsState, setSongsState] = useState({ items: [], pagination: null, loading: true, error: '' });
   const [yearState, setYearState] = useState({ data: null, loading: true, error: '' });
   const [artistsRetry, setArtistsRetry] = useState(0);
   const [songsRetry, setSongsRetry] = useState(0);
   const [yearsRetry, setYearsRetry] = useState(0);
+
+  const resolvedSongArtist = songParam
+    ? (songArtistParam || selectedArtist || songsState.items.find((s) => s.songTitle === songParam)?.artist || '')
+    : '';
+  const focusedSong = songParam ? { title: songParam, artist: resolvedSongArtist } : null;
+  const chartScope = songParam ? 'song' : (selectedArtist && !chartAllOverride ? 'artist' : 'all');
 
   useEffect(() => {
     let active = true;
@@ -100,7 +91,7 @@ export default function OverviewView({ data, loading, error, onRetry }) {
 
     const loadSongs = selectedArtist
       ? getArtistSongs(selectedArtist).then((res) => {
-        const sorted = sortScopedSongs(res.data?.songs || [], rank);
+        const sorted = sortSongs(res.data?.songs || [], rank);
         const capLimit = cap === 'all' ? sorted.length : Number(cap);
         const capped = sorted.slice(0, capLimit);
         const total = capped.length;
@@ -229,18 +220,16 @@ export default function OverviewView({ data, loading, error, onRetry }) {
 
   const handleSelectArtist = useCallback(
     (artistName) => {
-      if (selectedArtist === artistName) {
-        setSelectedArtist(null);
-        setFocusedSong(null);
-        setChartScope('all');
-      } else {
-        setSelectedArtist(artistName);
-        setFocusedSong(null);
-        setChartScope('artist');
-      }
+      setChartAllOverride(false);
       setSearchParams((prev) => {
-        if (!prev.has('spage')) return prev;
         const next = new URLSearchParams(prev);
+        if (selectedArtist === artistName) {
+          next.delete('artist');
+        } else {
+          next.set('artist', artistName);
+        }
+        next.delete('song');
+        next.delete('songArtist');
         next.delete('spage');
         return next;
       });
@@ -249,20 +238,63 @@ export default function OverviewView({ data, loading, error, onRetry }) {
   );
 
   const handleClearArtistScope = useCallback(() => {
-    setSelectedArtist(null);
-    setChartScope((prev) => (prev === 'artist' ? 'all' : prev));
+    setChartAllOverride(false);
     setSearchParams((prev) => {
-      if (!prev.has('spage')) return prev;
       const next = new URLSearchParams(prev);
+      next.delete('artist');
+      next.delete('song');
+      next.delete('songArtist');
       next.delete('spage');
       return next;
     });
   }, [setSearchParams]);
 
-  const handleSelectSong = useCallback((songTitle, artistName) => {
-    setFocusedSong({ title: songTitle, artist: artistName });
-    setChartScope('song');
-  }, []);
+  const handleSelectSong = useCallback(
+    (songTitle, artistName) => {
+      setChartAllOverride(false);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('song', songTitle);
+        if (artistName && artistName !== selectedArtist) {
+          next.set('songArtist', artistName);
+        } else {
+          next.delete('songArtist');
+        }
+        return next;
+      });
+    },
+    [selectedArtist, setSearchParams],
+  );
+
+  const handleChartScopeChange = useCallback(
+    (nextScope) => {
+      if (nextScope === 'all') {
+        setChartAllOverride(true);
+        if (searchParams.has('song') || searchParams.has('songArtist')) {
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('song');
+            next.delete('songArtist');
+            return next;
+          });
+        }
+        return;
+      }
+
+      if (nextScope === 'artist') {
+        setChartAllOverride(false);
+        if (searchParams.has('song') || searchParams.has('songArtist')) {
+          setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete('song');
+            next.delete('songArtist');
+            return next;
+          });
+        }
+      }
+    },
+    [searchParams, setSearchParams],
+  );
 
   const handleViewSongDates = useCallback(
     (songTitle, artistName) => {
@@ -285,8 +317,6 @@ export default function OverviewView({ data, loading, error, onRetry }) {
   const latestUrl = data.latestEpisodeId
     ? `/episodes?episode=${encodeURIComponent(data.latestEpisodeId)}`
     : '/episodes';
-  const avgSpins = (Number(data.totalSongPlays || 0) / Math.max(1, Number(data.totalEpisodes || 1))).toFixed(1);
-  const topArtist = data.topArtists?.[0];
   const chartData = yearState.data || (chartScope === 'all' ? seedYearData(data.yearSummary) : null);
 
   return (
@@ -305,44 +335,7 @@ export default function OverviewView({ data, loading, error, onRetry }) {
         </Link>
       </header>
 
-      <dl className="readout-strip">
-        <div className="readout-cell">
-          <dt>Total Spins</dt>
-          <dd>
-            <span className="readout-num" id="kpi-plays">{formatInt(data.totalSongPlays)}</span>
-            <span className="readout-unit">spins</span>
-          </dd>
-          <p className="readout-context">Avg {avgSpins} spins per episode</p>
-        </div>
-        <div className="readout-cell">
-          <dt>Archived Episodes</dt>
-          <dd>
-            <span className="readout-num" id="kpi-episodes">{formatInt(data.totalEpisodes)}</span>
-            <span className="readout-unit">episodes</span>
-          </dd>
-          <p className="readout-context">
-            {formatAirDate(data.dateRange?.earliest)} to {formatAirDate(data.dateRange?.latest)}
-          </p>
-        </div>
-        <div className="readout-cell">
-          <dt>Catalog Artists</dt>
-          <dd>
-            <span className="readout-num" id="kpi-artists">{formatInt(data.uniqueArtists)}</span>
-            <span className="readout-unit">artists</span>
-          </dd>
-          <p className="readout-context">
-            Top: {topArtist?.name || '—'} ({formatInt(topArtist?.plays)} spins)
-          </p>
-        </div>
-        <div className="readout-cell">
-          <dt>Unique Songs</dt>
-          <dd>
-            <span className="readout-num" id="kpi-songs">{formatInt(data.uniqueSongs)}</span>
-            <span className="readout-unit">songs</span>
-          </dd>
-          <p className="readout-context">Across {formatInt(data.uniqueAlbums)} albums</p>
-        </div>
-      </dl>
+      <OverviewReadoutStrip data={data} />
 
       <AnnualSpinChart
         scope={chartScope}
@@ -353,7 +346,7 @@ export default function OverviewView({ data, loading, error, onRetry }) {
         loading={yearState.loading}
         error={yearState.error}
         isCompact={isCompact}
-        onScopeChange={setChartScope}
+        onScopeChange={handleChartScopeChange}
         onRetry={() => setYearsRetry((k) => k + 1)}
       />
 

@@ -28,6 +28,8 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
 
   useEffect(() => {
     if (!isOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     setQuery('');
     setResults(EMPTY_RESULTS);
     setLoading(false);
@@ -36,7 +38,10 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
     const frameId = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
-    return () => window.cancelAnimationFrame(frameId);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.cancelAnimationFrame(frameId);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
             { key: 'nav-songs', label: 'Songs', meta: 'Route', icon: 'songs', to: '/songs' },
             { key: 'nav-episodes', label: 'Episodes', meta: 'Route', icon: 'episodes', to: '/episodes' },
             { key: 'nav-search', label: 'Search', meta: 'Route', icon: 'search', to: '/search' },
-            { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Broadcast', icon: 'playlist', to: latestUrl },
+            { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Episode', icon: 'playlist', to: latestUrl },
           ],
         },
         {
@@ -147,6 +152,7 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
           key: `artist-${artist.name}`,
           label: artist.name,
           meta: `${formatInt(artist.plays)} spins`,
+          monoMeta: true,
           icon: 'artists',
           to: `/artists?artist=${encodeURIComponent(artist.name)}`,
         })),
@@ -334,7 +340,9 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
                         </span>
                         <span className="cmd-row-label">{item.label}</span>
                       </span>
-                      <span className="cmd-row-meta">{item.meta}</span>
+                      <span className={item.monoMeta ? 'cmd-row-meta font-mono num' : 'cmd-row-meta'}>
+                        {item.meta}
+                      </span>
                     </button>
                   );
                 })}

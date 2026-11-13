@@ -195,7 +195,7 @@ export default function SearchView() {
           <div>
             <h1>Catalog Search</h1>
             <p className="search-hero-sub">
-              Search artists, songs, and albums across every archived broadcast.
+              Search artists, songs, and albums across every archived episode.
             </p>
           </div>
           {trimmedQ.length >= 2 && !loading && !error ? (
@@ -240,7 +240,7 @@ export default function SearchView() {
         <div className="surface-region search-guidance">
           <p className="search-guidance-title">Search across artists, songs, and albums</p>
           <p className="search-guidance-copy">
-            Enter at least 2 characters to inspect artist catalogs, broadcast air dates, and album rotations.
+            Enter at least 2 characters to inspect artist catalogs, episode air dates, and album rotations.
           </p>
         </div>
       ) : loading ? (

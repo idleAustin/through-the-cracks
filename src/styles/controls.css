@@ -14,12 +14,6 @@
   border-radius: var(--as-radius-md);
 }
 
-.icon-dock-elevated {
-  background: var(--as-bg-elevated);
-  border-color: var(--as-border-strong);
-  box-shadow: var(--as-shadow-float);
-}
-
 .icon-dock-divider {
   width: 1px;
   height: 20px;
@@ -195,7 +189,7 @@
 .btn-primary {
   background: var(--as-accent-primary);
   color: var(--as-accent-text);
-  border-color: var(--as-accent-primary);
+  border-color: transparent;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -216,32 +210,6 @@
   .btn-secondary:hover:not(:disabled) {
     background: var(--as-bg-overlay);
     border-color: var(--as-text-secondary);
-  }
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--as-text-secondary);
-  border-color: var(--as-border-strong);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .btn-outline:hover:not(:disabled) {
-    color: var(--as-text-primary);
-    border-color: var(--as-text-secondary);
-  }
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--as-text-secondary);
-  border-color: transparent;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .btn-ghost:hover:not(:disabled) {
-    color: var(--as-accent-fg);
-    background: var(--as-bg-overlay);
   }
 }
 
@@ -309,10 +277,6 @@
 }
 
 .search-wrapper:focus-within .search-icon { color: var(--as-accent-fg); }
-
-.search-input--hero { min-height: 46px; font-size: 15px; padding-left: 42px; }
-.search-wrapper--hero { max-width: 100%; }
-.search-wrapper--hero .search-icon { left: 12px; }
 
 @media (max-width: 768px) {
   .btn,

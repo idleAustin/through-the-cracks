@@ -312,9 +312,10 @@ export default function EpisodesView() {
                 onClick={() => handleSelectEpisode(ep.id)}
               >
                 <div className="m-card-top">
-                  <span className="m-card-title">{formatAirDate(ep.airDate)}</span>
+                  <span className="m-card-title font-mono num">{formatAirDate(ep.airDate)}</span>
                   <span className="spin-count font-mono num">
-                    {formatInt(ep.songCount)} {ep.songCount === 1 ? 'spin' : 'spins'} →
+                    {formatInt(ep.songCount)} {ep.songCount === 1 ? 'spin' : 'spins'}{' '}
+                    <Icon name="arrow-right" size={14} />
                   </span>
                 </div>
               </button>

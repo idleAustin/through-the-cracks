@@ -46,7 +46,7 @@ function sortArtists(list, sort) {
   });
 }
 
-function sortSongs(list, sort) {
+export function sortSongs(list, sort) {
   return [...list].sort((a, b) => {
     const playsA = Number(a.totalPlays || 0);
     const playsB = Number(b.totalPlays || 0);

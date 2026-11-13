@@ -1,11 +1,9 @@
-// Root application routes, archive overview state, and detail modals.
+// Root application routes and shared archive overview telemetry state.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { getOverview } from './api';
 import AppShell from './components/AppShell';
-import ArtistSongsModal from './components/ArtistSongsModal';
 import { NotFoundState } from './components/DataState';
-import EpisodeModal from './components/EpisodeModal';
 import ArtistsView from './views/ArtistsView';
 import EpisodesView from './views/EpisodesView';
 import OverviewView from './views/OverviewView';
@@ -17,8 +15,6 @@ export default function App() {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState('');
   const [overviewRetryKey, setOverviewRetryKey] = useState(0);
-  const [selectedEpisode, setSelectedEpisode] = useState(null);
-  const [selectedArtist, setSelectedArtist] = useState(null);
   const overviewInFlightRef = useRef({ key: null, promise: null });
 
   useEffect(() => {
@@ -50,10 +46,6 @@ export default function App() {
     setOverviewRetryKey((key) => key + 1);
   }, []);
 
-  const handleSelectArtist = (artistName) => {
-    setSelectedArtist(artistName);
-  };
-
   return (
     <AppShell
       totalSpins={overviewData?.totalSongPlays ?? null}
@@ -68,45 +60,22 @@ export default function App() {
               loading={overviewLoading}
               error={overviewError}
               onRetry={retryOverview}
-              onSelectArtist={handleSelectArtist}
             />
           }
         />
-        <Route
-          path="/artists"
-          element={<ArtistsView onSelectArtist={handleSelectArtist} />}
-        />
-        <Route
-          path="/songs"
-          element={<SongsView onSelectArtist={handleSelectArtist} />}
-        />
-        <Route
-          path="/episodes"
-          element={<EpisodesView onSelectEpisode={setSelectedEpisode} />}
-        />
-        <Route
-          path="/search"
-          element={<SearchView onSelectArtist={handleSelectArtist} />}
-        />
+        <Route path="/artists" element={<ArtistsView />} />
+        <Route path="/songs" element={<SongsView />} />
+        <Route path="/episodes" element={<EpisodesView />} />
+        <Route path="/search" element={<SearchView />} />
         <Route path="*" element={<NotFoundState />} />
       </Routes>
-
-      <EpisodeModal
-        episode={selectedEpisode}
-        onClose={() => setSelectedEpisode(null)}
-      />
-
-      <ArtistSongsModal
-        artistName={selectedArtist}
-        onClose={() => setSelectedArtist(null)}
-      />
 
       <footer className="app-footer">
         <div>
           Through the Cracks · WEVL 89.9 FM Radio Archive · Hosted by Ed Dirmeyer · Premiered Dec 7, 1991
         </div>
         <div>
-          Blogger API v3 &amp; Google BigQuery · 36,902 spins recorded (<span className="num">2013–2026</span> digital archive)
+          Blogger API v3 &amp; Google BigQuery · <span className="font-mono num">36,902</span> spins recorded (<span className="font-mono num">2013–2026</span> digital archive)
         </div>
       </footer>
     </AppShell>
