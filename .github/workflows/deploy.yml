@@ -13,6 +13,8 @@ jobs:
   validate:
     name: Lint, Security & Build Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,7 +46,7 @@ jobs:
           image: through-the-cracks
 
   refresh-archive:
-    name: Refresh BigQuery & Archive Snapshot
+    name: Refresh Archive Snapshot
     needs: validate
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -75,14 +77,11 @@ jobs:
       - name: Run Incremental Archive Ingest
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
-          GCP_PROJECT_ID: through-the-cracks
-          BQ_DATASET: through_the_cracks
         run: |
           if [ -n "$DOPPLER_TOKEN" ] && doppler --no-check-version secrets download --no-file --format env >/dev/null 2>&1; then
-            doppler --no-check-version run -- npm run ingest:ci
+            doppler --no-check-version run -- node scripts/ingest.js --incremental --skip-bq
           else
-            npm run ingest:ci
+            node scripts/ingest.js --incremental --skip-bq
           fi
       - name: Persist Archive Snapshot Branch
         run: |
@@ -95,11 +94,13 @@ jobs:
             git push --force origin data-snapshot
           fi
 
-  deploy-cloud-run:
-    name: Deploy to Google Cloud Run
+  deploy-cloudflare:
+    name: Deploy to Cloudflare Workers
     needs: refresh-archive
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -114,20 +115,23 @@ jobs:
               git checkout origin/data-snapshot -- public/data/
             fi
           fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build Production Bundle
+        run: npm run build
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-      - name: Deploy to Cloud Run
+      - name: Deploy Worker & Sync Secrets
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          if [ -n "$DOPPLER_TOKEN" ] && doppler --no-check-version secrets download --no-file --format env >/dev/null 2>&1; then
-            doppler --no-check-version run -- sh -c 'gcloud run deploy through-the-cracks --source . --region us-central1 --allow-unauthenticated --set-env-vars "GCP_PROJECT_ID=$GCP_PROJECT_ID,BQ_DATASET=$BQ_DATASET,BLOGGER_BLOG_ID=$BLOGGER_BLOG_ID,BLOGGER_API_KEY=$BLOGGER_API_KEY,ENABLE_AUTO_INGEST=false"'
-          else
-            gcloud run deploy through-the-cracks --source . --region us-central1 --allow-unauthenticated --set-env-vars "GCP_PROJECT_ID=through-the-cracks,BQ_DATASET=through_the_cracks,BLOGGER_BLOG_ID=3469042462299367694,ENABLE_AUTO_INGEST=false"
+          if [ -z "$DOPPLER_TOKEN" ]; then
+            echo "::error::DOPPLER_TOKEN secret is required for Cloudflare Workers deployment."
+            exit 1
           fi
+          doppler --no-check-version run -- npx --no-install wrangler deploy
+          doppler --no-check-version run -- node -e "const { execFileSync } = require('node:child_process'); for (const key of ['BLOGGER_API_KEY', 'BLOGGER_BLOG_ID', 'INGEST_SECRET']) { if (!process.env[key]) throw new Error('Missing Doppler secret: ' + key); execFileSync('npx', ['--no-install', 'wrangler', 'secret', 'put', key], { input: process.env[key], stdio: ['pipe', 'inherit', 'inherit'] }); }"

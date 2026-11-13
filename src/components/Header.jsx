@@ -42,7 +42,7 @@ export function CockpitSidebar({ archiveMode, totalSpins, onQuickJump }) {
           <div className="cockpit-wordmark">Through the Cracks</div>
           <span className="status-badge">
             <span className={`status-dot ${isLive ? 'is-live' : 'is-static'}`} aria-hidden="true" />
-            <span>{isLive ? 'WEVL 89.9 · BigQuery Live' : 'WEVL 89.9 · Static Snapshot'}</span>
+            <span>{isLive ? 'WEVL 89.9 · Live Archive' : 'WEVL 89.9 · Static Snapshot'}</span>
           </span>
         </div>
 

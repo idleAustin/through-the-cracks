@@ -82,7 +82,7 @@ export default function App() {
           Through the Cracks · WEVL 89.9 FM Radio Archive · Hosted by Ed Dirmeyer · Premiered Dec 7, 1991
         </div>
         <div>
-          Blogger API v3 &amp; Google BigQuery · <span className="font-mono num">{footerSpins}</span> spins recorded (<span className="font-mono num">{earliestYear}–{latestYear}</span> digital archive)
+          Blogger API v3 &amp; Cloudflare D1 · <span className="font-mono num">{footerSpins}</span> spins recorded (<span className="font-mono num">{earliestYear}–{latestYear}</span> digital archive)
         </div>
       </footer>
     </AppShell>
