@@ -1,7 +1,7 @@
 {
   "name": "through-the-cracks",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "doppler --no-check-version run -- vite",
@@ -13,6 +13,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "version:next": "node scripts/version.mjs",
     "db:seed:sql": "node scripts/seed-d1.js",
     "db:d1:init": "doppler --no-check-version run -- wrangler d1 execute through-the-cracks-db --remote --file=server/schema.sql",
     "db:d1:seed": "node scripts/seed-d1.js && doppler --no-check-version run -- wrangler d1 execute through-the-cracks-db --remote --file=.cache/d1-seed.sql",

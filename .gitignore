@@ -48,6 +48,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .eslintcache
+notes.md
+preview-notes.md
 
 # ── Operating System ───────────────────────
 .DS_Store

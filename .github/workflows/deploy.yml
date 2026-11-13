@@ -9,6 +9,8 @@ on:
     - cron: '0 6 * * 4,0'
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   validate:
     name: Lint, Security & Build Test
@@ -135,3 +137,30 @@ jobs:
           fi
           doppler --no-check-version run -- npx --no-install wrangler deploy
           doppler --no-check-version run -- node -e "const { execFileSync } = require('node:child_process'); for (const key of ['BLOGGER_API_KEY', 'BLOGGER_BLOG_ID', 'INGEST_SECRET']) { if (!process.env[key]) throw new Error('Missing Doppler secret: ' + key); execFileSync('npx', ['--no-install', 'wrangler', 'secret', 'put', key], { input: process.env[key], stdio: ['pipe', 'inherit', 'inherit'] }); }"
+
+  release:
+    name: Tag Release & Publish Notes
+    needs: deploy-cloudflare
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tag Release & Publish Notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="v$(node scripts/version.mjs --notes notes.md)"
+          if gh release view "$VERSION" > /dev/null 2>&1; then
+            echo "$VERSION already released; deployed commit ${GITHUB_SHA::7}."
+            exit 0
+          fi
+          gh release create "$VERSION" --target "$GITHUB_SHA" --title "$VERSION" --notes-file notes.md
