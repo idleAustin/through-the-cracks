@@ -1,0 +1,119 @@
+/* Shared pagination bar, windowed desktop page controls, compact rail controls, and 44px mobile controls. */
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-surface);
+  flex-wrap: wrap;
+}
+
+.pagination-bar.is-compact {
+  padding: 10px 12px;
+  justify-content: center;
+}
+
+.pagination-bar.is-mobile {
+  border: 1px solid var(--as-border-subtle);
+  border-radius: var(--as-radius-md);
+  padding: 8px 10px;
+}
+
+.pagination-readout {
+  font-size: 12px;
+  color: var(--as-text-secondary);
+}
+
+.pagination-compact-status {
+  padding: 0 6px;
+  white-space: nowrap;
+}
+
+.page-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.page-controls.is-compact {
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.page-btn {
+  min-width: 30px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--as-border-subtle);
+  border-radius: var(--as-radius-sm);
+  background: var(--as-bg-base);
+  color: var(--as-text-secondary);
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--as-duration-fast) ease,
+              color var(--as-duration-fast) ease,
+              background-color var(--as-duration-fast) ease;
+}
+
+.page-btn.is-mobile {
+  min-height: var(--as-tap-min);
+  min-width: var(--as-tap-min);
+  height: auto;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .page-btn:hover:not(:disabled) {
+    border-color: var(--as-border-strong);
+    color: var(--as-text-primary);
+    background: var(--as-bg-overlay);
+  }
+}
+
+.page-btn:active:not(:disabled) {
+  background: var(--as-bg-overlay);
+  transform: scale(0.97);
+}
+
+.page-btn[aria-current="page"] {
+  background: var(--as-accent-muted);
+  border-color: var(--as-accent-fg);
+  color: var(--as-accent-fg);
+  font-weight: 600;
+}
+
+.page-btn:disabled {
+  color: var(--as-text-muted);
+  border-color: var(--as-border-subtle);
+  background: var(--as-bg-surface);
+  cursor: not-allowed;
+}
+
+.page-ellipsis {
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  padding: 0 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-btn:active {
+    transform: none;
+  }
+}

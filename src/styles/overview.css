@@ -1,0 +1,141 @@
+/* Overview header, Readout Strip, and 2013-2026 Annual Spin Volume bar chart. */
+
+.overview-page {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.overview-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-header-copy { min-width: 0; }
+.overview-header-copy h1 { font-size: 24px; line-height: 1.2; margin: 0; }
+.overview-subtitle { margin: 4px 0 0; font-size: 13px; color: var(--as-text-secondary); }
+.latest-broadcast-btn { flex-shrink: 0; }
+
+.readout-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--as-border-subtle);
+  border: 1px solid var(--as-border-subtle);
+  border-radius: var(--as-radius-md);
+  overflow: hidden;
+}
+
+.readout-cell {
+  background: var(--as-bg-surface);
+  padding: 14px 16px;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.readout-cell dt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--as-text-secondary);
+  margin: 0;
+}
+
+.readout-cell dd {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.readout-num {
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--as-text-primary);
+}
+
+.readout-unit { font-size: 12px; color: var(--as-text-secondary); }
+.readout-context { margin: 0; font-size: 12px; color: var(--as-text-secondary); overflow-wrap: anywhere; }
+
+.chart-toolbar { align-items: center; }
+.chart-header-meta { min-width: 0; }
+.chart-header-meta h2 { margin: 0; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.chart-header-sub { margin: 4px 0 0; font-size: 12px; color: var(--as-text-secondary); }
+
+.chart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.year-bars {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 6px;
+  padding: 16px 16px 12px;
+  align-items: end;
+  height: 148px;
+}
+
+.year-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 100%;
+  min-width: 0;
+}
+
+.year-val {
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--as-text-secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.year-col.is-peak .year-val { color: var(--as-accent-fg); font-weight: 600; }
+.year-col.is-zero .year-val { color: var(--as-text-secondary); }
+
+.year-bar-fill {
+  width: 100%;
+  background: var(--as-border-strong);
+  border-radius: 2px 2px 0 0;
+  min-height: 3px;
+  transition: height var(--as-duration-normal) var(--as-ease-snap),
+              background-color var(--as-duration-normal) ease;
+}
+
+.year-col.is-zero .year-bar-fill { background: var(--as-border-subtle); min-height: 2px; }
+.year-col.is-peak .year-bar-fill { background: var(--as-accent-primary); }
+
+.year-lbl {
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: var(--as-text-secondary);
+  line-height: 1;
+}
+
+.chart-state { padding: 16px; }
+
+@media (max-width: 768px) {
+  .readout-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .year-bars { gap: 3px; padding: 14px 10px 10px; }
+  .year-val, .year-lbl { font-size: 9px; }
+}

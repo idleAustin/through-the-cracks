@@ -1,0 +1,340 @@
+/* Paginated catalog toolbar, segmented lens/cap controls, split workspace, and inline/push artist inspector. */
+
+.catalog-page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.catalog-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.catalog-head h1 {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.catalog-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--as-text-secondary);
+}
+
+.catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.catalog-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.seg-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--as-bg-surface);
+  border: 1px solid var(--as-border-subtle);
+  border-radius: var(--as-radius-md);
+  padding: 2px;
+  gap: 2px;
+  max-width: 100%;
+}
+
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-secondary);
+  font-family: var(--as-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--as-duration-fast) ease,
+              color var(--as-duration-fast) ease,
+              border-color var(--as-duration-fast) ease;
+}
+
+.seg-btn-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg-btn:hover {
+    color: var(--as-text-primary);
+    background: var(--as-bg-elevated);
+  }
+}
+
+.seg-btn:active {
+  background: var(--as-bg-overlay);
+}
+
+.seg-btn[aria-pressed="true"] {
+  background: var(--as-accent-muted);
+  border-color: var(--as-accent-fg);
+  color: var(--as-accent-fg);
+  font-weight: 600;
+}
+
+.split-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.split-workspace.has-detail {
+  grid-template-columns: minmax(0, 1fr) 400px;
+}
+
+.catalog-main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.catalog-state {
+  padding: 16px;
+}
+
+.catalog-table td.col-rank,
+.catalog-table th.col-rank {
+  width: 52px;
+  text-align: right;
+}
+
+.catalog-table td.col-num,
+.catalog-table th.col-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.songs-table {
+  table-layout: fixed;
+}
+
+.songs-table th.col-rank { width: 54px; }
+.songs-table th.col-song { width: 50%; }
+.songs-table th.col-artist { width: 20%; }
+.songs-table th.col-album { width: auto; }
+.songs-table th.col-num { width: 72px; }
+
+.songs-table td {
+  overflow-wrap: anywhere;
+}
+
+.data-table tbody tr.is-selected {
+  background: var(--as-accent-muted);
+}
+
+.data-table tbody tr.is-selected td.cell-primary,
+.data-table tbody tr.is-selected td.col-primary {
+  color: var(--as-accent-fg);
+}
+
+.inline-inspector {
+  width: 400px;
+  max-height: calc(100dvh - 120px);
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.push-view {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.push-inspector-bar {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-surface);
+}
+
+.inspector-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--as-border-subtle);
+}
+
+.inspector-head-title {
+  min-width: 0;
+}
+
+.inspector-head-title h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.inspector-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--as-text-secondary);
+}
+
+.inspector-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-elevated);
+}
+
+.inspector-stat-cell {
+  min-width: 0;
+}
+
+.inspector-stat-cell dt {
+  font-size: 11px;
+  color: var(--as-text-secondary);
+  margin: 0 0 2px;
+}
+
+.inspector-stat-cell dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--as-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.inspector-filter-bar {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--as-border-subtle);
+}
+
+.album-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--as-bg-base);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-primary);
+  font-family: var(--as-font-body);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.inspector-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.inspector-state {
+  padding: 16px;
+}
+
+.inspector-table td.col-num,
+.inspector-table th.col-num {
+  width: 72px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.inspector-table tr.is-interactive {
+  cursor: pointer;
+}
+
+.inspector-mobile-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.m-card--interactive {
+  cursor: pointer;
+}
+
+.inspector-song-link {
+  text-decoration: none;
+  color: var(--as-text-secondary);
+}
+
+.m-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  min-width: 0;
+}
+
+@media (min-width: 769px) {
+  .push-inspector-bar {
+    top: var(--as-safe-top);
+  }
+}
+
+@media (max-width: 1024px) {
+  .split-workspace.has-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .catalog-toolbar {
+    align-items: stretch;
+  }
+
+  .catalog-controls-row {
+    width: 100%;
+  }
+
+  .seg-btn {
+    min-height: var(--as-tap-min);
+    min-width: var(--as-tap-min);
+    max-width: 100%;
+    padding: 0 12px;
+  }
+
+  .album-select {
+    min-height: var(--as-tap-min);
+    height: var(--as-tap-min);
+    font-size: 16px;
+    padding: 0 12px;
+  }
+
+  .inspector-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

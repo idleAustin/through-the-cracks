@@ -1,0 +1,79 @@
+/* Shared archive data table primitives using canonical --as-* tokens. */
+
+.table-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.data-table th {
+  padding: 10px 14px;
+  font-family: var(--as-font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--as-text-secondary);
+  background: var(--as-bg-elevated);
+  border-bottom: 1px solid var(--as-border-subtle);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--as-border-subtle);
+  color: var(--as-text-secondary);
+}
+
+.data-table tbody tr {
+  transition: background-color var(--as-duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .data-table tbody tr:hover {
+    background: var(--as-bg-elevated);
+  }
+}
+
+.data-table tbody tr.row-clickable:active {
+  background: var(--as-bg-overlay);
+}
+
+.data-table tbody tr:focus-visible {
+  background: var(--as-bg-elevated);
+  outline: none;
+  box-shadow: inset 2px 0 0 0 var(--as-accent-fg);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cell-primary {
+  font-weight: 600;
+  color: var(--as-text-primary);
+}
+
+.cell-mono,
+.col-num {
+  font-family: var(--as-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-dim {
+  color: var(--as-text-secondary);
+}
+
+.row-clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}

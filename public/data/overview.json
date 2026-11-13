@@ -1,105 +1,118 @@
 {
-  "lastUpdated": "2026-08-09T04:45:40.659Z",
-  "totalEpisodes": 1317,
-  "totalSongPlays": 36902,
-  "uniqueArtists": 1891,
-  "uniqueAlbums": 6340,
-  "uniqueSongs": 16782,
+  "lastUpdated": "2026-11-13T18:00:07.533Z",
+  "latestEpisodeId": "4423069433994810612",
+  "totalEpisodes": 1344,
+  "totalSongPlays": 37678,
+  "uniqueArtists": 1917,
+  "uniqueAlbums": 6451,
+  "uniqueSongs": 17134,
+  "oneSpinArtists": 654,
+  "oneSpinSongs": 8000,
   "dateRange": {
     "earliest": "2013-06-23",
-    "latest": "2026-08-08"
+    "latest": "2026-11-11"
   },
   "topArtists": [
     {
       "name": "Todd Snider",
-      "plays": 296
+      "plays": 305
     },
     {
       "name": "Bob Dylan",
-      "plays": 266
+      "plays": 270
     },
     {
       "name": "Lucinda Williams",
-      "plays": 220
+      "plays": 221
     },
     {
       "name": "Jim Lauderdale",
-      "plays": 213
+      "plays": 214
     },
     {
       "name": "John Prine",
-      "plays": 193
-    },
-    {
-      "name": "Steve Forbert",
-      "plays": 181
+      "plays": 194
     },
     {
       "name": "Joe Ely",
+      "plays": 183
+    },
+    {
+      "name": "Steve Forbert",
+      "plays": 182
+    },
+    {
+      "name": "Rob Jungklas",
       "plays": 180
     },
     {
       "name": "Bonnie Raitt",
-      "plays": 176
-    },
-    {
-      "name": "Rob Jungklas",
-      "plays": 173
+      "plays": 177
     },
     {
       "name": "Rodney Crowell",
-      "plays": 168
+      "plays": 173
     }
   ],
   "topSongs": [
     {
       "artist": "Carrie Rodriguez",
       "song": "50s French Movie",
+      "album": "Seven Angels On A Bicycle",
       "plays": 15
     },
     {
       "artist": "Rice Drewry",
       "song": "Count On Me",
+      "album": "single",
       "plays": 15
     },
     {
       "artist": "Jonatha Brooke",
       "song": "Because I Told You So",
+      "album": "10 Cent Wings",
       "plays": 14
     },
     {
       "artist": "Eliza Gilkyson",
       "song": "Hard Times In Babylon",
+      "album": "Hard Times In Babylon",
       "plays": 13
     },
     {
       "artist": "Tim O'Brien",
       "song": "Where's Love Come From",
+      "album": "Chameleon",
       "plays": 13
-    },
-    {
-      "artist": "McKendree Spring",
-      "song": "Hobo Lady",
-      "plays": 12
     },
     {
       "artist": "Ashleigh Flynn",
       "song": "Dirty Hands And Dirty Feet",
+      "album": "A Million Stars",
       "plays": 12
     },
     {
-      "artist": "Davis Coen",
-      "song": "Mile After Mile",
+      "artist": "McKendree Spring",
+      "song": "Hobo Lady",
+      "album": "McKendree Spring 3",
       "plays": 12
     },
     {
       "artist": "Rebecca Almond",
       "song": "Last Night",
+      "album": "Rebecca Almond",
+      "plays": 12
+    },
+    {
+      "artist": "Davis Coen",
+      "song": "Mile After Mile",
+      "album": "Hard Luck Café",
       "plays": 12
     },
     {
       "artist": "Marcella & Her Lovers",
       "song": "Put That Bronze",
+      "album": "The Bronze Age",
       "plays": 12
     }
   ],
@@ -184,9 +197,9 @@
     },
     {
       "year": "2026",
-      "episodeCount": 59,
-      "songCount": 1689,
-      "uniqueArtists": 625
+      "episodeCount": 86,
+      "songCount": 2465,
+      "uniqueArtists": 780
     }
   ]
 }

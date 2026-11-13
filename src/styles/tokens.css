@@ -1,0 +1,116 @@
+/* ========================================================
+   idleAustin — Universal Design Tokens v1.1.0
+   Themes: dark (default, `:root`) and light (`[data-theme="light"]`).
+   See 11.Theme-Modes.md for switching rules.
+   Brand: Austin Smith (GitHub: idleAustin)
+   Tagline: "Mostly idle. There probably was an easier way to do this."
+   ======================================================== */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Typography */
+  --as-font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --as-font-body: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --as-font-mono: 'Fira Code', monospace;
+
+  /* Surfaces & Void (Pure Obsidian) */
+  --as-bg-base: #0a0a0c;
+  --as-bg-surface: #121216;
+  --as-bg-elevated: #18181f;
+  --as-bg-overlay: #202029;
+  --as-border-subtle: #22222a;
+  --as-border-strong: #33333f;
+  --as-border-focus: #84cc16;
+
+  /* Signature Accent (Radioactive Lime) */
+  --as-accent-primary: #84cc16;
+  --as-accent-hover: #65a30d;
+  --as-accent-text: #1a2e05;
+  --as-accent-muted: rgba(132, 204, 22, 0.12);
+  --as-accent-glow: rgba(132, 204, 22, 0.25);
+  --as-accent-fg: #84cc16;          /* lime as text, icon, marker, underline */
+
+  /* Semantic Status */
+  --as-status-success: #10b981;
+  --as-status-success-bg: rgba(16, 185, 129, 0.12);
+  --as-status-warning: #f59e0b;
+  --as-status-warning-bg: rgba(245, 158, 11, 0.12);
+  --as-status-error: #f43f5e;
+  --as-status-error-bg: rgba(244, 63, 94, 0.12);
+  --as-status-info: #38bdf8;
+  --as-status-info-bg: rgba(56, 189, 248, 0.12);
+
+  /* Text Colors */
+  --as-text-primary: #f4f4f5;
+  --as-text-secondary: #a1a1aa;
+  --as-text-muted: #71717a;
+
+  /* Geometry & Radius */
+  --as-radius-sm: 4px;
+  --as-radius-md: 6px;
+  --as-radius-lg: 10px;
+  --as-radius-pill: 9999px;
+
+  /* Elevation (floating layers only: tooltips, menus, palette, docks) */
+  --as-shadow-float: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --as-scrim: rgba(10, 10, 12, 0.7);   /* backdrop behind dialogs, sheets, drawers */
+
+  /* Motion */
+  --as-ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --as-duration-fast: 100ms;
+  --as-duration-normal: 150ms;
+
+  /* Touch & Safe Areas (see 10.Mobile-Web.md) */
+  --as-tap-min: 44px;
+  --as-safe-top: env(safe-area-inset-top, 0px);
+  --as-safe-right: env(safe-area-inset-right, 0px);
+  --as-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --as-safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* ========================================================
+   Light theme — same roles, recomposed for daylight.
+   Only color, elevation, and color-scheme change. Type,
+   radius, motion, and touch tokens are shared.
+   ======================================================== */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces (cool paper; depth comes from white-on-gray plus shadow) */
+  --as-bg-base: #f4f4f6;
+  --as-bg-surface: #ffffff;
+  --as-bg-elevated: #ffffff;
+  --as-bg-overlay: #eaeaee;
+  --as-border-subtle: #e4e4e7;
+  --as-border-strong: #c8c8d0;
+  --as-border-focus: #3f6212;
+
+  /* Accent: the lime fill is unchanged; lime as foreground darkens to pass AA */
+  --as-accent-primary: #84cc16;
+  --as-accent-hover: #65a30d;
+  --as-accent-text: #1a2e05;
+  --as-accent-muted: rgba(132, 204, 22, 0.18);
+  --as-accent-glow: rgba(101, 163, 13, 0.30);
+  --as-accent-fg: #3f6212;
+
+  /* Semantic status (700/800 steps so text passes AA on white and tints) */
+  --as-status-success: #047857;
+  --as-status-success-bg: rgba(4, 120, 87, 0.10);
+  --as-status-warning: #92400e;
+  --as-status-warning-bg: rgba(180, 83, 9, 0.10);
+  --as-status-error: #be123c;
+  --as-status-error-bg: rgba(190, 18, 60, 0.08);
+  --as-status-info: #0369a1;
+  --as-status-info-bg: rgba(3, 105, 161, 0.10);
+
+  /* Text */
+  --as-text-primary: #18181b;
+  --as-text-secondary: #52525b;
+  --as-text-muted: #71717a;
+
+  /* Elevation */
+  --as-shadow-float: 0 8px 24px rgba(24, 24, 32, 0.12), 0 1px 2px rgba(24, 24, 32, 0.08);
+  --as-scrim: rgba(24, 24, 32, 0.32);
+}

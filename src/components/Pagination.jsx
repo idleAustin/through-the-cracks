@@ -1,42 +1,133 @@
+// Responsive pagination bar supporting windowed desktop page links, compact rail mode, and 44px mobile controls.
 import React from 'react';
+import { formatInt, useMediaQuery } from '../utils/format';
 import Icon from './Icon';
 
-/**
- * Shared pager for the Artists and Episodes tables. Renders nothing until the
- * caller has pagination metadata, so views can hand it a possibly-undefined
- * `pagination` object without guarding first.
- */
-export default function Pagination({ pagination, page, onPageChange, noun, idPrefix }) {
+function buildPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push('…');
+  for (let p = start; p <= end; p += 1) pages.push(p);
+  if (end < total - 1) pages.push('…');
+  pages.push(total);
+  return pages;
+}
+
+export default function Pagination({
+  pagination,
+  page,
+  onPageChange,
+  noun = 'items',
+  idPrefix,
+  compact = false,
+}) {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   if (!pagination) return null;
 
-  const { totalPages, total } = pagination;
+  const total = Number(pagination.total ?? 0);
+  const limit = Math.max(1, Number(pagination.limit ?? 20));
+  const totalPages = Math.max(1, Number(pagination.totalPages ?? Math.ceil(total / limit)) || 1);
+  const currentPage = Math.min(totalPages, Math.max(1, Number(page ?? pagination.page ?? 1) || 1));
 
-  return (
-    <nav className="pagination" aria-label={`${noun} pagination`}>
-      <div className="pagination-status">
-        Page <strong>{pagination.page}</strong> of <strong>{totalPages}</strong>
-        {' · '}
-        <strong>{total?.toLocaleString()}</strong> {noun}
-      </div>
+  if (compact && totalPages <= 1) return null;
 
-      <div className="pagination-actions">
+  const startIdx = (currentPage - 1) * limit;
+  const shownStart = total === 0 ? 0 : startIdx + 1;
+  const shownEnd = Math.min(total, startIdx + limit);
+  const prevId = idPrefix ? `${idPrefix}-prev-btn` : undefined;
+  const nextId = idPrefix ? `${idPrefix}-next-btn` : undefined;
+
+  if (isMobile) {
+    return (
+      <nav
+        className={`pagination-bar is-mobile${compact ? ' is-compact' : ''}`}
+        aria-label={`${noun} pagination`}
+      >
         <button
-          id={`${idPrefix}-prev-btn`}
-          className="btn btn-outline btn-sm"
-          disabled={page <= 1}
-          onClick={() => onPageChange(p => Math.max(1, p - 1))}
+          id={prevId}
+          type="button"
+          className="page-btn btn-sm is-mobile"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         >
-          <Icon name="chevron_left" size="sm" />
-          Previous
+          <Icon name="arrow-left" size={14} />
+          Prev
         </button>
+        <span className="pagination-readout font-mono num">
+          {compact
+            ? `${currentPage} / ${totalPages}`
+            : `${formatInt(shownStart)}–${formatInt(shownEnd)} of ${formatInt(total)} (${currentPage}/${totalPages})`}
+        </span>
         <button
-          id={`${idPrefix}-next-btn`}
-          className="btn btn-outline btn-sm"
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(p => p + 1)}
+          id={nextId}
+          type="button"
+          className="page-btn btn-sm is-mobile"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         >
           Next
-          <Icon name="chevron_right" size="sm" />
+          <Icon name="arrow-right" size={14} />
+        </button>
+      </nav>
+    );
+  }
+
+  return (
+    <nav
+      className={`pagination-bar${compact ? ' is-compact' : ''}`}
+      aria-label={`${noun} pagination`}
+    >
+      {!compact && (
+        <span className="pagination-readout font-mono num">
+          Showing {formatInt(shownStart)}–{formatInt(shownEnd)} of {formatInt(total)}
+        </span>
+      )}
+
+      <div className={`page-controls${compact ? ' is-compact' : ''}`}>
+        <button
+          id={prevId}
+          type="button"
+          className="page-btn btn-sm"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        >
+          <Icon name="arrow-left" size={14} />
+          Prev
+        </button>
+
+        {compact ? (
+          <span className="pagination-readout font-mono num pagination-compact-status">
+            {currentPage} / {totalPages}
+          </span>
+        ) : (
+          buildPageNumbers(currentPage, totalPages).map((entry, idx) => (
+            entry === '…' ? (
+              <span key={`ellipsis-${idx}`} className="page-ellipsis" aria-hidden="true">…</span>
+            ) : (
+              <button
+                key={entry}
+                type="button"
+                className="page-btn"
+                aria-current={entry === currentPage ? 'page' : undefined}
+                onClick={() => onPageChange(entry)}
+              >
+                {entry}
+              </button>
+            )
+          ))
+        )}
+
+        <button
+          id={nextId}
+          type="button"
+          className="page-btn btn-sm"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        >
+          Next
+          <Icon name="arrow-right" size={14} />
         </button>
       </div>
     </nav>

@@ -1,37 +1,39 @@
+// Geometric 2px-stroke Lucide icon wrapper with semantic size presets and screen-reader hiding.
 import React from 'react';
-import { ICONS } from './icon-names';
+import { ICON_MAP } from './icon-names';
 
-const SIZE_CLASS = {
-  sm: 'icon-sm',   // 16px
-  md: '',          // 20px — system default
-  lg: 'icon-lg',   // 24px
+const SIZE_MAP = {
+  sm: 16,
+  md: 18,
+  lg: 20,
 };
 
-/**
- * Google Material Symbols (Rounded) — the design system's only sanctioned
- * icon library (05.Minimal-Dark/07.Effects-Animation.md).
- *
- * Icons are decorative by default; the adjacent text carries the meaning. Pass
- * a `title` only when the icon genuinely stands alone.
- */
-export default function Icon({ name, size = 'md', accent = false, className = '', ...rest }) {
-  if (import.meta.env.DEV && !ICONS.includes(name)) {
-    console.warn(
-      `[Icon] "${name}" is not in the subset — add it to src/components/icon-names.js ` +
-      `and to the icon_names list in index.html, or the full 1.2MB font will be fetched.`
-    );
+export default function Icon({
+  name,
+  size = 'md',
+  className = '',
+  strokeWidth = 2,
+  ...rest
+}) {
+  const IconComponent = ICON_MAP[name];
+  if (!IconComponent) {
+    if (import.meta.env.DEV) {
+      console.warn(`[Icon] Unknown icon "${name}". Add it to src/components/icon-names.js.`);
+    }
+    return null;
   }
 
-  const classes = [
-    'material-symbols-rounded',
-    SIZE_CLASS[size] || '',
-    accent ? 'icon-accent' : '',
-    className,
-  ].filter(Boolean).join(' ');
+  const pixelSize = typeof size === 'number' ? size : (SIZE_MAP[size] ?? SIZE_MAP.md);
+  const classes = ['as-icon', className].filter(Boolean).join(' ');
 
   return (
-    <span className={classes} aria-hidden="true" {...rest}>
-      {name}
-    </span>
+    <IconComponent
+      size={pixelSize}
+      strokeWidth={strokeWidth}
+      aria-hidden="true"
+      focusable="false"
+      className={classes}
+      {...rest}
+    />
   );
 }

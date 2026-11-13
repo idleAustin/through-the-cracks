@@ -4,29 +4,37 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "doppler run -- vite",
-    "server": "doppler run -- node server/index.js",
-    "server:dev": "doppler run -- nodemon server/index.js",
-    "ingest": "doppler run -- node scripts/ingest.js --incremental",
-    "build": "vite build",
+    "dev": "doppler --no-check-version run -- vite",
+    "server": "doppler --no-check-version run -- node server/index.js",
+    "server:dev": "doppler --no-check-version run -- nodemon server/index.js",
+    "ingest": "doppler --no-check-version run -- node scripts/ingest.js --incremental",
+    "ingest:full": "doppler --no-check-version run -- node scripts/ingest.js",
+    "ingest:ci": "node scripts/ingest.js --incremental",
+    "build": "vite build && cp dist/index.html dist/404.html",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run src",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.0.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "lucide-react": "^1.72.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "nodemon": "^3.1.14",
     "oxlint": "^1.75.0",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "vitest": "^5.1.0"
   }
 }
