@@ -1,0 +1,191 @@
+/* Overview lens bar, asymmetric linked Artists/Songs cards, subtle Air dates control, and card pagers. */
+
+.catalog-lens-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lens-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.lens-summary { font-size: 12px; color: var(--as-text-secondary); }
+
+.overview-split-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 316px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.overview-split-grid .region-toolbar {
+  min-height: 52px;
+  padding: 10px 14px;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.overview-split-grid .region-toolbar h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.overview-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.overview-cap-select {
+  height: 32px;
+  padding: 0 8px;
+  background: var(--as-bg-base);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-primary);
+  font-family: var(--as-font-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.overview-table { table-layout: fixed; }
+
+.overview-table th.col-rank,
+.overview-table td.col-rank {
+  width: 38px;
+  padding-left: 12px;
+  padding-right: 8px;
+  text-align: right;
+}
+
+.overview-table th.col-num,
+.overview-table td.col-num {
+  width: 64px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.overview-table th.col-act,
+.overview-table td.col-act {
+  width: 38px;
+  padding: 4px 10px 4px 4px;
+  text-align: right;
+}
+
+.overview-songs-table th.col-song { width: 34%; }
+.overview-songs-table th.col-artist { width: 24%; }
+.overview-songs-table th.col-album { width: auto; }
+
+.overview-table td.cell-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtle-dates-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--as-radius-sm);
+  background: transparent;
+  color: var(--as-text-secondary);
+  opacity: 0.42;
+  cursor: pointer;
+  transition: opacity var(--as-duration-fast) ease,
+              color var(--as-duration-fast) ease,
+              background-color var(--as-duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .data-table tbody tr:hover .subtle-dates-btn { opacity: 0.85; }
+  .subtle-dates-btn:hover { opacity: 1; color: var(--as-accent-fg); background: var(--as-bg-overlay); }
+  .tooltip-wrapper.tip-left:hover .tooltip-bubble { transform: translate(0, 50%); }
+}
+
+.subtle-dates-btn:focus-visible {
+  opacity: 1;
+  color: var(--as-accent-fg);
+  outline: 2px solid var(--as-border-focus);
+  outline-offset: 1px;
+}
+
+.tooltip-wrapper.tip-left .tooltip-bubble {
+  bottom: 50%;
+  left: auto;
+  right: calc(100% + 6px);
+  transform: translate(4px, 50%);
+}
+
+.tooltip-wrapper.tip-left:focus-within .tooltip-bubble { transform: translate(0, 50%); }
+
+.overview-mobile-list { padding: 10px; }
+
+.m-dates-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--as-tap-min);
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--as-text-secondary);
+  font-family: var(--as-font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.m-dates-link:active { color: var(--as-accent-fg); }
+
+.overview-card-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-surface);
+}
+
+.overview-card-state { padding: 16px; }
+
+@media (min-width: 769px) {
+  .overview-songs-card.surface-region,
+  .overview-songs-card .table-container {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 1024px) {
+  .overview-split-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .overview-cap-select {
+    min-height: var(--as-tap-min);
+    height: var(--as-tap-min);
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .overview-split-grid .region-toolbar { flex-wrap: wrap; }
+}

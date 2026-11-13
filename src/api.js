@@ -15,6 +15,7 @@ import {
   fetchStaticJson,
   getStaticEpisodeById,
   getStaticEpisodes,
+  getStaticYearSpins,
   normalizeEpisodeDetail,
   normalizeEpisodeSummary,
 } from './api-static.js';
@@ -60,12 +61,41 @@ async function fetchApiJson(apiEndpoint) {
   return null;
 }
 
+function normalizeOverview(data) {
+  return {
+    ...data,
+    latestEpisodeId: data?.latestEpisodeId ?? null,
+    oneSpinArtists: Number(data?.oneSpinArtists ?? 0),
+    oneSpinSongs: Number(data?.oneSpinSongs ?? 0),
+    topSongs: Array.isArray(data?.topSongs)
+      ? data.topSongs.map((s) => ({ ...s, album: s.album || '' }))
+      : [],
+  };
+}
+
 export async function getOverview() {
   const liveData = await fetchApiJson('/overview');
   if (liveData !== null) {
-    return { data: liveData, source: 'express-api', mode: 'live' };
+    return { data: normalizeOverview(liveData), source: 'express-api', mode: 'live' };
   }
   const data = await fetchStaticJson('/data/overview.json');
+  setArchiveMode('static');
+  return { data: normalizeOverview(data), source: 'static-json', mode: 'static' };
+}
+
+export async function getYearSpins({ artist = '', song = '' } = {}) {
+  const params = new URLSearchParams();
+  const cleanArtist = String(artist || '').trim();
+  const cleanSong = String(song || '').trim();
+  if (cleanArtist) params.set('artist', cleanArtist);
+  if (cleanSong) params.set('song', cleanSong);
+  const query = params.toString();
+  const liveData = await fetchApiJson(query ? `/years?${query}` : '/years');
+  if (liveData !== null) {
+    return { data: liveData, source: 'express-api', mode: 'live' };
+  }
+
+  const data = await getStaticYearSpins({ artist: cleanArtist, song: cleanSong });
   setArchiveMode('static');
   return { data, source: 'static-json', mode: 'static' };
 }

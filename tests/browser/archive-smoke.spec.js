@@ -49,22 +49,19 @@ test.describe('archive baseline & token contract smoke', () => {
   test('preserves archive behavior across Overview, Artists, Songs, Episodes, and Search', async ({ page }) => {
     await page.goto('/');
 
-    // Overview KPI totals and artist dialog
+    // Overview KPI totals and in-place artist scoping (no modal dialog)
     await expect(page.locator('#kpi-episodes')).toHaveText('1,317');
     await expect(page.locator('#kpi-plays')).toHaveText('36,902');
     await expect(page.locator('#kpi-artists')).toHaveText('1,891');
     await expect(page.locator('#kpi-songs')).toHaveText('16,782');
 
-    const topArtistBtn = page.locator('#top-artist-1');
-    await expect(topArtistBtn).toContainText('Todd Snider');
-    await topArtistBtn.click();
+    const topArtistRow = page.locator('table tbody tr, .m-card-stack .m-card').filter({ hasText: 'Todd Snider' }).first();
+    await expect(topArtistRow).toBeVisible();
+    await topArtistRow.click();
 
-    const artistDialog = page.getByRole('dialog');
-    await expect(artistDialog).toBeVisible();
-    await expect(artistDialog.getByRole('heading', { name: 'Todd Snider' })).toBeVisible();
-    await expect(artistDialog.locator('#artist-songs-table tbody tr').first()).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(artistDialog).toBeHidden();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('main')).toContainText(/Annual Spins.*Todd Snider/i);
+    await expect(page.getByRole('heading', { name: /Songs · Todd Snider/i })).toBeVisible();
 
     // Artists view + search
     const primaryNav = page.getByRole('navigation', { name: 'Primary navigation' });

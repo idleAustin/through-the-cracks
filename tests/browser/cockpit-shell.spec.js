@@ -231,6 +231,27 @@ test.describe('Thread Level Midnight cockpit shell', () => {
         const res = await route.fetch({ url: new URL('/data/overview.json', route.request().url()).toString() });
         await route.fulfill({ response: res });
       });
+      await page.route('**/api/years*', async (route) => {
+        const res = await route.fetch({ url: new URL('/data/year-spins.json', route.request().url()).toString() });
+        const payload = await res.json();
+        await route.fulfill({
+          json: { years: payload.years, spins: payload.archive, scope: 'archive', artist: null, song: null },
+        });
+      });
+      await page.route('**/api/artists*', async (route) => {
+        const res = await route.fetch({ url: new URL('/data/artists.json', route.request().url()).toString() });
+        const list = await res.json();
+        await route.fulfill({
+          json: { items: list.slice(0, 10), total: 10, pagination: { page: 1, limit: 10, total: 10, totalPages: 1 } },
+        });
+      });
+      await page.route('**/api/songs*', async (route) => {
+        const res = await route.fetch({ url: new URL('/data/songs.json', route.request().url()).toString() });
+        const list = await res.json();
+        await route.fulfill({
+          json: { items: list.slice(0, 10), total: 10, pagination: { page: 1, limit: 10, total: 10, totalPages: 1 } },
+        });
+      });
       await page.goto('/');
       await expect(page.locator('.cockpit-sidebar')).toContainText('WEVL 89.9 · BigQuery Live');
       return;

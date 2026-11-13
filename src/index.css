@@ -8,4 +8,6 @@
 @import './styles/broadcast.css';
 @import './styles/pagination.css';
 @import './styles/catalog.css';
+@import './styles/overview.css';
+@import './styles/overview-cards.css';
 @import './styles/overlays.css';
