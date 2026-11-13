@@ -13,7 +13,7 @@ Where things live in through-the-cracks. The table is regenerated from tracked f
 | `.project-documentation/` | Historical initial project specification notes. |
 | `docs/` | Engineering reference docs, including the subagent roster and file ownership (`docs/agents.md`). |
 | `public/` | Static web assets and prebuilt JSON archive snapshots (`public/data/`). |
-| `scripts/` | Blogger API v3 ingestion, HTML playlist parser, static snapshot builder, D1 SQL seeder, and setup scripts. |
+| `scripts/` | Blogger API v3 ingestion, HTML playlist parser, static snapshot builder, D1 SQL seeder, SemVer release calculator, and setup scripts. |
 | `server/` | Cloudflare Worker + D1 runtime (`worker.js`, `d1Schema.js`, `d1Queries.js`, `schema.sql`) and local Express/BigQuery server (`index.js`, `bigquery.js`, `routes/`). |
 | `src/` | React + Vite cockpit UI (`views/`, `components/`, `styles/`), API/static clients, and Vitest unit tests (`*.test.js`). |
 | `tests/` | Playwright end-to-end browser test suite (`tests/browser/`). |

@@ -13,6 +13,7 @@ Releases are cut automatically from Conventional Commits, and each GitHub Releas
 - `idleAustin` Thread Level Midnight cockpit UI (`DESIGN.md`, `--as-*` tokens, Overview telemetry and interactive `AnnualSpinChart`, two-pane Broadcast Log, paginated Artists and Songs catalogs with Artist Inspector, `/search` and `⌘K` Command Palette).
 - Vitest unit test suites (`src/*.test.js`) and Playwright browser end-to-end suite (`tests/browser/*.spec.js`).
 - Seven-doc `/setup-docs` governance suite, `.agents/agents/` subagent definitions, and `docs/agents.md` roster.
+- Automated SemVer calculation (`scripts/version.mjs`) and CI GitHub Release tagging on merges to `main`.
 
 ### Changed
 
