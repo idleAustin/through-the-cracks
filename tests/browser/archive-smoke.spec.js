@@ -1,5 +1,6 @@
 // End-to-end Playwright smoke checks for archive views and --as-* token loading at 1440x900 and 375x812.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('archive baseline & token contract smoke', () => {
   test('loads immutable thread-level-midnight --as-* tokens alongside existing theme', async ({ page }) => {
@@ -50,10 +51,10 @@ test.describe('archive baseline & token contract smoke', () => {
     await page.goto('/');
 
     // Overview KPI totals and in-place artist scoping (no modal dialog)
-    await expect(page.locator('#kpi-episodes')).toHaveText('1,317');
-    await expect(page.locator('#kpi-plays')).toHaveText('36,902');
-    await expect(page.locator('#kpi-artists')).toHaveText('1,891');
-    await expect(page.locator('#kpi-songs')).toHaveText('16,782');
+    await expect(page.locator('#kpi-episodes')).toHaveText(EXPECTED.totalEpisodesFmt);
+    await expect(page.locator('#kpi-plays')).toHaveText(EXPECTED.totalSpinsFmt);
+    await expect(page.locator('#kpi-artists')).toHaveText(EXPECTED.uniqueArtistsFmt);
+    await expect(page.locator('#kpi-songs')).toHaveText(EXPECTED.uniqueSongsFmt);
 
     const topArtistRow = page.locator('table tbody tr, .m-card-stack .m-card').filter({ hasText: 'Todd Snider' }).first();
     await expect(topArtistRow).toBeVisible();
@@ -74,16 +75,16 @@ test.describe('archive baseline & token contract smoke', () => {
     // Songs view + search
     await primaryNav.getByRole('link', { name: 'Songs' }).click();
     await expect(page.getByRole('heading', { name: 'Songs', level: 1 })).toBeVisible();
-    await expect(page.locator('#songs-table:visible, .m-card-stack:visible')).toContainText('50s French Movie');
+    await expect(page.locator('#songs-table:visible, .m-card-stack:visible')).toContainText(EXPECTED.topSong.songTitle);
     await page.getByRole('searchbox', { name: 'Search songs' }).fill('Hobo Lady');
     await expect(page.locator('#songs-table:visible, .m-card-stack:visible')).toContainText('McKendree Spring');
 
     // Episodes view + playlist selection
     await primaryNav.getByRole('link', { name: 'Episodes' }).click();
     await expect(page.getByRole('heading', { name: 'Episodes', level: 1 })).toBeVisible();
-    await expect(page.locator('main')).toContainText('Aug 8, 2026');
+    await expect(page.locator('main')).toContainText(EXPECTED.latestAirDateShort);
     await page.locator('.airdate-item, .m-card').first().click();
-    await expect(page.locator('main')).toContainText('Jonathan Byrd');
+    await expect(page.locator('main')).toContainText(EXPECTED.latestFirstTrack.artist);
     await page.keyboard.press('Escape');
 
     // Search view

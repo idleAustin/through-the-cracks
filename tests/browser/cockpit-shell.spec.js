@@ -1,5 +1,6 @@
 // End-to-end Playwright specs for the Thread Level Midnight cockpit shell, theme persistence, URL routing, and responsive layout.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 const ROUTES = [
   { label: 'Overview', path: '/', heading: null },
@@ -219,7 +220,7 @@ test.describe('Thread Level Midnight cockpit shell', () => {
 
       const activeLink = sidebar.locator('[aria-current="page"]');
       await expect(activeLink.locator('.nav-lime-dot')).toBeVisible();
-      await expect(sidebar).toContainText(/36,902\s+spins/i);
+      await expect(sidebar).toContainText(new RegExp(`${EXPECTED.totalSpinsFmt}\\s+spins`, 'i'));
 
       await getThemeToggle(page).focus();
       await expect(page.getByRole('tooltip')).toBeVisible();

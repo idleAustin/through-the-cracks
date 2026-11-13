@@ -46,6 +46,13 @@ export default function App() {
     setOverviewRetryKey((key) => key + 1);
   }, []);
 
+  const footerSpins =
+    overviewData?.totalSongPlays != null
+      ? Number(overviewData.totalSongPlays).toLocaleString('en-US')
+      : '—';
+  const earliestYear = overviewData?.dateRange?.earliest?.slice(0, 4) || '2013';
+  const latestYear = overviewData?.dateRange?.latest?.slice(0, 4) || '2026';
+
   return (
     <AppShell
       totalSpins={overviewData?.totalSongPlays ?? null}
@@ -75,7 +82,7 @@ export default function App() {
           Through the Cracks · WEVL 89.9 FM Radio Archive · Hosted by Ed Dirmeyer · Premiered Dec 7, 1991
         </div>
         <div>
-          Blogger API v3 &amp; Google BigQuery · <span className="font-mono num">36,902</span> spins recorded (<span className="font-mono num">2013–2026</span> digital archive)
+          Blogger API v3 &amp; Google BigQuery · <span className="font-mono num">{footerSpins}</span> spins recorded (<span className="font-mono num">{earliestYear}–{latestYear}</span> digital archive)
         </div>
       </footer>
     </AppShell>

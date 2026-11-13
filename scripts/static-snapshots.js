@@ -32,11 +32,12 @@ function aggregateSnapshots(episodesData) {
   const yearIdxMap = new Map(years.map((y, idx) => [y, idx]));
   const archive = new Array(years.length).fill(0);
 
+  const normalizedEpisodes = [];
   const episodesIndexList = [];
   const songEpisodes = {};
   const playlistsByYear = new Map();
   const artistMap = new Map();
-  const albumKeys = new Set();
+  const albumMap = new Map();
   const songMap = new Map();
   const yearStats = new Map();
   let totalSongPlays = 0;
@@ -48,11 +49,29 @@ function aggregateSnapshots(episodesData) {
     const yearIdx = yearIdxMap.get(Number(yearStr));
     const ordered = [...(ep.songs || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
+    normalizedEpisodes.push({
+      id: epId,
+      title: ep.title || '',
+      airDate,
+      dayOfWeek: ep.dayOfWeek ?? null,
+      episodeNumber: ep.episodeNumber ?? null,
+      publishedAt: ep.publishedAt || null,
+      url: ep.url || null,
+      songCount: ordered.length,
+      songs: ordered.map((s) => ({
+        position: Number(s.position),
+        rawLine: s.rawLine || '',
+        artist: s.artist || '',
+        songTitle: s.songTitle || s.song || '',
+        album: s.album || '',
+      })),
+    });
+
     episodesIndexList.push({ id: epId, air_date: airDate, song_count: ordered.length, url: ep.url || null });
 
     if (yearStr) {
       if (!playlistsByYear.has(yearStr)) playlistsByYear.set(yearStr, {});
-      playlistsByYear.get(yearStr)[epId] = ordered.map(s => {
+      playlistsByYear.get(yearStr)[epId] = ordered.map((s) => {
         const title = s.songTitle || s.song || '';
         return { position: Number(s.position), song: title, songTitle: title, artist: s.artist || '', album: s.album || '' };
       });
@@ -78,7 +97,21 @@ function aggregateSnapshots(episodesData) {
       const albumLower = albumTrim.toLowerCase();
 
       yStat.uniqueArtists.add(artistLower);
-      albumKeys.add(`${artistLower}|||${albumLower}`);
+
+      const albumKey = `${artistLower}|||${albumLower}`;
+      if (!albumMap.has(albumKey)) {
+        albumMap.set(albumKey, {
+          artist: rawArtist,
+          album: albumTrim,
+          totalPlays: 0,
+          uniqueSongs: new Set(),
+          firstAppearance: airDate,
+        });
+      }
+      const alEntry = albumMap.get(albumKey);
+      alEntry.totalPlays++;
+      alEntry.uniqueSongs.add(titleLower);
+      updateBounds(alEntry, airDate);
 
       const songIdxKey = `${titleLower}\t${artistLower}`;
       if (!songEpisodes[songIdxKey]) songEpisodes[songIdxKey] = [epId];
@@ -125,7 +158,7 @@ function aggregateSnapshots(episodesData) {
 
   const artistValues = Array.from(artistMap.values());
   const artists = artistValues
-    .map(a => ({
+    .map((a) => ({
       name: a.name,
       totalPlays: a.totalPlays,
       uniqueSongs: a.uniqueSongs.size,
@@ -136,17 +169,32 @@ function aggregateSnapshots(episodesData) {
     }))
     .sort((a, b) => (b.totalPlays - a.totalPlays) || cmpAsc(a.name.toLowerCase(), b.name.toLowerCase()));
 
+  const albums = Array.from(albumMap.values())
+    .map((a) => ({
+      artist: a.artist,
+      album: a.album,
+      totalPlays: a.totalPlays,
+      uniqueSongs: a.uniqueSongs.size,
+      firstAppearance: a.firstAppearance,
+    }))
+    .sort(
+      (a, b) =>
+        (b.totalPlays - a.totalPlays) ||
+        cmpAsc(a.artist.toLowerCase(), b.artist.toLowerCase()) ||
+        cmpAsc(a.album.toLowerCase(), b.album.toLowerCase()),
+    );
+
   const songValues = Array.from(songMap.values());
   const songs = songValues
-    .map(s => {
-      const albums = Array.from(s.albumCounts.entries())
+    .map((s) => {
+      const songAlbums = Array.from(s.albumCounts.entries())
         .sort((a, b) => (b[1] - a[1]) || cmpAsc(a[0].toLowerCase(), b[0].toLowerCase()))
         .map(([name]) => name);
       return {
         artist: s.artist,
         songTitle: s.songTitle,
-        album: albums[0] || '',
-        albums,
+        album: songAlbums[0] || '',
+        albums: songAlbums,
         totalPlays: s.totalPlays,
         firstAppearance: s.firstAppearance,
         lastAppearance: s.lastAppearance,
@@ -155,7 +203,7 @@ function aggregateSnapshots(episodesData) {
     .sort((a, b) => (b.totalPlays - a.totalPlays) || cmpAsc(a.songTitle.toLowerCase(), b.songTitle.toLowerCase()) || cmpAsc(a.artist.toLowerCase(), b.artist.toLowerCase()));
 
   const yearSummary = Array.from(yearStats.values())
-    .map(y => ({ year: y.year, episodeCount: y.episodeCount, songCount: y.songCount, uniqueArtists: y.uniqueArtists.size }))
+    .map((y) => ({ year: y.year, episodeCount: y.episodeCount, songCount: y.songCount, uniqueArtists: y.uniqueArtists.size }))
     .sort((a, b) => cmpAsc(a.year, b.year));
 
   const artistYearSpins = {};
@@ -165,35 +213,40 @@ function aggregateSnapshots(episodesData) {
 
   const overview = {
     lastUpdated: new Date().toISOString(),
-    latestEpisodeId: sorted[0] ? String(sorted[0].id) : null,
-    totalEpisodes: sorted.length,
+    latestEpisodeId: normalizedEpisodes[0]?.id || null,
+    totalEpisodes: normalizedEpisodes.length,
     totalSongPlays,
     uniqueArtists: artists.length,
-    uniqueAlbums: albumKeys.size,
+    uniqueAlbums: albums.length,
     uniqueSongs: songs.length,
-    oneSpinArtists: artists.filter(a => a.totalPlays === 1).length,
-    oneSpinSongs: songs.filter(s => s.totalPlays === 1).length,
-    dateRange: { earliest: sorted[sorted.length - 1]?.airDate || null, latest: sorted[0]?.airDate || null },
-    topArtists: artists.slice(0, 10).map(a => ({ name: a.name, plays: a.totalPlays })),
-    topSongs: songs.slice(0, 10).map(s => ({ artist: s.artist, song: s.songTitle, album: s.album, plays: s.totalPlays })),
+    oneSpinArtists: artists.filter((a) => a.totalPlays === 1).length,
+    oneSpinSongs: songs.filter((s) => s.totalPlays === 1).length,
+    dateRange: { earliest: normalizedEpisodes[normalizedEpisodes.length - 1]?.airDate || null, latest: normalizedEpisodes[0]?.airDate || null },
+    topArtists: artists.slice(0, 10).map((a) => ({ name: a.name, plays: a.totalPlays })),
+    topSongs: songs.slice(0, 10).map((s) => ({ artist: s.artist, song: s.songTitle, album: s.album, plays: s.totalPlays })),
     yearSummary,
   };
 
-  return { episodesIndex: { episodes: episodesIndexList, songEpisodes }, playlistsByYear, yearSpins: { years, archive, artists: artistYearSpins, songs: songYearSpins }, artists, songs, overview };
+  return { normalizedEpisodes, episodesIndex: { episodes: episodesIndexList, songEpisodes }, playlistsByYear, yearSpins: { years, archive, artists: artistYearSpins, songs: songYearSpins }, artists, albums, songs, overview };
 }
 
-export function writeStaticSnapshots(episodesData, dataDir) {
+export function writeStaticSnapshots(episodesData, dataDir, { writeEpisodesFile = false } = {}) {
   const playlistsDir = path.join(dataDir, 'playlists');
   mkdirSync(playlistsDir, { recursive: true });
-  const { episodesIndex, playlistsByYear, yearSpins, artists, songs, overview } = aggregateSnapshots(episodesData);
+  const { normalizedEpisodes, episodesIndex, playlistsByYear, yearSpins, artists, albums, songs, overview } = aggregateSnapshots(episodesData);
 
+  if (writeEpisodesFile) {
+    writeFileSync(path.join(dataDir, 'episodes.json'), JSON.stringify(normalizedEpisodes, null, 2));
+  }
   writeFileSync(path.join(dataDir, 'episodes-index.json'), JSON.stringify(episodesIndex));
   for (const [year, playlistMap] of playlistsByYear.entries()) {
     writeFileSync(path.join(playlistsDir, `${year}.json`), JSON.stringify(playlistMap));
   }
   writeFileSync(path.join(dataDir, 'year-spins.json'), JSON.stringify(yearSpins));
   writeFileSync(path.join(dataDir, 'artists.json'), JSON.stringify(artists, null, 2));
+  writeFileSync(path.join(dataDir, 'albums.json'), JSON.stringify(albums, null, 2));
   writeFileSync(path.join(dataDir, 'songs.json'), JSON.stringify(songs, null, 2));
+  writeFileSync(path.join(dataDir, 'years.json'), JSON.stringify(overview.yearSummary, null, 2));
   writeFileSync(path.join(dataDir, 'overview.json'), JSON.stringify(overview, null, 2));
 }
 

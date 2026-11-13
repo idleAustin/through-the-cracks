@@ -1,5 +1,6 @@
 // End-to-end Playwright specs for shared loading skeleton, deadpan empty/error states, and unknown-route recovery.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('archive data states and unknown route recovery', () => {
   test('renders flat .skeleton loading rows while artists data is pending', async ({ page }) => {
@@ -83,7 +84,7 @@ test.describe('archive data states and unknown route recovery', () => {
 
     await retryBtn.click();
     await expect(alert).toBeHidden();
-    await expect(page.locator('main')).toContainText('Aug 8, 2026');
+    await expect(page.locator('main')).toContainText(EXPECTED.latestAirDateShort);
   });
 
   test('renders deadpan unknown route recovery and returns to Overview', async ({ page }) => {
@@ -95,7 +96,7 @@ test.describe('archive data states and unknown route recovery', () => {
 
     await returnLink.click();
     await expect(page).toHaveURL('/');
-    await expect(page.locator('#kpi-plays')).toHaveText('36,902');
+    await expect(page.locator('#kpi-plays')).toHaveText(EXPECTED.totalSpinsFmt);
   });
 
   test('passes mobile-web touch target, input font-size, tooltip, and 320px overflow checks', async ({ page }, testInfo) => {
@@ -150,7 +151,7 @@ test.describe('archive data states and unknown route recovery', () => {
     expect((await yearSelect.boundingBox()).height).toBeGreaterThanOrEqual(44);
     await expectTouchTarget(page.locator('.m-card').first());
 
-    await page.goto('/episodes?episode=492815995999333864');
+    await page.goto(`/episodes?episode=${EXPECTED.latestEpisodeId}`);
     await expectTouchTarget(page.locator('.playlist-mobile-main .cell-link-btn').first());
     await expectTouchTarget(page.locator('.source-post-link').first());
 
@@ -164,7 +165,7 @@ test.describe('archive data states and unknown route recovery', () => {
       ['/artists?artist=Todd%20Snider', '.push-view'],
       ['/songs', '#songs-table:visible, .m-card-stack:visible'],
       ['/episodes', '.m-card'],
-      ['/episodes?episode=492815995999333864', '.playlist-pane'],
+      [`/episodes?episode=${EXPECTED.latestEpisodeId}`, '.playlist-pane'],
       ['/search', '#global-search-input'],
     ]) {
       await page.goto(path);

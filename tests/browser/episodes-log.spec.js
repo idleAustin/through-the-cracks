@@ -1,5 +1,6 @@
 // End-to-end Playwright specs for Ticket 03 Episodes two-pane Broadcast Log, mobile push playlist, and song filtering.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
   test('renders stripped Air Date + tabular Fira Code Spin counts without Episode # or blog Title', async ({ page }, testInfo) => {
@@ -8,10 +9,10 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
 
     await expect(page.getByRole('heading', { name: 'Episodes', level: 1 })).toBeVisible();
     const listScope = isMobile ? page.locator('.m-card').first() : page.locator('.airdate-rail');
-    await expect(listScope).toContainText('Aug 8, 2026');
-    await expect(listScope).toContainText('27 spins');
+    await expect(listScope).toContainText(EXPECTED.latestAirDateShort);
+    await expect(listScope).toContainText(`${EXPECTED.latestSongCount} spins`);
 
-    const spinReadout = listScope.getByText('27 spins').first();
+    const spinReadout = listScope.getByText(`${EXPECTED.latestSongCount} spins`).first();
     const spinStyles = await spinReadout.evaluate((el) => {
       const s = getComputedStyle(el);
       return { fontFamily: s.fontFamily, fontVariantNumeric: s.fontVariantNumeric };
@@ -39,10 +40,10 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
 
       const playlistPane = page.locator('.broadcast-log .playlist-pane');
       await expect(playlistPane).toBeVisible();
-      await expect(playlistPane).toContainText('Aug 8, 2026');
-      await expect(playlistPane).toContainText('01');
-      await expect(playlistPane).toContainText('Prairie Girl');
-      await expect(playlistPane).toContainText('The Law & The Lonesome');
+      await expect(playlistPane).toContainText(EXPECTED.latestAirDateShort);
+      await expect(playlistPane).toContainText(EXPECTED.latestFirstTrack.position);
+      await expect(playlistPane).toContainText(EXPECTED.latestFirstTrack.songTitle);
+      await expect(playlistPane).toContainText(EXPECTED.latestFirstTrack.album);
       await expect(playlistPane.getByRole('link', { name: /Source post/i })).toHaveAttribute('href', /http/);
 
       await yearSelect.selectOption('2025');
@@ -56,8 +57,11 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
       await expect(page).toHaveURL(/page=2/);
 
       await page.goto('/episodes');
-      await playlistPane.getByRole('button', { name: 'Jonathan Byrd' }).first().click();
-      await expect(page).toHaveURL(/\/artists\?artist=Jonathan(%20|\+)Byrd/);
+      await playlistPane.getByRole('button', { name: EXPECTED.latestFirstTrack.artist }).first().click();
+      await expect.poll(() => {
+        const u = new URL(page.url());
+        return [u.pathname, u.searchParams.get('artist')];
+      }).toEqual(['/artists', EXPECTED.latestFirstTrack.artist]);
       return;
     }
 
@@ -94,10 +98,11 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
 
   test('supports direct /episodes?song=&artist= filtering, playlist song clicks, and .is-song-match highlight', async ({ page }, testInfo) => {
     const isMobile = testInfo.project.name === 'mobile-375';
-    await page.goto('/episodes?song=Prairie%20Girl&artist=Jonathan%20Byrd');
+    const { songTitle, artist } = EXPECTED.latestFirstTrack;
+    await page.goto(`/episodes?song=${encodeURIComponent(songTitle)}&artist=${encodeURIComponent(artist)}`);
 
     await expect(page.getByText('Played Song')).toBeVisible();
-    await expect(page.locator('.filter-banner')).toContainText('Prairie Girl');
+    await expect(page.locator('.filter-banner')).toContainText(songTitle);
     const clearBtn = page.getByRole('button', { name: 'Clear Song Filter' });
     await expect(clearBtn).toBeVisible();
 
@@ -107,7 +112,7 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
 
     const matchedRow = page.locator('.is-song-match').first();
     await expect(matchedRow).toBeVisible();
-    await expect(matchedRow).toContainText('Prairie Girl');
+    await expect(matchedRow).toContainText(songTitle);
 
     if (isMobile) {
       await page.getByRole('button', { name: 'Back', exact: true }).click();
@@ -118,9 +123,11 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
     await expect(page.getByText('Played Song')).toBeHidden();
 
     if (!isMobile) {
-      await page.locator('.broadcast-log .playlist-pane').getByRole('button', { name: 'Prairie Girl' }).first().click();
-      await expect(page).toHaveURL(/song=Prairie(%20|\+)Girl/);
-      await expect(page).toHaveURL(/artist=Jonathan(%20|\+)Byrd/);
+      await page.locator('.broadcast-log .playlist-pane').getByRole('button', { name: songTitle }).first().click();
+      await expect.poll(() => {
+        const u = new URL(page.url());
+        return [u.searchParams.get('song'), u.searchParams.get('artist')];
+      }).toEqual([songTitle, artist]);
       await expect(page.getByText('Played Song')).toBeVisible();
       await expect(page.locator('.is-song-match').first()).toBeVisible();
     }

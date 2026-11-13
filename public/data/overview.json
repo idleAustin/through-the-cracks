@@ -1,57 +1,57 @@
 {
-  "lastUpdated": "2026-11-13T08:04:13.927Z",
-  "latestEpisodeId": "492815995999333864",
-  "totalEpisodes": 1317,
-  "totalSongPlays": 36902,
-  "uniqueArtists": 1891,
-  "uniqueAlbums": 6340,
-  "uniqueSongs": 16782,
-  "oneSpinArtists": 640,
-  "oneSpinSongs": 7786,
+  "lastUpdated": "2026-11-13T18:00:07.533Z",
+  "latestEpisodeId": "4423069433994810612",
+  "totalEpisodes": 1344,
+  "totalSongPlays": 37678,
+  "uniqueArtists": 1917,
+  "uniqueAlbums": 6451,
+  "uniqueSongs": 17134,
+  "oneSpinArtists": 654,
+  "oneSpinSongs": 8000,
   "dateRange": {
     "earliest": "2013-06-23",
-    "latest": "2026-08-08"
+    "latest": "2026-11-11"
   },
   "topArtists": [
     {
       "name": "Todd Snider",
-      "plays": 296
+      "plays": 305
     },
     {
       "name": "Bob Dylan",
-      "plays": 266
+      "plays": 270
     },
     {
       "name": "Lucinda Williams",
-      "plays": 220
+      "plays": 221
     },
     {
       "name": "Jim Lauderdale",
-      "plays": 213
+      "plays": 214
     },
     {
       "name": "John Prine",
-      "plays": 193
-    },
-    {
-      "name": "Steve Forbert",
-      "plays": 181
+      "plays": 194
     },
     {
       "name": "Joe Ely",
+      "plays": 183
+    },
+    {
+      "name": "Steve Forbert",
+      "plays": 182
+    },
+    {
+      "name": "Rob Jungklas",
       "plays": 180
     },
     {
       "name": "Bonnie Raitt",
-      "plays": 176
-    },
-    {
-      "name": "Rob Jungklas",
-      "plays": 173
+      "plays": 177
     },
     {
       "name": "Rodney Crowell",
-      "plays": 168
+      "plays": 173
     }
   ],
   "topSongs": [
@@ -197,9 +197,9 @@
     },
     {
       "year": "2026",
-      "episodeCount": 59,
-      "songCount": 1689,
-      "uniqueArtists": 625
+      "episodeCount": 86,
+      "songCount": 2465,
+      "uniqueArtists": 780
     }
   ]
 }

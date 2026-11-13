@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   push:
     branches: [ main ]
+  schedule:
+    - cron: '0 6 * * 4,0'
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -13,27 +16,25 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Install Dependencies
         run: npm ci
-
       - name: Run Linter
         run: npm run lint
-
+      - name: Run Unit Tests
+        run: npm run test:unit
+      - name: Build Production Bundle
+        run: npm run build
       - name: Snyk Dependency Vulnerability Scan
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
       - name: Build Docker Container
         run: docker build -t through-the-cracks .
-
       - name: Snyk Container Image Scan
         uses: snyk/actions/docker@master
         continue-on-error: true
@@ -42,32 +43,117 @@ jobs:
         with:
           image: through-the-cracks
 
-  deploy:
-    name: Deploy to Google Cloud Run
+  refresh-archive:
+    name: Refresh Archive Data & Build Pages
     needs: validate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    outputs:
+      pages_enabled: ${{ steps.pages_check.outputs.enabled }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore Latest Data Snapshot
+        run: |
+          if git fetch origin +refs/heads/data-snapshot:refs/remotes/origin/data-snapshot >/dev/null 2>&1; then
+            SNAP_DATE=$(git show origin/data-snapshot:public/data/overview.json 2>/dev/null | jq -r '.dateRange.latest // ""' || echo "")
+            CUR_DATE=$(jq -r '.dateRange.latest // ""' public/data/overview.json 2>/dev/null || echo "")
+            if [[ -n "$SNAP_DATE" && ( -z "$CUR_DATE" || ! "$SNAP_DATE" < "$CUR_DATE" ) ]]; then
+              git checkout origin/data-snapshot -- public/data/
+            fi
+          fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Dependencies
+        run: npm ci
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+      - name: Run Incremental Archive Ingest
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT_ID: through-the-cracks
+          BQ_DATASET: through_the_cracks
+        run: |
+          if [ -n "$DOPPLER_TOKEN" ] && doppler --no-check-version secrets download --no-file --format env >/dev/null 2>&1; then
+            doppler --no-check-version run -- npm run ingest:ci
+          else
+            npm run ingest:ci
+          fi
+      - name: Build Production Bundle
+        run: npm run build
+      - name: Persist Archive Snapshot Branch
+        run: |
+          if [ -n "$(git status --porcelain public/data/)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git checkout -B data-snapshot
+            git add public/data/
+            git commit -m "chore(data): refresh archive snapshot"
+            git push --force origin data-snapshot
+          fi
+      - name: Check GitHub Pages Availability
+        id: pages_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::GitHub Pages is not enabled yet; skipping artifact upload/deploy."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Configure GitHub Pages
+        if: steps.pages_check.outputs.enabled == 'true'
+        uses: actions/configure-pages@v5
+      - name: Upload Pages Artifact
+        if: steps.pages_check.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: refresh-archive
+    if: needs.refresh-archive.outputs.pages_enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  deploy-cloud-run:
+    name: Deploy to Google Cloud Run
+    needs: refresh-archive
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch') && vars.ENABLE_CLOUD_RUN == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-
       - name: Deploy to Cloud Run with Doppler Secrets Injection
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run -- gcloud run deploy through-the-cracks \
-            --source . \
-            --region us-central1 \
-            --allow-unauthenticated \
-            --set-env-vars "GCP_PROJECT_ID=$GCP_PROJECT_ID,BQ_DATASET=$BQ_DATASET,BLOGGER_BLOG_ID=$BLOGGER_BLOG_ID,BLOGGER_API_KEY=$BLOGGER_API_KEY,AUTO_INGEST_HOURS=$AUTO_INGEST_HOURS,ENABLE_AUTO_INGEST=$ENABLE_AUTO_INGEST"
+          doppler --no-check-version run -- sh -c 'gcloud run deploy through-the-cracks --source . --region us-central1 --allow-unauthenticated --set-env-vars "GCP_PROJECT_ID=$GCP_PROJECT_ID,BQ_DATASET=$BQ_DATASET,BLOGGER_BLOG_ID=$BLOGGER_BLOG_ID,BLOGGER_API_KEY=$BLOGGER_API_KEY,AUTO_INGEST_HOURS=$AUTO_INGEST_HOURS,ENABLE_AUTO_INGEST=false"'

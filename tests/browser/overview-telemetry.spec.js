@@ -1,15 +1,16 @@
 // End-to-end Playwright specs for Ticket 05 Overview telemetry, dynamic Annual Spin chart, and asymmetric linked cards.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmetric cards', () => {
   test('renders Latest Broadcast CTA, 4-cell Readout Strip, and zero horizontal overflow on mobile', async ({ page }, testInfo) => {
     const isMobile = testInfo.project.name === 'mobile-375';
     await page.goto('/');
 
-    await expect(page.locator('#kpi-plays')).toHaveText('36,902');
-    await expect(page.locator('#kpi-episodes')).toHaveText('1,317');
-    await expect(page.locator('#kpi-artists')).toHaveText('1,891');
-    await expect(page.locator('#kpi-songs')).toHaveText('16,782');
+    await expect(page.locator('#kpi-plays')).toHaveText(EXPECTED.totalSpinsFmt);
+    await expect(page.locator('#kpi-episodes')).toHaveText(EXPECTED.totalEpisodesFmt);
+    await expect(page.locator('#kpi-artists')).toHaveText(EXPECTED.uniqueArtistsFmt);
+    await expect(page.locator('#kpi-songs')).toHaveText(EXPECTED.uniqueSongsFmt);
 
     if (isMobile) {
       const overflow = await page.evaluate(() => ({
@@ -19,11 +20,11 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
       expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.innerWidth);
     }
 
-    const latestCta = page.getByRole('link', { name: /Latest Broadcast \(Aug 8, 2026\)/i })
-      .or(page.getByRole('button', { name: /Latest Broadcast \(Aug 8, 2026\)/i }));
+    const latestCta = page.getByRole('link', { name: `Latest Broadcast (${EXPECTED.latestAirDateShort})` })
+      .or(page.getByRole('button', { name: `Latest Broadcast (${EXPECTED.latestAirDateShort})` }));
     await expect(latestCta).toBeVisible();
     await latestCta.click();
-    await expect(page).toHaveURL('/episodes?episode=492815995999333864');
+    await expect(page).toHaveURL(`/episodes?episode=${EXPECTED.latestEpisodeId}`);
   });
 
   test('plots Annual Spin Volume with lime peak, replots on Artist & Song clicks, and resets via All Archive', async ({ page }, testInfo) => {
@@ -32,7 +33,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
 
     const chart = page.locator('.year-bars');
     await expect(chart).toBeVisible();
-    await expect(chart.locator('.year-col')).toHaveCount(14);
+    await expect(chart.locator('.year-col')).toHaveCount(EXPECTED.yearCount);
     await expect(chart.locator('.year-col.is-peak .year-val')).toBeVisible();
 
     const toddItem = isMobile
@@ -43,7 +44,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
     await expect(page).toHaveURL(/[?&]artist=Todd(%20|\+)Snider/);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('main')).toContainText(/Annual Spins.*Todd Snider/i);
-    await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText('77');
+    await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText(EXPECTED.toddSniderPeakSpins);
 
     const songItem = isMobile
       ? page.locator('.m-card-stack .m-card').filter({ hasText: 'Handsome John' }).first()
@@ -57,7 +58,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
     await expect(viewAirDates).toBeVisible();
 
     await page.getByRole('button', { name: 'All Archive' }).click();
-    await expect(page.locator('main')).toContainText('Annual Spin Volume (2013–2026)');
+    await expect(page.locator('main')).toContainText(`Annual Spin Volume (${EXPECTED.yearRangeLabel})`);
 
     await songItem.click();
     await viewAirDates.click();
@@ -66,7 +67,7 @@ test.describe('Overview telemetry, dynamic Annual Spin Volume chart, and asymmet
     await page.goto('/?artist=Todd%20Snider');
     await expect(page.locator('main')).toContainText(/Songs · Todd Snider/i);
     await expect(page.locator('main')).toContainText(/Annual Spins · Todd Snider/i);
-    await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText('77');
+    await expect(chart.locator('.year-col.is-peak .year-val')).toHaveText(EXPECTED.toddSniderPeakSpins);
   });
 
   test('supports Most Obscure toggle, Top cap/footer pagination, in-place Songs scoping, and Air dates action', async ({ page }, testInfo) => {

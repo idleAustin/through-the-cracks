@@ -37,11 +37,12 @@ async function runIngestion(incremental = true) {
   }
 }
 
-function scheduleAutomatedIngestion() {
-  const ENABLED = process.env.ENABLE_AUTO_INGEST !== 'false';
+export function scheduleAutomatedIngestion() {
+  const ENABLED = process.env.ENABLE_AUTO_INGEST === 'true';
   if (!ENABLED) {
-    console.log('⏰ Automated scheduled ingestion is disabled (ENABLE_AUTO_INGEST=false)');
-    return;
+    const flagValue = process.env.ENABLE_AUTO_INGEST ?? 'unset';
+    console.log(`⏰ Automated scheduled ingestion is disabled (ENABLE_AUTO_INGEST=${flagValue})`);
+    return false;
   }
 
   const INTERVAL_HOURS = parseInt(process.env.AUTO_INGEST_HOURS) || 6;
@@ -69,6 +70,7 @@ function scheduleAutomatedIngestion() {
       runIngestion(true);
     }, INTERVAL_MS);
   }, delayUntilFirstRun);
+  return true;
 }
 
 export function createApp({

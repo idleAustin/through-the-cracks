@@ -1,19 +1,20 @@
 // End-to-end Playwright specs for Ticket 04 paginated Artists & Songs catalogs and inline/push ArtistInspector.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('Paginated catalogs and inline/push ArtistInspector', () => {
-  test('paginates full 1,891 artists and 16,782 songs with global rank, cap, debounced ?q=, and URL history', async ({ page }, testInfo) => {
+  test('paginates full artists and songs catalogs with global rank, cap, debounced ?q=, and URL history', async ({ page }, testInfo) => {
     const isMobile = testInfo.project.name === 'mobile-375';
     await page.goto('/artists');
 
     await expect(page.getByRole('heading', { name: 'Artists', level: 1 })).toBeVisible();
-    await expect(page.locator('main')).toContainText(/1[–-]25 of 1,891/);
+    await expect(page.locator('main')).toContainText(new RegExp(`1[–-]25 of ${EXPECTED.uniqueArtistsFmt}`));
     const artistItems = isMobile ? page.locator('.m-card-stack .m-card') : page.locator('#artists-table tbody tr');
     await expect(artistItems).toHaveCount(25);
 
     await page.getByRole('button', { name: /Next/i }).click();
     await expect(page).toHaveURL(/page=2/);
-    await expect(page.locator('main')).toContainText(/26[–-]50 of 1,891/);
+    await expect(page.locator('main')).toContainText(new RegExp(`26[–-]50 of ${EXPECTED.uniqueArtistsFmt}`));
     await expect(artistItems.first()).toContainText('26');
     await expect(artistItems.last()).toContainText('50');
 
@@ -32,7 +33,7 @@ test.describe('Paginated catalogs and inline/push ArtistInspector', () => {
 
     await page.goto('/songs');
     await expect(page.getByRole('heading', { name: 'Songs', level: 1 })).toBeVisible();
-    await expect(page.locator('main')).toContainText(/1[–-]25 of 16,782/);
+    await expect(page.locator('main')).toContainText(new RegExp(`1[–-]25 of ${EXPECTED.uniqueSongsFmt}`));
     const songItems = isMobile ? page.locator('.m-card-stack .m-card') : page.locator('#songs-table tbody tr');
     await expect(songItems).toHaveCount(25);
   });
@@ -116,12 +117,12 @@ test.describe('Paginated catalogs and inline/push ArtistInspector', () => {
     await page.goto('/songs');
 
     const artistBtn = isMobile
-      ? page.locator('.m-card-stack .m-card').first().getByRole('button', { name: 'Carrie Rodriguez' })
-      : page.locator('#songs-table tbody tr').first().getByRole('button', { name: 'Carrie Rodriguez' });
+      ? page.locator('.m-card-stack .m-card').first().getByRole('button', { name: EXPECTED.topSong.artist })
+      : page.locator('#songs-table tbody tr').first().getByRole('button', { name: EXPECTED.topSong.artist });
     await artistBtn.click();
 
     expect(await page.evaluate(() => window.location.pathname)).toBe('/songs');
-    await expect(page).toHaveURL(/artist=Carrie(%20|\+)Rodriguez/);
+    await expect.poll(() => new URL(page.url()).searchParams.get('artist')).toBe(EXPECTED.topSong.artist);
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
     if (isMobile) {
@@ -139,7 +140,10 @@ test.describe('Paginated catalogs and inline/push ArtistInspector', () => {
       ? page.locator('.m-card-stack .m-card').first()
       : page.locator('#songs-table tbody tr').first();
     await songRow.click();
-    await expect(page).toHaveURL(/\/episodes\?song=50s(%20|\+)French(%20|\+)Movie&artist=Carrie(%20|\+)Rodriguez/);
+    await expect.poll(() => {
+      const u = new URL(page.url());
+      return [u.pathname, u.searchParams.get('song'), u.searchParams.get('artist')];
+    }).toEqual(['/episodes', EXPECTED.topSong.songTitle, EXPECTED.topSong.artist]);
     await expect(page.getByText('Played Song')).toBeVisible();
   });
 });
