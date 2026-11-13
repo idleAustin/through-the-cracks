@@ -1,16 +1,28 @@
-# React + Vite
+# through-the-cracks
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Searchable broadcast playlist archive and analytics cockpit for WEVL 89.9 FM's Through the Cracks.
 
-Currently, two official plugins are available:
+## Usage
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Live archive: [idleamericana.com/through-the-cracks/](https://idleamericana.com/through-the-cracks/)
 
-## React Compiler
+Explore broadcast telemetry and annual spin trends in Overview, browse full episode playlists in the Broadcast Log, filter paginated Artists and Songs catalogs with cross-linked inspector drawers, and jump anywhere with the `⌘K` command palette. Archive data refreshes automatically from Blogger API v3 into Cloudflare D1 every Sunday and Thursday (`06:00 UTC`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+For local development, testing, archive ingestion, and Worker deployment, see [CONTRIBUTING.md](CONTRIBUTING.md#setup-and-commands).
 
-## Expanding the Oxlint configuration
+Agents: see [AGENTS.md](AGENTS.md).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Documentation
+
+<!-- setup-docs:docs -->
+- [AGENTS.md](AGENTS.md): rules an AI coding agent follows here (loaded automatically)
+- [WORKSPACE_INDEX.md](WORKSPACE_INDEX.md): the repo map
+- [SCOPE.md](SCOPE.md): what this project takes on and what it turns away
+- [CONTRIBUTING.md](CONTRIBUTING.md): setup, commands, where files go, review and releases
+- [GLOSSARY.md](GLOSSARY.md): settled meanings of project terms
+- [CHANGELOG.md](CHANGELOG.md): what changed in each release
+<!-- /setup-docs:docs sha256=4b490d031303 -->
+
+## Owner
+
+Owner: Austin Smith ([@idleAustin](https://github.com/idleAustin)). Issues and pull requests: [idleAustin/through-the-cracks](https://github.com/idleAustin/through-the-cracks).
