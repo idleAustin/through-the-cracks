@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+// Song library view with search filter, loading skeletons, empty/error states, and pagination.
+import React, { useEffect, useRef, useState } from 'react';
 import { getSongs } from '../api';
+import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 import Pagination from '../components/Pagination';
 
@@ -8,21 +10,43 @@ export default function SongsView({ onSelectArtist }) {
   const [page, setPage] = useState(1);
   const [songsData, setSongsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const inFlightRef = useRef({ key: null, promise: null });
 
   useEffect(() => {
     let isMounted = true;
+    const requestKey = `${search}:${page}:${retryKey}`;
+    if (inFlightRef.current.key !== requestKey) {
+      inFlightRef.current = { key: requestKey, promise: getSongs(search, page, 20) };
+    }
     setLoading(true);
-    getSongs(search, page, 20).then(res => {
-      if (isMounted) {
-        setSongsData(res.data);
-        setLoading(false);
-      }
-    });
-    return () => { isMounted = false; };
-  }, [search, page]);
+    setError('');
+    inFlightRef.current.promise
+      .then((res) => {
+        if (isMounted) {
+          setSongsData(res.data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err?.message || 'Could not load songs.');
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [search, page, retryKey]);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
+    setPage(1);
+  };
+
+  const handleClearFilter = () => {
+    setSearch('');
     setPage(1);
   };
 
@@ -45,6 +69,7 @@ export default function SongsView({ onSelectArtist }) {
           <input
             id="song-search-input"
             type="search"
+            enterKeyHint="search"
             className="search-input"
             placeholder="Search songs or artists…"
             aria-label="Search songs"
@@ -55,10 +80,11 @@ export default function SongsView({ onSelectArtist }) {
       </div>
 
       {loading ? (
-        <div className="state-block state-block--loading">
-          <Icon name="graphic_eq" />
-          Loading song data…
-        </div>
+        <SkeletonRows label="Loading songs" />
+      ) : error ? (
+        <ArchiveErrorState message={error} onRetry={() => setRetryKey((k) => k + 1)} />
+      ) : !songsData?.songs?.length ? (
+        <EmptyFilterState items="songs" onClear={handleClearFilter} />
       ) : (
         <>
           <div className="table-container">
@@ -69,13 +95,13 @@ export default function SongsView({ onSelectArtist }) {
                   <th>Song</th>
                   <th>Artist</th>
                   <th>Album</th>
-                  <th>First Played</th>
-                  <th>Last Played</th>
-                  <th>Plays</th>
+                  <th>First Spun</th>
+                  <th>Last Spun</th>
+                  <th>Spins</th>
                 </tr>
               </thead>
               <tbody>
-                {songsData?.songs?.map((song, idx) => {
+                {songsData.songs.map((song, idx) => {
                   const rank = ((page - 1) * 20) + idx + 1;
                   return (
                     <tr

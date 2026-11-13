@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { getEpisodes, getEpisodeById } from '../api';
+// Episodes archive view with loading skeletons, empty/error states, playlist modal trigger, and pagination.
+import React, { useEffect, useRef, useState } from 'react';
+import { getEpisodeById, getEpisodes } from '../api';
+import { ArchiveErrorState, EmptyArchiveState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 import Pagination from '../components/Pagination';
 
@@ -7,18 +9,35 @@ export default function EpisodesView({ onSelectEpisode }) {
   const [page, setPage] = useState(1);
   const [episodesData, setEpisodesData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const inFlightRef = useRef({ key: null, promise: null });
 
   useEffect(() => {
     let isMounted = true;
+    const requestKey = `${page}:${retryKey}`;
+    if (inFlightRef.current.key !== requestKey) {
+      inFlightRef.current = { key: requestKey, promise: getEpisodes(page, 20) };
+    }
     setLoading(true);
-    getEpisodes(page, 20).then(res => {
-      if (isMounted) {
-        setEpisodesData(res.data);
-        setLoading(false);
-      }
-    });
-    return () => { isMounted = false; };
-  }, [page]);
+    setError('');
+    inFlightRef.current.promise
+      .then((res) => {
+        if (isMounted) {
+          setEpisodesData(res.data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err?.message || 'Could not load episodes.');
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [page, retryKey]);
 
   const handleEpisodeClick = async (ep) => {
     try {
@@ -35,20 +54,21 @@ export default function EpisodesView({ onSelectEpisode }) {
         <div>
           <h2 className="panel-title">
             <Icon name="radio" />
-            Show Playlist Archive
+            Episode Playlist Archive
           </h2>
           <div className="panel-subtitle">
-            Browse tracklists from all{' '}
-            {episodesData?.pagination?.total?.toLocaleString() || '1,317'} broadcast episodes
+            Browse playlists from all{' '}
+            {episodesData?.pagination?.total?.toLocaleString() || '1,317'} archived episodes
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="state-block state-block--loading">
-          <Icon name="graphic_eq" />
-          Loading episode archive…
-        </div>
+        <SkeletonRows label="Loading episodes" />
+      ) : error ? (
+        <ArchiveErrorState message={error} onRetry={() => setRetryKey((k) => k + 1)} />
+      ) : !episodesData?.episodes?.length ? (
+        <EmptyArchiveState items="episodes" onRetry={() => setRetryKey((k) => k + 1)} />
       ) : (
         <>
           <div className="table-container">
@@ -58,13 +78,13 @@ export default function EpisodesView({ onSelectEpisode }) {
                   <th>Air Date</th>
                   <th>Day</th>
                   <th>Episode</th>
-                  <th>Show Title</th>
-                  <th>Tracks</th>
+                  <th>Episode Title</th>
+                  <th>Songs</th>
                   <th><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
-                {episodesData?.episodes?.map((ep, idx) => (
+                {episodesData.episodes.map((ep, idx) => (
                   <tr
                     key={idx}
                     id={`episode-row-${idx + 1}`}
@@ -79,7 +99,7 @@ export default function EpisodesView({ onSelectEpisode }) {
                     }}
                   >
                     <td className="cell-primary">{ep.airDate}</td>
-                    <td><span className="badge">{ep.dayOfWeek || 'Show'}</span></td>
+                    <td><span className="badge">{ep.dayOfWeek || 'Episode'}</span></td>
                     <td>
                       {ep.episodeNumber ? (
                         <span className="badge badge-accent">#{ep.episodeNumber}</span>
@@ -93,6 +113,7 @@ export default function EpisodesView({ onSelectEpisode }) {
                     </td>
                     <td>
                       <button
+                        type="button"
                         className="btn btn-ghost btn-sm"
                         onClick={(e) => {
                           e.stopPropagation();

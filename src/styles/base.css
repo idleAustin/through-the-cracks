@@ -1,91 +1,38 @@
-/* Base styles: legacy theme tokens, reset, typography, focus rings, buttons, inputs, and reduced motion. */
+/* Base layer: temporary legacy variable aliases mapped to --as-*, reset, typography, links, and reduced motion. */
 
 :root {
-  color-scheme: light;
+  /* Temporary --as-* aliases for legacy views/modals until Tickets 03-07 replace them */
+  --background: var(--as-bg-base);
+  --card: var(--as-bg-surface);
+  --foreground: var(--as-text-primary);
+  --muted: var(--as-bg-elevated);
+  --muted-foreground: var(--as-text-secondary);
+  --border: var(--as-border-subtle);
+  --border-light: var(--as-border-subtle);
+  --accent-hover: var(--as-accent-fg);
+  --accent-hover-muted: var(--as-accent-muted);
+  --font-display: var(--as-font-heading);
+  --font-body: var(--as-font-body);
+  --font-mono: var(--as-font-mono);
 
-  /* --- Colors: Ink, Paper, and Interaction -------------------------------- */
-  --background:         #F5F4F0;  /* Newsprint off-white — warm and tactile */
-  --foreground:         #1C1B1A;  /* Printer's Ink — rich dark charcoal */
-  --muted:              #EAE8E1;  /* Slightly darker paper for subtle contrast */
-  --muted-foreground:   #5C5A56;  /* Faded ink for secondary text */
-  --border:             #1C1B1A;  /* Ink borders */
-  --border-light:       #D1CEC5;  /* Light faded ink for subtle dividers */
-  --card:               #F5F4F0;  /* Matches paper */
-  --card-foreground:    #1C1B1A;  /* Matches ink */
-  --ring:               #1C1B1A;  /* Ink focus rings */
+  /* Non-color layout and typography helpers for legacy data-views/overlays */
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2.25rem;
 
-  /* The Interaction Colors — STRICTLY hover/focus/active only */
-  --accent-hover:       #D9381E;  /* Classic Editorial Red */
-  --accent-hover-muted: rgba(217, 56, 30, 0.10); /* 10% for table row hovers */
+  --tracking-tighter: -0.03em;
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-widest: 0.06em;
 
-  /* --- Typography -------------------------------------------------------- */
-  --font-display: 'Playfair Display', 'Times New Roman', serif;
-  --font-body:    'Source Serif 4', Georgia, serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
-
-  --text-xs:  0.75rem;    /* 12px — Bylines, metadata */
-  --text-sm:  0.875rem;   /* 14px — Captions, labels */
-  --text-base: 1rem;      /* 16px — Body text minimum */
-  --text-lg:  1.125rem;   /* 18px — Body text preferred */
-  --text-xl:  1.25rem;    /* 20px — Lead paragraphs */
-  --text-2xl: 1.5rem;     /* 24px — Section intros */
-  --text-3xl: 2rem;       /* 32px — Subheadings */
-  --text-4xl: 2.5rem;     /* 40px — Minor article titles */
-  --text-5xl: 3.5rem;     /* 56px — Major article titles */
-  --text-6xl: 4.5rem;     /* 72px — Section headers */
-
-  --tracking-tighter: -0.05em;
-  --tracking-tight:   -0.025em;
-  --tracking-normal:  0;
-  --tracking-wide:    0.025em;
-  --tracking-widest:  0.1em;
-
-  /* --- Radius — ZERO everywhere. Non-negotiable. ------------------------- */
-  --radius: 0px;
-
-  /* --- Layout ------------------------------------------------------------ */
-  --container-max: 80rem;   /* max-w-7xl — wide like an open broadsheet */
-  --container-pad: 1.5rem;  /* px-6 → md:px-8 → lg:px-12 below */
-  --section-gap:   2.5rem;
-  --grid-gap:      1.5rem;
-}
-
-@media (min-width: 768px) {
-  :root {
-    --container-pad: 2rem;
-    --section-gap: 3rem;
-    --grid-gap: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --container-pad: 3rem;
-    --section-gap: 3.5rem;
-  }
-}
-
-/* ============================================================================
-   Dark Mode — True inverse of the Editorial Broadsheet.
-   Ink becomes paper, paper becomes ink. The editorial red stays.
-   ========================================================================= */
-
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --background:         #1C1B1A;
-  --foreground:         #F5F4F0;
-  --muted:              #2A2926;
-  --muted-foreground:   #A09E99;
-  --border:             #D1CEC5;
-  --border-light:       #3A3835;
-  --card:               #1C1B1A;
-  --card-foreground:    #F5F4F0;
-  --ring:               #F5F4F0;
-
-  /* Interaction colors stay — red works on both backgrounds. */
-  --accent-hover:       #D9381E;
-  --accent-hover-muted: rgba(217, 56, 30, 0.15);
+  --section-gap: 24px;
+  --grid-gap: 16px;
 }
 
 .theme-switching *,
@@ -93,10 +40,6 @@
 .theme-switching *::after {
   transition: none !important;
 }
-
-/* ============================================================================
-   Reset & base
-   ========================================================================= */
 
 *,
 *::before,
@@ -107,62 +50,90 @@
 }
 
 html {
+  background-color: var(--as-bg-base);
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body);
-  font-size: var(--text-base);
-  line-height: 1.625;                  /* leading-relaxed for body */
-  letter-spacing: var(--tracking-normal);
+  background-color: var(--as-bg-base);
+  color: var(--as-text-secondary);
+  font-family: var(--as-font-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
   min-height: 100vh;
-  overflow-x: hidden;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* Paper Grain Noise — sells the newsprint effect. */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
-[data-theme="dark"] body {
-  /* Invert the paper-grain noise — slightly brighter on dark paper. */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+::selection {
+  background: var(--as-accent-primary);
+  color: var(--as-accent-text);
 }
 
-/* ============================================================================
-   Typography
-   ========================================================================= */
+input,
+textarea,
+select,
+[contenteditable] {
+  caret-color: var(--as-accent-fg);
+}
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--as-border-strong) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--as-border-focus);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--as-font-heading);
   font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  line-height: 1;                      /* leading-none for display */
-  color: var(--foreground);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--as-text-primary);
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+.num,
+td,
+time,
+kbd,
+.kbd {
+  font-variant-numeric: tabular-nums;
 }
 
 .font-mono,
 code,
 pre {
-  font-family: var(--font-mono);
-  letter-spacing: var(--tracking-wide);
+  font-family: var(--as-font-mono);
 }
 
-/* Uppercase mono eyebrow — the system's label voice. */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-family: var(--as-font-body);
+  font-size: 12px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-  color: var(--muted-foreground);
+  letter-spacing: 0.01em;
+  color: var(--as-text-secondary);
 }
 
-.text-secondary { color: var(--muted-foreground); }
+.text-secondary {
+  color: var(--as-text-secondary);
+}
 
-/* Visually hidden but exposed to assistive tech. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -175,173 +146,46 @@ pre {
   border: 0;
 }
 
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 16px;
+  z-index: 200;
+  padding: 8px 14px;
+  background: var(--as-accent-primary);
+  color: var(--as-accent-text);
+  font-family: var(--as-font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--as-radius-sm);
+  text-decoration: none;
+}
+
+.skip-link:focus-visible {
+  top: max(12px, var(--as-safe-top));
+  left: max(16px, var(--as-safe-left));
+}
+
 a {
-  color: var(--foreground);
+  color: var(--as-text-primary);
   text-decoration: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+  text-decoration-color: var(--as-border-strong);
 }
 
-a:hover {
-  color: var(--accent-hover);
-  text-decoration-color: var(--accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  a:hover {
+    color: var(--as-accent-fg);
+    text-decoration-color: var(--as-accent-fg);
+  }
 }
 
-/* ============================================================================
-   Icons — Google Material Symbols Rounded
-   ========================================================================= */
-
-.material-symbols-rounded {
-  font-size: 20px;
-  line-height: 1;
-  color: var(--foreground);
-  user-select: none;
+.as-icon {
+  display: inline-block;
   flex-shrink: 0;
-  font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 20;
+  vertical-align: middle;
 }
-
-.material-symbols-rounded.icon-sm { font-size: 16px; font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 20; }
-.material-symbols-rounded.icon-lg { font-size: 24px; font-variation-settings: 'FILL' 0, 'GRAD' 0, 'opsz' 24; }
-.material-symbols-rounded.icon-accent { color: var(--foreground); }
-
-/* ============================================================================
-   Focus states (Accessibility — REQUIRED)
-   ========================================================================= */
-
-:focus-visible {
-  outline: 3px solid var(--accent-hover);
-  outline-offset: 3px;
-  border-radius: 0;
-}
-
-a:focus-visible {
-  color: var(--accent-hover);
-  outline: none;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-/* ============================================================================
-   Buttons
-   ========================================================================= */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  height: 2.75rem;
-  padding: 0 2rem;
-  border: none;
-  border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-  cursor: pointer;
-  transition: none;
-}
-
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: var(--foreground);
-  color: var(--background);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--foreground);
-  border: 1px solid var(--border);
-}
-
-.btn-outline:hover:not(:disabled) {
-  border-color: var(--accent-hover);
-  color: var(--accent-hover);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--foreground);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  color: var(--accent-hover);
-}
-
-.btn-sm {
-  height: 2rem;
-  padding: 0 0.875rem;
-  font-size: 0.6875rem;
-}
-
-/* ============================================================================
-   Inputs
-   ========================================================================= */
-
-.search-wrapper {
-  position: relative;
-  flex: 1;
-  max-width: 28rem;
-}
-
-.search-input {
-  width: 100%;
-  height: 2.75rem;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--foreground);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  padding: 0 1rem 0 2.75rem;
-  outline: none;
-  transition: none;
-}
-
-.search-input::placeholder { color: var(--muted-foreground); }
-
-.search-input:focus {
-  border-bottom-width: 3px;
-  border-bottom-color: var(--accent-hover);
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted-foreground);
-  pointer-events: none;
-}
-
-.search-wrapper:focus-within .search-icon { color: var(--accent-hover); }
-
-.search-input--hero {
-  height: 3.5rem;
-  font-size: var(--text-lg);
-  padding-left: 3.25rem;
-  border-bottom-width: 2px;
-}
-
-.search-wrapper--hero { max-width: 100%; }
-.search-wrapper--hero .search-icon { left: 1.125rem; }
-
-@media (max-width: 560px) {
-  .search-wrapper { max-width: 100%; }
-}
-
-/* ============================================================================
-   Reduced motion — pulses stand down.
-   ========================================================================= */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -350,5 +194,15 @@ a:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+    transition-property: color, background-color, border-color, opacity, box-shadow, visibility !important;
+  }
+
+  .icon-action-btn:hover,
+  .icon-action-btn:active,
+  .btn:active,
+  .mobile-theme-btn:active,
+  .mobile-tab-link:active,
+  .cmd-trigger-btn:active {
+    transform: none;
   }
 }

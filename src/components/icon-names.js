@@ -1,29 +1,70 @@
-/**
- * The exact Material Symbols glyphs this app uses.
- *
- * This list MUST stay identical to the `icon_names=` query parameter on the
- * Material Symbols <link> in index.html. Google subsets the font to those
- * names (~6KB); an icon rendered but not listed there does not 404 — it makes
- * the API fall back to serving the entire 1.2MB font.
- *
- * Kept in its own module so Icon.jsx exports only a component (react-refresh).
- */
-export const ICONS = [
-  'album',
-  'arrow_forward',
-  'bar_chart',
-  'chevron_left',
-  'chevron_right',
-  'close',
-  'dark_mode',
-  'database',
-  'graphic_eq',
-  'light_mode',
-  'mic',
-  'music_note',
-  'open_in_new',
-  'playlist_play',
-  'radio',
-  'search',
-  'trophy',
-];
+// Canonical Lucide icon map and legacy Material Symbols alias table for Icon.jsx.
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  AudioLines,
+  Ban,
+  BarChart3,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Database,
+  Disc3,
+  ExternalLink,
+  ListMusic,
+  Mic,
+  Moon,
+  Music,
+  PlayCircle,
+  Radio,
+  Search,
+  SlidersHorizontal,
+  Sun,
+  Trophy,
+  X,
+} from 'lucide-react';
+
+export const ICON_MAP = {
+  // Canonical Lucide icon keys
+  overview: BarChart3,
+  artists: Mic,
+  songs: Music,
+  episodes: Radio,
+  search: Search,
+  sun: Sun,
+  moon: Moon,
+  database: Database,
+  external: ExternalLink,
+  close: X,
+  'chevron-left': ChevronLeft,
+  'chevron-right': ChevronRight,
+  'arrow-left': ArrowLeft,
+  'arrow-right': ArrowRight,
+  'arrow-up-right': ArrowUpRight,
+  album: Disc3,
+  playlist: ListMusic,
+  calendar: Calendar,
+  alert: AlertCircle,
+  filter: SlidersHorizontal,
+  compass: Compass,
+
+  // Legacy Material Symbols aliases (removed incrementally across Tickets 03-07)
+  bar_chart: BarChart3,
+  mic: Mic,
+  music_note: Music,
+  radio: Radio,
+  light_mode: Sun,
+  dark_mode: Moon,
+  chevron_left: ChevronLeft,
+  chevron_right: ChevronRight,
+  arrow_forward: ArrowRight,
+  open_in_new: ExternalLink,
+  playlist_play: ListMusic,
+  trophy: Trophy,
+  graphic_eq: AudioLines,
+  play_circle: PlayCircle,
+  music_off: Ban,
+};

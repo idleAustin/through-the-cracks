@@ -1,0 +1,159 @@
+/* Mobile shell chrome (<= 768px): sticky top bar, safe-area padding, and fixed bottom tab bar. */
+
+.mobile-topbar,
+.mobile-bottom-tabs {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: block;
+  }
+
+  .cockpit-sidebar {
+    display: none;
+  }
+
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: calc(52px + var(--as-safe-top));
+    padding: var(--as-safe-top) max(16px, var(--as-safe-right)) 0 max(16px, var(--as-safe-left));
+    background: var(--as-bg-surface);
+    border-bottom: 1px solid var(--as-border-subtle);
+  }
+
+  .mobile-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .mobile-wordmark {
+    font-family: var(--as-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--as-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-station {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--as-font-body);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--as-text-secondary);
+  }
+
+  .mobile-theme-btn {
+    width: auto;
+    height: var(--as-tap-min);
+    min-width: var(--as-tap-min);
+    min-height: var(--as-tap-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--as-bg-base);
+    border: 1px solid var(--as-border-strong);
+    border-radius: var(--as-radius-sm);
+    color: var(--as-text-secondary);
+    font-family: var(--as-font-body);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--as-duration-normal) ease,
+                border-color var(--as-duration-normal) ease,
+                color var(--as-duration-normal) ease,
+                transform var(--as-duration-fast) var(--as-ease-snap);
+  }
+
+  .mobile-theme-label {
+    white-space: nowrap;
+  }
+
+  .mobile-theme-btn:active {
+    background: var(--as-accent-muted);
+    border-color: var(--as-accent-fg);
+    color: var(--as-accent-fg);
+    transform: scale(0.95);
+  }
+
+  .app-work-area {
+    padding: 16px max(16px, var(--as-safe-right)) calc(76px + var(--as-safe-bottom)) max(16px, var(--as-safe-left));
+  }
+
+  .mobile-bottom-tabs {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 8px;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 50;
+    padding: 6px max(8px, var(--as-safe-right)) max(6px, var(--as-safe-bottom)) max(8px, var(--as-safe-left));
+    background: var(--as-bg-surface);
+    border-top: 1px solid var(--as-border-subtle);
+  }
+
+  .mobile-tab-link {
+    flex: 1;
+    min-width: 0;
+    min-height: var(--as-tap-min);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 2px;
+    border-radius: var(--as-radius-sm);
+    color: var(--as-text-secondary);
+    text-decoration: none;
+    font-family: var(--as-font-body);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    -webkit-tap-highlight-color: transparent;
+    transition: color var(--as-duration-fast) ease,
+                background-color var(--as-duration-fast) ease,
+                transform var(--as-duration-fast) var(--as-ease-snap);
+  }
+
+  .mobile-tab-link:active {
+    background: var(--as-bg-overlay);
+    transform: scale(0.96);
+  }
+
+  .mobile-tab-link.is-active {
+    color: var(--as-text-primary);
+    font-weight: 600;
+  }
+
+  .mobile-tab-link.is-active .as-icon {
+    color: var(--as-accent-fg);
+  }
+
+  .mobile-tab-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+

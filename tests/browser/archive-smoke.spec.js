@@ -67,22 +67,23 @@ test.describe('archive baseline & token contract smoke', () => {
     await expect(artistDialog).toBeHidden();
 
     // Artists view + search
-    await page.getByRole('button', { name: 'Artists' }).click();
+    const primaryNav = page.getByRole('navigation', { name: 'Primary navigation' });
+    await primaryNav.getByRole('link', { name: 'Artists' }).click();
     await expect(page.getByRole('heading', { name: 'Artist Directory' })).toBeVisible();
     await expect(page.locator('#artists-table')).toContainText('Todd Snider');
     await page.getByRole('searchbox', { name: 'Search artists' }).fill('Lucinda');
     await expect(page.locator('#artists-table')).toContainText('Lucinda Williams');
 
     // Songs view + search
-    await page.getByRole('button', { name: 'Songs' }).click();
+    await primaryNav.getByRole('link', { name: 'Songs' }).click();
     await expect(page.getByRole('heading', { name: 'Song Library' })).toBeVisible();
     await expect(page.locator('#songs-table')).toContainText('50s French Movie');
     await page.getByRole('searchbox', { name: 'Search songs' }).fill('Hobo Lady');
     await expect(page.locator('#songs-table')).toContainText('McKendree Spring');
 
     // Episodes view + playlist dialog
-    await page.getByRole('button', { name: 'Episodes' }).click();
-    await expect(page.getByRole('heading', { name: 'Show Playlist Archive' })).toBeVisible();
+    await primaryNav.getByRole('link', { name: 'Episodes' }).click();
+    await expect(page.getByRole('heading', { name: 'Episode Playlist Archive' })).toBeVisible();
     await expect(page.locator('#episodes-table')).toContainText('2026-08-08');
     await page.locator('#episodes-table tbody tr').first().click();
 
@@ -93,8 +94,8 @@ test.describe('archive baseline & token contract smoke', () => {
     await expect(episodeDialog).toBeHidden();
 
     // Search view
-    await page.getByRole('button', { name: 'Search' }).click();
+    await primaryNav.getByRole('link', { name: 'Search' }).click();
     await page.getByRole('searchbox', { name: 'Search the catalog' }).fill('Prine');
-    await expect(page.getByRole('button', { name: /^John Prine \d+ plays$/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^John Prine \d+ spins$/ })).toBeVisible();
   });
 });

@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+// Global catalog search view with debounced queries, loading skeletons, and empty/error states.
+import React, { useEffect, useState } from 'react';
 import { searchAll } from '../api';
+import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 
-/**
- * One result column. The icon + label carries group distinction since the
- * palette is monochrome at rest.
- */
 function ResultPanel({ icon, title, count, empty, children }) {
   return (
     <section className="ink-panel panel-pad">
@@ -25,35 +23,58 @@ export default function SearchView({ onSelectArtist }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!query || query.trim().length < 2) {
       setResults(null);
-      return;
+      setError('');
+      setLoading(false);
+      return undefined;
     }
 
+    let isMounted = true;
     const timer = setTimeout(() => {
       setLoading(true);
-      searchAll(query).then(res => {
-        setResults(res.data);
-        setLoading(false);
-      });
+      setError('');
+      searchAll(query)
+        .then((res) => {
+          if (isMounted) {
+            setResults(res.data);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (isMounted) {
+            setError(err?.message || 'Could not search archive catalog.');
+            setLoading(false);
+          }
+        });
     }, 250);
 
-    return () => clearTimeout(timer);
-  }, [query]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [query, retryKey]);
+
+  const totalMatches = results
+    ? (results.artists?.length || 0) + (results.songs?.length || 0) + (results.albums?.length || 0)
+    : 0;
 
   return (
     <div className="ink-panel panel-pad-lg">
       <div className="search-hero">
         <h2>Global Catalog Search</h2>
-        <p>Search instantly across 36,000+ song plays, 1,600+ artists, and 6,000+ albums</p>
+        <p>Search instantly across 36,000+ spins, 1,600+ artists, and 6,000+ albums</p>
 
         <div className="search-wrapper search-wrapper--hero">
           <Icon name="search" className="search-icon" size="lg" />
           <input
             id="global-search-input"
             type="search"
+            enterKeyHint="search"
             className="search-input search-input--hero"
             placeholder="Artist, song, or album…"
             aria-label="Search the catalog"
@@ -64,14 +85,13 @@ export default function SearchView({ onSelectArtist }) {
         </div>
       </div>
 
-      {loading && (
-        <div className="state-block state-block--loading">
-          <Icon name="graphic_eq" />
-          Searching catalog…
-        </div>
-      )}
-
-      {results && !loading && (
+      {loading ? (
+        <SkeletonRows count={4} label="Searching catalog" />
+      ) : error ? (
+        <ArchiveErrorState message={error} onRetry={() => setRetryKey((k) => k + 1)} />
+      ) : results && totalMatches === 0 ? (
+        <EmptyFilterState items="catalog entries" onClear={() => setQuery('')} />
+      ) : results ? (
         <div className="grid-auto">
           <ResultPanel
             icon="mic"
@@ -91,7 +111,7 @@ export default function SearchView({ onSelectArtist }) {
                     <span className="list-row-title">{artist.name}</span>
                   </span>
                 </span>
-                <span className="metric-value">{artist.plays} plays</span>
+                <span className="metric-value">{artist.plays} spins</span>
               </button>
             ))}
           </ResultPanel>
@@ -134,7 +154,7 @@ export default function SearchView({ onSelectArtist }) {
             ))}
           </ResultPanel>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -1,14 +1,15 @@
+// Overview dashboard displaying KPI summaries, archive timeline, and top artist/song lists.
 import React from 'react';
+import { ArchiveErrorState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 
-export default function OverviewView({ data, onSelectArtist }) {
-  if (!data) {
-    return (
-      <div className="state-block state-block--loading">
-        <Icon name="graphic_eq" />
-        Loading overview stats…
-      </div>
-    );
+export default function OverviewView({ data, loading, error, onRetry, onSelectArtist }) {
+  if (error) {
+    return <ArchiveErrorState message={error} onRetry={onRetry} />;
+  }
+
+  if (loading || !data) {
+    return <SkeletonRows count={4} label="Loading overview" />;
   }
 
   const kpis = [
@@ -20,9 +21,9 @@ export default function OverviewView({ data, onSelectArtist }) {
     },
     {
       id: 'kpi-plays',
-      label: 'Song Plays',
+      label: 'Song Spins',
       value: data.totalSongPlays,
-      sub: 'Individual track spins',
+      sub: 'Individual song spins',
     },
     {
       id: 'kpi-artists',
@@ -41,7 +42,7 @@ export default function OverviewView({ data, onSelectArtist }) {
   return (
     <div className="section-stack">
       <div className="kpi-grid">
-        {kpis.map(kpi => (
+        {kpis.map((kpi) => (
           <div key={kpi.id} className="ink-panel kpi-card">
             <div className="kpi-label">{kpi.label}</div>
             <div className="kpi-value" id={kpi.id}>{kpi.value?.toLocaleString()}</div>
@@ -50,7 +51,6 @@ export default function OverviewView({ data, onSelectArtist }) {
         ))}
       </div>
 
-      {/* Archive timeline — highlighted with thick top rule. */}
       <div className="ink-panel ink-panel--highlight timeline-banner">
         <div>
           <div className="eyebrow">WEVL 89.9 FM Digital Archive Timeline</div>
@@ -60,16 +60,15 @@ export default function OverviewView({ data, onSelectArtist }) {
             <span>{data.dateRange?.latest}</span>
           </div>
         </div>
-        <span className="badge badge-accent">On air since Dec 7, 1991 · 34+ years of Memphis radio</span>
+        <span className="badge">On air since Dec 7, 1991 · 34+ years of Memphis radio</span>
       </div>
 
       <div className="grid-auto">
-        {/* Top artists */}
         <section className="ink-panel panel-pad">
           <div className="panel-header">
             <h3 className="panel-title">
               <Icon name="trophy" />
-              Most Played Artists
+              Most Spun Artists
             </h3>
             <span className="badge">All-time</span>
           </div>
@@ -89,18 +88,17 @@ export default function OverviewView({ data, onSelectArtist }) {
                   </span>
                   <span className="list-row-title">{artist.name}</span>
                 </span>
-                <span className="metric-value">{artist.plays} plays</span>
+                <span className="metric-value">{artist.plays} spins</span>
               </button>
             ))}
           </div>
         </section>
 
-        {/* Top songs */}
         <section className="ink-panel panel-pad">
           <div className="panel-header">
             <h3 className="panel-title">
               <Icon name="music_note" />
-              Top Played Tracks
+              Top Spun Songs
             </h3>
             <span className="badge">Most spun</span>
           </div>

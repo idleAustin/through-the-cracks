@@ -1,67 +1,151 @@
+// Responsive cockpit navigation chrome: desktop left sidebar rail, mobile top bar, and mobile bottom tab bar.
 import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { useTheme } from '../theme';
 import Icon from './Icon';
+import Tooltip from './Tooltip';
 
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: 'bar_chart' },
-  { id: 'artists', label: 'Artists', icon: 'mic' },
-  { id: 'songs', label: 'Songs', icon: 'music_note' },
-  { id: 'episodes', label: 'Episodes', icon: 'radio' },
-  { id: 'search', label: 'Search', icon: 'search' },
+const NAV_ITEMS = [
+  { to: '/', label: 'Overview', icon: 'overview', end: true },
+  { to: '/artists', label: 'Artists', icon: 'artists', end: false },
+  { to: '/songs', label: 'Songs', icon: 'songs', end: false },
+  { to: '/episodes', label: 'Episodes', icon: 'episodes', end: false },
+  { to: '/search', label: 'Search', icon: 'search', end: false },
 ];
 
-export default function Header({ activeTab, setActiveTab, dataSource, theme, onToggleTheme }) {
-  const isLive = dataSource === 'express-api';
-  const isDark = theme === 'dark';
+function getQuickJumpShortcut() {
+  if (typeof navigator === 'undefined') return 'Ctrl+K';
+  const platform = navigator.platform || navigator.userAgent || '';
+  return /Mac|iPhone|iPad|iPod/i.test(platform) ? '⌘K' : 'Ctrl+K';
+}
+
+function getThemeToggleMeta(resolvedTheme) {
+  const toLight = resolvedTheme === 'dark';
+  return {
+    label: toLight ? 'Switch to light theme' : 'Switch to dark theme',
+    shortLabel: toLight ? 'Light' : 'Dark',
+    icon: toLight ? 'sun' : 'moon',
+  };
+}
+
+export function CockpitSidebar({ archiveMode, totalSpins, onQuickJump }) {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const isLive = archiveMode === 'live';
+  const themeMeta = getThemeToggleMeta(resolvedTheme);
+  const shortcutLabel = getQuickJumpShortcut();
+  const spinsText = totalSpins != null ? `${totalSpins.toLocaleString('en-US')} spins` : '— spins';
 
   return (
-    <header className="navbar">
-      <div className="logo-section">
-        <div>
-          <div className="brand-title">Through the Cracks</div>
-          <div className="brand-subtitle">WEVL 89.9 FM · Memphis, TN</div>
+    <aside className="cockpit-sidebar" aria-label="Archive cockpit">
+      <div className="cockpit-top">
+        <div className="cockpit-brand">
+          <div className="cockpit-wordmark">Through the Cracks</div>
+          <span className="status-badge">
+            <span className={`status-dot ${isLive ? 'is-live' : 'is-static'}`} aria-hidden="true" />
+            <span>{isLive ? 'WEVL 89.9 · BigQuery Live' : 'WEVL 89.9 · Static Snapshot'}</span>
+          </span>
         </div>
-      </div>
-
-      <nav className="nav-links" aria-label="Primary">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            id={`nav-${tab.id}`}
-            className={`nav-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            aria-label={tab.label}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
-          >
-            <Icon name={tab.icon} size="sm" />
-            <span className="nav-btn-label">{tab.label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="header-actions">
-        {isLive ? (
-          <span
-            className="badge badge-accent badge-live"
-            title="Connected to Express API & BigQuery dataset"
-          >
-            Live · BigQuery
-          </span>
-        ) : (
-          <span className="badge" title="Reading from pre-computed static JSON files">
-            <Icon name="database" size="sm" />
-            Local JSON
-          </span>
-        )}
 
         <button
-          className="theme-toggle"
-          onClick={onToggleTheme}
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          title={isDark ? 'Light mode' : 'Dark mode'}
+          type="button"
+          className="cmd-trigger-btn"
+          onClick={onQuickJump}
+          aria-label={`Quick jump (${shortcutLabel})`}
         >
-          <Icon name={isDark ? 'light_mode' : 'dark_mode'} size="sm" />
+          <span className="cmd-trigger-left">
+            <Icon name="search" size="sm" />
+            <span>Quick jump</span>
+          </span>
+          <kbd className="kbd">{shortcutLabel}</kbd>
         </button>
+
+        <nav className="cockpit-nav" aria-label="Primary navigation">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                isActive ? 'cockpit-nav-link is-active' : 'cockpit-nav-link'
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span className="cockpit-nav-main">
+                    <Icon name={item.icon} size="sm" />
+                    <span>{item.label}</span>
+                  </span>
+                  {isActive ? <span className="nav-lime-dot" aria-hidden="true" /> : null}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
       </div>
+
+      <div className="cockpit-footer">
+        <span className="cockpit-spins num">{spinsText}</span>
+        <div className="icon-dock" role="toolbar" aria-label="Appearance controls">
+          <Tooltip label={themeMeta.label} position="left">
+            <button
+              type="button"
+              className="icon-action-btn"
+              onClick={toggleTheme}
+              aria-label={themeMeta.label}
+            >
+              <Icon name={themeMeta.icon} size="sm" />
+            </button>
+          </Tooltip>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+export function MobileTopBar({ archiveMode }) {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const isLive = archiveMode === 'live';
+  const themeMeta = getThemeToggleMeta(resolvedTheme);
+
+  return (
+    <header className="mobile-topbar">
+      <div className="mobile-brand">
+        <div className="mobile-wordmark">Through the Cracks</div>
+        <span className="mobile-station">
+          <span className={`status-dot ${isLive ? 'is-live' : 'is-static'}`} aria-hidden="true" />
+          <span>WEVL 89.9 FM</span>
+        </span>
+      </div>
+
+      <button
+        type="button"
+        className="mobile-theme-btn"
+        onClick={toggleTheme}
+        aria-label={themeMeta.label}
+      >
+        <Icon name={themeMeta.icon} size="sm" />
+        <span className="mobile-theme-label">{themeMeta.shortLabel}</span>
+      </button>
     </header>
+  );
+}
+
+export function MobileBottomTabs() {
+  return (
+    <nav className="mobile-bottom-tabs" aria-label="Primary navigation">
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          className={({ isActive }) =>
+            isActive ? 'mobile-tab-link is-active' : 'mobile-tab-link'
+          }
+        >
+          <Icon name={item.icon} size="sm" />
+          <span className="mobile-tab-label">{item.label}</span>
+        </NavLink>
+      ))}
+    </nav>
   );
 }

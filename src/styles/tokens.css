@@ -6,8 +6,6 @@
    Tagline: "Mostly idle. There probably was an easier way to do this."
    ======================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Geist:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;

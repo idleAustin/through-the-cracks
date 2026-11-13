@@ -7,10 +7,39 @@
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api');
 
+let currentMode = null;
+const archiveModeListeners = new Set();
+
+function setArchiveMode(nextMode) {
+  if (nextMode === currentMode) return;
+  currentMode = nextMode;
+  for (const listener of archiveModeListeners) {
+    listener(nextMode);
+  }
+}
+
+export function getArchiveMode() {
+  return currentMode ?? 'static';
+}
+
+export function subscribeArchiveMode(listener) {
+  archiveModeListeners.add(listener);
+  return () => {
+    archiveModeListeners.delete(listener);
+  };
+}
+
 function getStaticPath(relativePath) {
   const base = import.meta.env.BASE_URL || '/';
   const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
   return base.endsWith('/') ? `${base}${cleanPath}` : `${base}/${cleanPath}`;
+}
+
+async function fetchStaticJson(relativePath) {
+  const fullStaticPath = getStaticPath(relativePath);
+  const jsonResponse = await fetch(fullStaticPath);
+  if (!jsonResponse.ok) throw new Error(`Failed to load data from ${fullStaticPath}`);
+  return jsonResponse.json();
 }
 
 async function fetchWithFallback(apiEndpoint, staticJsonPath) {
@@ -21,18 +50,17 @@ async function fetchWithFallback(apiEndpoint, staticJsonPath) {
     clearTimeout(timeoutId);
     if (response.ok) {
       const data = await response.json();
-      return { data, source: 'express-api' };
+      setArchiveMode('live');
+      return { data, source: 'express-api', mode: 'live' };
     }
   } catch {
     // API server unreachable or timed out -> fallback to static JSON
   }
 
   // Fallback to static JSON file
-  const fullStaticPath = getStaticPath(staticJsonPath);
-  const jsonResponse = await fetch(fullStaticPath);
-  if (!jsonResponse.ok) throw new Error(`Failed to load data from ${fullStaticPath}`);
-  const data = await jsonResponse.json();
-  return { data, source: 'static-json' };
+  const data = await fetchStaticJson(staticJsonPath);
+  setArchiveMode('static');
+  return { data, source: 'static-json', mode: 'static' };
 }
 
 export async function getOverview() {
@@ -60,7 +88,8 @@ export async function getEpisodes(page = 1, limit = 20) {
           totalPages: Math.ceil(allEpisodes.length / limit)
         }
       },
-      source: 'static-json'
+      source: 'static-json',
+      mode: 'static'
     };
   } catch (err) {
     console.error('Error fetching episodes:', err);
@@ -77,7 +106,7 @@ export async function getEpisodeById(id) {
     const allEpisodes = result.data;
     const match = allEpisodes.find(e => e.id === id);
     if (!match) throw new Error('Episode not found');
-    return { data: match, source: 'static-json' };
+    return { data: match, source: 'static-json', mode: 'static' };
   } catch (err) {
     console.error('Error fetching episode details:', err);
     throw err;
@@ -108,7 +137,8 @@ export async function getArtists(search = '', page = 1, limit = 20) {
           totalPages: Math.ceil(allArtists.length / limit)
         }
       },
-      source: 'static-json'
+      source: 'static-json',
+      mode: 'static'
     };
   } catch (err) {
     console.error('Error fetching artists:', err);
@@ -117,7 +147,9 @@ export async function getArtists(search = '', page = 1, limit = 20) {
 }
 
 export async function searchAll(query) {
-  if (!query || query.trim().length < 2) return { data: { artists: [], songs: [], albums: [] }, source: 'static-json' };
+  if (!query || query.trim().length < 2) {
+    return { data: { artists: [], songs: [], albums: [] }, source: 'static-json', mode: 'static' };
+  }
   try {
     const q = encodeURIComponent(query.trim());
     const result = await fetchWithFallback(`/search?q=${q}`, '/data/artists.json');
@@ -127,9 +159,9 @@ export async function searchAll(query) {
     
     // Fallback: query local JSON files in parallel
     const [artistsRes, songsRes, albumsRes] = await Promise.all([
-      fetch(getStaticPath('data/artists.json')).then(r => r.json()),
-      fetch(getStaticPath('data/songs.json')).then(r => r.json()),
-      fetch(getStaticPath('data/albums.json')).then(r => r.json())
+      fetchStaticJson('data/artists.json'),
+      fetchStaticJson('data/songs.json'),
+      fetchStaticJson('data/albums.json')
     ]);
 
     const term = query.toLowerCase();
@@ -143,11 +175,12 @@ export async function searchAll(query) {
         songs: matchedSongs.map(s => ({ artist: s.artist, songTitle: s.songTitle, album: s.albums?.[0] || '', plays: s.totalPlays })),
         albums: matchedAlbums.map(a => ({ artist: a.artist, album: a.album, plays: a.totalPlays }))
       },
-      source: 'static-json'
+      source: 'static-json',
+      mode: 'static'
     };
   } catch (err) {
     console.error('Search error:', err);
-    return { data: { artists: [], songs: [], albums: [] }, source: 'static-json' };
+    throw err;
   }
 }
 
@@ -186,7 +219,8 @@ export async function getSongs(search = '', page = 1, limit = 20) {
           totalPages: Math.ceil(allSongs.length / limit)
         }
       },
-      source: 'static-json'
+      source: 'static-json',
+      mode: 'static'
     };
   } catch (err) {
     console.error('Error fetching songs:', err);
@@ -224,7 +258,8 @@ export async function getArtistSongs(artistName) {
           lastPlayed: '',
         }))
       },
-      source: 'static-json'
+      source: 'static-json',
+      mode: 'static'
     };
   } catch (err) {
     console.error('Error fetching artist songs:', err);

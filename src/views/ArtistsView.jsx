@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+// Artist directory view with search filter, loading skeletons, empty/error states, and pagination.
+import React, { useEffect, useRef, useState } from 'react';
 import { getArtists } from '../api';
+import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 import Pagination from '../components/Pagination';
 
@@ -8,22 +10,44 @@ export default function ArtistsView({ initialSearch = '', onSelectArtist }) {
   const [page, setPage] = useState(1);
   const [artistsData, setArtistsData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const inFlightRef = useRef({ key: null, promise: null });
 
   useEffect(() => {
     let isMounted = true;
+    const requestKey = `${search}:${page}:${retryKey}`;
+    if (inFlightRef.current.key !== requestKey) {
+      inFlightRef.current = { key: requestKey, promise: getArtists(search, page, 20) };
+    }
     setLoading(true);
-    getArtists(search, page, 20).then(res => {
-      if (isMounted) {
-        setArtistsData(res.data);
-        setLoading(false);
-      }
-    });
-    return () => { isMounted = false; };
-  }, [search, page]);
+    setError('');
+    inFlightRef.current.promise
+      .then((res) => {
+        if (isMounted) {
+          setArtistsData(res.data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err?.message || 'Could not load artists.');
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [search, page, retryKey]);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // reset to page 1 on new search
+    setPage(1);
+  };
+
+  const handleClearFilter = () => {
+    setSearch('');
+    setPage(1);
   };
 
   return (
@@ -45,6 +69,7 @@ export default function ArtistsView({ initialSearch = '', onSelectArtist }) {
           <input
             id="artist-search-input"
             type="search"
+            enterKeyHint="search"
             className="search-input"
             placeholder="Search artists (e.g. Dylan, Lucinda, Prine)…"
             aria-label="Search artists"
@@ -55,10 +80,11 @@ export default function ArtistsView({ initialSearch = '', onSelectArtist }) {
       </div>
 
       {loading ? (
-        <div className="state-block state-block--loading">
-          <Icon name="graphic_eq" />
-          Loading artist data…
-        </div>
+        <SkeletonRows label="Loading artists" />
+      ) : error ? (
+        <ArchiveErrorState message={error} onRetry={() => setRetryKey((k) => k + 1)} />
+      ) : !artistsData?.artists?.length ? (
+        <EmptyFilterState items="artists" onClear={handleClearFilter} />
       ) : (
         <>
           <div className="table-container">
@@ -67,15 +93,15 @@ export default function ArtistsView({ initialSearch = '', onSelectArtist }) {
                 <tr>
                   <th>Rank</th>
                   <th>Artist</th>
-                  <th>Plays</th>
+                  <th>Spins</th>
                   <th>Songs</th>
                   <th>Albums</th>
-                  <th>First Played</th>
-                  <th>Last Played</th>
+                  <th>First Spun</th>
+                  <th>Last Spun</th>
                 </tr>
               </thead>
               <tbody>
-                {artistsData?.artists?.map((artist, idx) => {
+                {artistsData.artists.map((artist, idx) => {
                   const rank = ((page - 1) * 20) + idx + 1;
                   return (
                     <tr

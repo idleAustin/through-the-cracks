@@ -7,65 +7,58 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(28, 27, 26, 0.6);
+  background: var(--as-scrim);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1.5rem;
-  animation: fade-in 0ms;
-}
-
-[data-theme="dark"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
+  padding: max(16px, var(--as-safe-top)) max(16px, var(--as-safe-right)) max(16px, var(--as-safe-bottom)) max(16px, var(--as-safe-left));
 }
 
 .modal-content {
-  background: var(--background);
-  border: 2px solid var(--border);
-  border-radius: 0;
+  background: var(--as-bg-surface);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-lg);
+  box-shadow: var(--as-shadow-float);
   max-width: 46rem;
   width: 100%;
-  max-height: 85vh;
+  max-height: 85dvh;
   display: flex;
   flex-direction: column;
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  overflow: hidden;
 }
 
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 2px solid var(--border);
+  padding: 20px;
+  border-bottom: 1px solid var(--as-border-subtle);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .modal-title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   font-weight: 700;
-  margin-top: 0.5rem;
+  margin-top: 8px;
   letter-spacing: var(--tracking-tight);
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 20px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .modal-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-light);
   font-size: var(--text-sm);
   color: var(--muted-foreground);
@@ -74,37 +67,60 @@
 .modal-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 6px;
   color: var(--foreground);
   text-decoration: underline;
 }
 
-.modal-link:hover { color: var(--accent-hover); }
-
-.modal-link .material-symbols-rounded { color: inherit; }
+@media (hover: hover) and (pointer: fine) {
+  .modal-link:hover {
+    color: var(--accent-hover);
+  }
+}
 
 .close-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--foreground);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  background: var(--as-bg-base);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-secondary);
   cursor: pointer;
-  border-radius: 0;
-  transition: none;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--as-duration-normal) ease,
+              border-color var(--as-duration-normal) ease,
+              color var(--as-duration-normal) ease,
+              transform var(--as-duration-fast) var(--as-ease-snap);
 }
 
-.close-btn:hover {
-  background: var(--accent-hover);
-  color: var(--background);
-  border-color: var(--accent-hover);
+@media (pointer: coarse) {
+  .close-btn {
+    width: var(--as-tap-min);
+    height: var(--as-tap-min);
+    min-width: var(--as-tap-min);
+    min-height: var(--as-tap-min);
+  }
 }
 
-.close-btn .material-symbols-rounded { color: inherit; }
+@media (hover: hover) and (pointer: fine) {
+  .close-btn:hover {
+    color: var(--as-accent-fg);
+    border-color: var(--as-accent-fg);
+    background: var(--as-bg-elevated);
+  }
+}
+
+.close-btn:active {
+  transform: scale(0.95);
+  background: var(--as-accent-muted);
+  color: var(--as-accent-fg);
+}
 
 .modal-content--wide {
   max-width: 62rem;
@@ -114,31 +130,31 @@
 
 .artist-modal-stats {
   display: flex;
-  gap: 1.5rem;
+  gap: 20px;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.25rem;
+  margin-bottom: 20px;
+  padding: 14px 18px;
   background: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--as-radius-md);
 }
 
 .artist-stat {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   color: var(--muted-foreground);
   font-size: var(--text-sm);
 }
 
-.artist-stat .material-symbols-rounded {
+.artist-stat .as-icon {
   color: var(--foreground);
-  font-size: 1.125rem;
 }
 
 .artist-stat-value {
   font-family: var(--font-mono);
-  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
   font-size: var(--text-lg);
   color: var(--foreground);
   letter-spacing: var(--tracking-tight);
@@ -152,7 +168,7 @@
 }
 
 /* ============================================================================
-   Tracklist
+   Playlist rows
    ========================================================================= */
 
 .track-list {
@@ -164,28 +180,38 @@
 .track-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0.5rem;
-  border-radius: 0;
+  gap: 14px;
+  padding: 10px 8px;
+  border-radius: var(--as-radius-sm);
   background: transparent;
   border-bottom: 1px solid var(--border-light);
-  transition: none;
+  transition: background-color var(--as-duration-fast) ease;
 }
 
-.track-item:last-child { border-bottom: none; }
+.track-item:last-child {
+  border-bottom: none;
+}
 
-.track-item:hover { background: var(--accent-hover-muted); }
+@media (hover: hover) and (pointer: fine) {
+  .track-item:hover {
+    background: var(--as-bg-elevated);
+  }
+}
 
 .track-num {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
   font-weight: 500;
   color: var(--muted-foreground);
-  width: 1.5rem;
+  width: 24px;
   flex-shrink: 0;
 }
 
-.track-info { min-width: 0; flex: 1; }
+.track-info {
+  min-width: 0;
+  flex: 1;
+}
 
 .track-title {
   font-weight: 600;
@@ -198,5 +224,7 @@
   color: var(--muted-foreground);
 }
 
-.track-artist { color: var(--foreground); font-weight: 500; }
-
+.track-artist {
+  color: var(--foreground);
+  font-weight: 500;
+}
