@@ -122,7 +122,7 @@ test.describe('archive data states and unknown route recovery', () => {
     }
 
     await page.locator('#global-search-input').fill('Prine');
-    const searchRow = page.locator('.list-row--clickable').first();
+    const searchRow = page.locator('#search-artists-table tbody tr:visible, .m-card:visible').first();
     await expect(searchRow).toBeVisible();
     expect((await searchRow.boundingBox()).height).toBeGreaterThanOrEqual(44);
 

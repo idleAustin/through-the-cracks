@@ -10,4 +10,6 @@
 @import './styles/catalog.css';
 @import './styles/overview.css';
 @import './styles/overview-cards.css';
+@import './styles/command-palette.css';
+@import './styles/search.css';
 @import './styles/overlays.css';

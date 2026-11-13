@@ -88,7 +88,8 @@ test.describe('archive baseline & token contract smoke', () => {
 
     // Search view
     await primaryNav.getByRole('link', { name: 'Search' }).click();
+    await expect(page.getByRole('heading', { name: 'Catalog Search', level: 1 })).toBeVisible();
     await page.getByRole('searchbox', { name: 'Search the catalog' }).fill('Prine');
-    await expect(page.getByRole('button', { name: /^John Prine \d+ spins$/ })).toBeVisible();
+    await expect(page.locator('#search-artists-table:visible, .m-card-stack:visible').first()).toContainText('John Prine');
   });
 });

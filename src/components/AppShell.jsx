@@ -1,43 +1,43 @@
-// Application shell coordinating live/static archive mode telemetry, quick-jump keyboard shortcuts, and main canvas.
-import React, { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// Application shell coordinating live/static archive mode telemetry, Command Palette shortcuts, and main canvas.
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getArchiveMode, subscribeArchiveMode } from '../api';
+import CommandPalette from './CommandPalette';
 import { CockpitSidebar, MobileBottomTabs, MobileTopBar } from './Header';
 
-export default function AppShell({ totalSpins, children }) {
+export default function AppShell({ totalSpins, latestEpisodeId = null, children }) {
   const [archiveMode, setArchiveMode] = useState(() => getArchiveMode());
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const previousFocusRef = useRef(null);
 
-  useEffect(() => {
-    setArchiveMode(getArchiveMode());
-    return subscribeArchiveMode((nextMode) => {
-      setArchiveMode(nextMode);
+  useEffect(() => subscribeArchiveMode(setArchiveMode), []);
+
+  const openPalette = useCallback(() => {
+    if (!paletteOpen && document.activeElement instanceof HTMLElement) {
+      previousFocusRef.current = document.activeElement;
+    }
+    setPaletteOpen(true);
+  }, [paletteOpen]);
+
+  const closePalette = useCallback(() => {
+    setPaletteOpen(false);
+    const target = previousFocusRef.current;
+    previousFocusRef.current = null;
+    window.requestAnimationFrame(() => {
+      if (target && typeof target.focus === 'function' && target.isConnected) {
+        target.focus();
+      }
     });
   }, []);
-
-  const handleQuickJump = useCallback(() => {
-    const focusSearchInput = () => {
-      const input = document.getElementById('global-search-input');
-      if (input) {
-        input.focus();
-      }
-    };
-
-    if (location.pathname !== '/search') {
-      navigate('/search');
-      window.setTimeout(focusSearchInput, 0);
-      return;
-    }
-
-    focusSearchInput();
-  }, [location.pathname, navigate]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
       if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        handleQuickJump();
+        if (paletteOpen) {
+          closePalette();
+        } else {
+          openPalette();
+        }
       }
     };
 
@@ -45,7 +45,7 @@ export default function AppShell({ totalSpins, children }) {
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [handleQuickJump]);
+  }, [closePalette, openPalette, paletteOpen]);
 
   return (
     <div className="app-root">
@@ -54,7 +54,7 @@ export default function AppShell({ totalSpins, children }) {
         <CockpitSidebar
           archiveMode={archiveMode}
           totalSpins={totalSpins}
-          onQuickJump={handleQuickJump}
+          onQuickJump={openPalette}
         />
 
         <div className="app-content-column">
@@ -65,7 +65,12 @@ export default function AppShell({ totalSpins, children }) {
           <MobileBottomTabs />
         </div>
       </div>
+
+      <CommandPalette
+        isOpen={paletteOpen}
+        onClose={closePalette}
+        latestEpisodeId={latestEpisodeId}
+      />
     </div>
   );
 }
-

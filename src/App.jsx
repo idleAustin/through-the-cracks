@@ -55,7 +55,10 @@ export default function App() {
   };
 
   return (
-    <AppShell totalSpins={overviewData?.totalSongPlays ?? null}>
+    <AppShell
+      totalSpins={overviewData?.totalSongPlays ?? null}
+      latestEpisodeId={overviewData?.latestEpisodeId ?? null}
+    >
       <Routes>
         <Route
           path="/"

@@ -1,0 +1,233 @@
+/* Command palette modal dialog: backdrop, query bar, grouped results, keyboard highlight, and safe-area layout. */
+
+.cmd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(12vh, var(--as-safe-top)) max(16px, var(--as-safe-right)) max(24px, var(--as-safe-bottom)) max(16px, var(--as-safe-left));
+  background: var(--as-scrim);
+}
+
+.cmd-dialog {
+  width: 100%;
+  max-width: 540px;
+  max-height: 74dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--as-bg-elevated);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-lg);
+  box-shadow: var(--as-shadow-float);
+}
+
+.cmd-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-surface);
+  color: var(--as-text-secondary);
+}
+
+.cmd-bar:focus-within {
+  border-bottom-color: var(--as-border-focus);
+}
+
+.cmd-input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--as-tap-min);
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  color: var(--as-text-primary);
+  caret-color: var(--as-accent-fg);
+  font-family: var(--as-font-body);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.cmd-input::placeholder {
+  color: var(--as-text-secondary);
+  opacity: 1;
+}
+
+.cmd-input:focus {
+  outline: none;
+}
+
+.cmd-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 4px 8px;
+  background: var(--as-bg-elevated);
+  border: 1px solid var(--as-border-subtle);
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-secondary);
+  font-family: var(--as-font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--as-duration-fast) ease, border-color var(--as-duration-fast) ease, background-color var(--as-duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cmd-close-btn:hover {
+    color: var(--as-accent-fg);
+    border-color: var(--as-accent-fg);
+    background: var(--as-bg-overlay);
+  }
+}
+
+.cmd-close-btn:active {
+  background: var(--as-accent-muted);
+  color: var(--as-accent-fg);
+}
+
+.cmd-close-btn:focus-visible {
+  outline: 2px solid var(--as-border-focus);
+  outline-offset: 1px;
+}
+
+.cmd-results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmd-group-lbl {
+  padding: 10px 10px 4px;
+  font-family: var(--as-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--as-text-secondary);
+}
+
+.cmd-group-lbl:first-child {
+  padding-top: 4px;
+}
+
+.cmd-row {
+  width: 100%;
+  min-height: var(--as-tap-min);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--as-radius-sm);
+  color: var(--as-text-primary);
+  font-family: var(--as-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--as-duration-fast) ease, border-color var(--as-duration-fast) ease, color var(--as-duration-fast) ease;
+}
+
+.cmd-row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cmd-row-icon {
+  color: var(--as-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cmd-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmd-row-meta {
+  font-family: var(--as-font-mono);
+  font-size: 11px;
+  color: var(--as-text-secondary);
+  flex-shrink: 0;
+}
+
+.cmd-row.is-active,
+.cmd-row[aria-selected="true"] {
+  background: var(--as-bg-overlay);
+  border-color: var(--as-border-strong);
+}
+
+.cmd-row.is-active .cmd-row-icon,
+.cmd-row[aria-selected="true"] .cmd-row-icon {
+  color: var(--as-accent-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cmd-row:hover {
+    background: var(--as-bg-overlay);
+    border-color: var(--as-border-subtle);
+  }
+}
+
+.cmd-row:active {
+  background: var(--as-accent-muted);
+  border-color: var(--as-accent-fg);
+}
+
+.cmd-row:focus-visible {
+  outline: 2px solid var(--as-border-focus);
+  outline-offset: 1px;
+}
+
+.cmd-empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--as-text-secondary);
+}
+
+.cmd-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--as-border-subtle);
+  background: var(--as-bg-base);
+  font-size: 11px;
+  color: var(--as-text-secondary);
+}
+
+.cmd-footer-hints {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .cmd-backdrop {
+    padding: max(16px, var(--as-safe-top)) max(12px, var(--as-safe-right)) max(16px, var(--as-safe-bottom)) max(12px, var(--as-safe-left));
+  }
+
+  .cmd-footer {
+    display: none;
+  }
+}

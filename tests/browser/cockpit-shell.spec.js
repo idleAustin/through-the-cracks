@@ -6,7 +6,7 @@ const ROUTES = [
   { label: 'Artists', path: '/artists', heading: 'Artists', level: 1 },
   { label: 'Songs', path: '/songs', heading: 'Songs', level: 1 },
   { label: 'Episodes', path: '/episodes', heading: 'Episodes', level: 1 },
-  { label: 'Search', path: '/search', heading: 'Global Catalog Search' },
+  { label: 'Search', path: '/search', heading: 'Catalog Search', level: 1 },
 ];
 
 const EXPECTED_FONT_FAMILIES = [

@@ -1,0 +1,166 @@
+/* Catalog search workspace: hero query bar, calm prompt, two-column sections, and responsive mobile layout. */
+
+.search-workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.search-hero-card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.search-hero-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+
+.search-hero-head h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.search-hero-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--as-text-secondary);
+}
+
+.search-hero-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.search-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--as-text-secondary);
+  display: inline-flex;
+  pointer-events: none;
+}
+
+.search-input--hero {
+  width: 100%;
+  min-height: var(--as-tap-min);
+  padding: 10px 14px 10px 42px;
+  background: var(--as-bg-base);
+  border: 1px solid var(--as-border-strong);
+  border-radius: var(--as-radius-md);
+  color: var(--as-text-primary);
+  caret-color: var(--as-accent-fg);
+  font-family: var(--as-font-body);
+  font-size: 16px;
+  line-height: 1.4;
+  transition: border-color var(--as-duration-normal) ease;
+}
+
+.search-input--hero::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-input--hero::placeholder {
+  color: var(--as-text-secondary);
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .search-input--hero:hover:not(:disabled) {
+    border-color: var(--as-text-secondary);
+  }
+}
+
+.search-input--hero:focus-visible {
+  outline: 2px solid var(--as-border-focus);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.search-clear-btn {
+  min-height: var(--as-tap-min);
+  flex-shrink: 0;
+}
+
+.search-guidance {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--as-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.search-guidance-title {
+  margin: 0 0 6px;
+  color: var(--as-text-primary);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.search-guidance-copy {
+  margin: 0;
+  color: var(--as-text-secondary);
+}
+
+.search-results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.search-section-card {
+  min-width: 0;
+}
+
+.search-row-tag {
+  display: inline-block;
+  margin-left: 6px;
+  font-family: var(--as-font-mono);
+  font-size: 11px;
+  color: var(--as-text-secondary);
+}
+
+.search-artist-desktop-btn {
+  width: 100%;
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  .search-results-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.catalog-cockpit.has-inspector .search-results-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 480px) {
+  .search-hero-card {
+    padding: 16px;
+  }
+
+  .search-clear-btn {
+    width: 100%;
+  }
+}
