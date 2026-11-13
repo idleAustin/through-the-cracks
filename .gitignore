@@ -73,3 +73,7 @@ Desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+# ── Boilerplate & Agent Workspaces ────────
+.boilerplate/
+.kennel-hub/
