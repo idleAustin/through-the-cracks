@@ -69,17 +69,17 @@ test.describe('archive baseline & token contract smoke', () => {
     // Artists view + search
     const primaryNav = page.getByRole('navigation', { name: 'Primary navigation' });
     await primaryNav.getByRole('link', { name: 'Artists' }).click();
-    await expect(page.getByRole('heading', { name: 'Artist Directory' })).toBeVisible();
-    await expect(page.locator('#artists-table')).toContainText('Todd Snider');
+    await expect(page.getByRole('heading', { name: 'Artists', level: 1 })).toBeVisible();
+    await expect(page.locator('#artists-table:visible, .m-card-stack:visible')).toContainText('Todd Snider');
     await page.getByRole('searchbox', { name: 'Search artists' }).fill('Lucinda');
-    await expect(page.locator('#artists-table')).toContainText('Lucinda Williams');
+    await expect(page.locator('#artists-table:visible, .m-card-stack:visible')).toContainText('Lucinda Williams');
 
     // Songs view + search
     await primaryNav.getByRole('link', { name: 'Songs' }).click();
-    await expect(page.getByRole('heading', { name: 'Song Library' })).toBeVisible();
-    await expect(page.locator('#songs-table')).toContainText('50s French Movie');
+    await expect(page.getByRole('heading', { name: 'Songs', level: 1 })).toBeVisible();
+    await expect(page.locator('#songs-table:visible, .m-card-stack:visible')).toContainText('50s French Movie');
     await page.getByRole('searchbox', { name: 'Search songs' }).fill('Hobo Lady');
-    await expect(page.locator('#songs-table')).toContainText('McKendree Spring');
+    await expect(page.locator('#songs-table:visible, .m-card-stack:visible')).toContainText('McKendree Spring');
 
     // Episodes view + playlist selection
     await primaryNav.getByRole('link', { name: 'Episodes' }).click();

@@ -5,6 +5,13 @@
  * If the API is offline or unreachable, falls back to pre-computed JSON files in /data/
  */
 import {
+  getStaticArtistSongs,
+  getStaticArtists,
+  getStaticSearchAll,
+  getStaticSongs,
+  parseCatalogOptions,
+} from './api-catalog.js';
+import {
   fetchStaticJson,
   getStaticEpisodeById,
   getStaticEpisodes,
@@ -53,18 +60,14 @@ async function fetchApiJson(apiEndpoint) {
   return null;
 }
 
-async function fetchWithFallback(apiEndpoint, staticJsonPath) {
-  const liveData = await fetchApiJson(apiEndpoint);
+export async function getOverview() {
+  const liveData = await fetchApiJson('/overview');
   if (liveData !== null) {
     return { data: liveData, source: 'express-api', mode: 'live' };
   }
-  const data = await fetchStaticJson(staticJsonPath);
+  const data = await fetchStaticJson('/data/overview.json');
   setArchiveMode('static');
   return { data, source: 'static-json', mode: 'static' };
-}
-
-export async function getOverview() {
-  return fetchWithFallback('/overview', '/data/overview.json');
 }
 
 export async function getEpisodes(optionsOrPage = 1, maybeLimit = 20) {
@@ -127,125 +130,73 @@ export async function getEpisodeById(id) {
   return { data, source: 'static-json', mode: 'static' };
 }
 
-export async function getArtists(search = '', page = 1, limit = 20) {
-  const searchParam = encodeURIComponent(search);
-  const result = await fetchWithFallback(`/artists?search=${searchParam}&page=${page}&limit=${limit}`, '/data/artists.json');
-  if (result.source === 'express-api') return result;
+function buildCatalogQuery({ search, sort, cap, page, limit }) {
+  const params = new URLSearchParams({
+    sort,
+    page: String(page),
+    limit: String(limit),
+  });
+  if (search) params.set('search', search);
+  if (cap) params.set('cap', String(cap));
+  return params.toString();
+}
 
-  let allArtists = result.data;
-  if (search) {
-    const q = search.toLowerCase();
-    allArtists = allArtists.filter((a) => a.name.toLowerCase().includes(q));
+export async function getArtists(optionsOrSearch = '', maybePage = 1, maybeLimit = 25) {
+  const opts = parseCatalogOptions(optionsOrSearch, maybePage, maybeLimit);
+  const liveData = await fetchApiJson(`/artists?${buildCatalogQuery(opts)}`);
+  if (liveData !== null) {
+    const items = liveData.items || liveData.artists || [];
+    return {
+      data: { ...liveData, items, artists: items },
+      source: 'express-api',
+      mode: 'live',
+    };
   }
-  const offset = (page - 1) * limit;
-  const paginated = allArtists.slice(offset, offset + limit);
-  return {
-    data: {
-      artists: paginated,
-      pagination: {
-        page,
-        limit,
-        total: allArtists.length,
-        totalPages: Math.ceil(allArtists.length / limit),
-      },
-    },
-    source: 'static-json',
-    mode: 'static',
-  };
+
+  const data = await getStaticArtists(opts);
+  setArchiveMode('static');
+  return { data, source: 'static-json', mode: 'static' };
+}
+
+export async function getSongs(optionsOrSearch = '', maybePage = 1, maybeLimit = 25) {
+  const opts = parseCatalogOptions(optionsOrSearch, maybePage, maybeLimit);
+  const liveData = await fetchApiJson(`/songs?${buildCatalogQuery(opts)}`);
+  if (liveData !== null) {
+    const items = liveData.items || liveData.songs || [];
+    return {
+      data: { ...liveData, items, songs: items },
+      source: 'express-api',
+      mode: 'live',
+    };
+  }
+
+  const data = await getStaticSongs(opts);
+  setArchiveMode('static');
+  return { data, source: 'static-json', mode: 'static' };
+}
+
+export async function getArtistSongs(artistName) {
+  const liveData = await fetchApiJson(`/artists/${encodeURIComponent(artistName)}/songs`);
+  if (liveData !== null) {
+    return { data: liveData, source: 'express-api', mode: 'live' };
+  }
+
+  const data = await getStaticArtistSongs(artistName);
+  setArchiveMode('static');
+  return { data, source: 'static-json', mode: 'static' };
 }
 
 export async function searchAll(query) {
   if (!query || query.trim().length < 2) {
     return { data: { artists: [], songs: [], albums: [] }, source: 'static-json', mode: 'static' };
   }
-  const q = encodeURIComponent(query.trim());
-  const result = await fetchWithFallback(`/search?q=${q}`, '/data/artists.json');
-  if (result.source === 'express-api') return result;
 
-  const [artistsRes, songsRes, albumsRes] = await Promise.all([
-    fetchStaticJson('data/artists.json'),
-    fetchStaticJson('data/songs.json'),
-    fetchStaticJson('data/albums.json'),
-  ]);
-
-  const term = query.toLowerCase();
-  const matchedArtists = artistsRes.filter((a) => a.name.toLowerCase().includes(term)).slice(0, 10);
-  const matchedSongs = songsRes.filter((s) => s.songTitle.toLowerCase().includes(term) || s.artist.toLowerCase().includes(term)).slice(0, 10);
-  const matchedAlbums = albumsRes.filter((a) => a.album.toLowerCase().includes(term) || a.artist.toLowerCase().includes(term)).slice(0, 10);
-
-  return {
-    data: {
-      artists: matchedArtists.map((a) => ({ name: a.name, plays: a.totalPlays })),
-      songs: matchedSongs.map((s) => ({ artist: s.artist, songTitle: s.songTitle, album: s.albums?.[0] || '', plays: s.totalPlays })),
-      albums: matchedAlbums.map((a) => ({ artist: a.artist, album: a.album, plays: a.totalPlays })),
-    },
-    source: 'static-json',
-    mode: 'static',
-  };
-}
-
-export async function getSongs(search = '', page = 1, limit = 20) {
-  const searchParam = encodeURIComponent(search);
-  const result = await fetchWithFallback(`/songs?search=${searchParam}&page=${page}&limit=${limit}`, '/data/songs.json');
-  if (result.source === 'express-api') return result;
-
-  let allSongs = result.data;
-  if (search) {
-    const q = search.toLowerCase();
-    allSongs = allSongs.filter((s) => s.artist.toLowerCase().includes(q) || s.songTitle.toLowerCase().includes(q));
+  const liveData = await fetchApiJson(`/search?q=${encodeURIComponent(query.trim())}`);
+  if (liveData !== null) {
+    return { data: liveData, source: 'express-api', mode: 'live' };
   }
-  const offset = (page - 1) * limit;
-  const paginated = allSongs.slice(offset, offset + limit);
-  return {
-    data: {
-      songs: paginated.map((s) => ({
-        artist: s.artist,
-        songTitle: s.songTitle,
-        album: s.albums?.[0] || '',
-        totalPlays: s.totalPlays,
-        firstPlayed: s.firstAppearance || '',
-        lastPlayed: '',
-      })),
-      pagination: {
-        page,
-        limit,
-        total: allSongs.length,
-        totalPages: Math.ceil(allSongs.length / limit),
-      },
-    },
-    source: 'static-json',
-    mode: 'static',
-  };
-}
 
-export async function getArtistSongs(artistName) {
-  const encoded = encodeURIComponent(artistName);
-  const result = await fetchWithFallback(`/artists/${encoded}/songs`, '/data/songs.json');
-  if (result.source === 'express-api') return result;
-
-  const allSongs = result.data;
-  const artistSongs = allSongs.filter((s) => s.artist === artistName);
-  const totalPlays = artistSongs.reduce((sum, s) => sum + s.totalPlays, 0);
-  const albums = new Set(artistSongs.flatMap((s) => s.albums || []));
-  return {
-    data: {
-      artist: artistName,
-      summary: {
-        totalPlays,
-        uniqueSongs: artistSongs.length,
-        uniqueAlbums: albums.size,
-        firstAppearance: artistSongs[artistSongs.length - 1]?.firstAppearance || '',
-        lastAppearance: artistSongs[0]?.firstAppearance || '',
-      },
-      songs: artistSongs.map((s) => ({
-        songTitle: s.songTitle,
-        album: s.albums?.[0] || '',
-        totalPlays: s.totalPlays,
-        firstPlayed: s.firstAppearance || '',
-        lastPlayed: '',
-      })),
-    },
-    source: 'static-json',
-    mode: 'static',
-  };
+  const data = await getStaticSearchAll(query);
+  setArchiveMode('static');
+  return { data, source: 'static-json', mode: 'static' };
 }

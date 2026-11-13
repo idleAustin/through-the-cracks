@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test';
 
 const ROUTES = [
   { label: 'Overview', path: '/', heading: null },
-  { label: 'Artists', path: '/artists', heading: 'Artist Directory' },
-  { label: 'Songs', path: '/songs', heading: 'Song Library' },
-  { label: 'Episodes', path: '/episodes', heading: 'Episodes' },
+  { label: 'Artists', path: '/artists', heading: 'Artists', level: 1 },
+  { label: 'Songs', path: '/songs', heading: 'Songs', level: 1 },
+  { label: 'Episodes', path: '/episodes', heading: 'Episodes', level: 1 },
   { label: 'Search', path: '/search', heading: 'Global Catalog Search' },
 ];
 
@@ -171,7 +171,7 @@ test.describe('Thread Level Midnight cockpit shell', () => {
       await expect(link).toHaveAttribute('aria-current', 'page');
       await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
       if (route.heading) {
-        await expect(page.getByRole('heading', { name: route.heading })).toBeVisible();
+        await expect(page.getByRole('heading', { name: route.heading, ...(route.level ? { level: route.level } : {}) })).toBeVisible();
       } else {
         await expect(page.locator('#kpi-plays')).toBeVisible();
       }
@@ -179,23 +179,23 @@ test.describe('Thread Level Midnight cockpit shell', () => {
 
     for (const route of ROUTES.slice(1)) {
       await page.goto(route.path);
-      await expect(page.getByRole('heading', { name: route.heading })).toBeVisible();
+      await expect(page.getByRole('heading', { name: route.heading, ...(route.level ? { level: route.level } : {}) })).toBeVisible();
       await expect(nav.getByRole('link', { name: route.label })).toHaveAttribute('aria-current', 'page');
     }
 
     await page.goto('/artists');
-    await expect(page.getByRole('heading', { name: 'Artist Directory' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Artists', level: 1 })).toBeVisible();
     await page.goto('/songs');
-    await expect(page.getByRole('heading', { name: 'Song Library' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Songs', level: 1 })).toBeVisible();
 
     await page.goBack();
     await expect(page).toHaveURL('/artists');
-    await expect(page.getByRole('heading', { name: 'Artist Directory' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Artists', level: 1 })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Artists' })).toHaveAttribute('aria-current', 'page');
 
     await page.goForward();
     await expect(page).toHaveURL('/songs');
-    await expect(page.getByRole('heading', { name: 'Song Library' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Songs', level: 1 })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Songs' })).toHaveAttribute('aria-current', 'page');
   });
 

@@ -76,7 +76,7 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
 
     await page.locator('.m-card').first().click();
     await expect(page).toHaveURL(/episode=/);
-    const backBtn = page.getByRole('button', { name: /Back/i });
+    const backBtn = page.getByRole('button', { name: 'Back', exact: true });
     await expect(backBtn).toBeVisible();
     expect((await backBtn.boundingBox()).height).toBeGreaterThanOrEqual(44);
     await expect(page.locator('main')).toContainText('01');
@@ -110,7 +110,7 @@ test.describe('Episodes broadcast log and song-to-broadcast filtering', () => {
     await expect(matchedRow).toContainText('Prairie Girl');
 
     if (isMobile) {
-      await page.getByRole('button', { name: /Back/i }).click();
+      await page.getByRole('button', { name: 'Back', exact: true }).click();
     }
 
     await clearBtn.click();

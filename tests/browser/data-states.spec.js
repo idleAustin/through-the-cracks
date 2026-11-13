@@ -19,7 +19,7 @@ test.describe('archive data states and unknown route recovery', () => {
     const bgImage = await skeleton.evaluate((el) => getComputedStyle(el).backgroundImage);
     expect(bgImage).toBe('none');
 
-    await expect(page.locator('#artists-table')).toContainText('Todd Snider');
+    await expect(page.locator('#artists-table:visible, .m-card-stack:visible')).toContainText('Todd Snider');
   });
 
   test('renders deadpan empty filter states with Clear Filter recovery on artists and songs', async ({ page }) => {
@@ -29,7 +29,7 @@ test.describe('archive data states and unknown route recovery', () => {
         searchLabel: 'Search artists',
         query: 'zzzznoartistmatch',
         emptyHeading: 'No artists match that filter.',
-        tableSelector: '#artists-table',
+        tableSelector: '#artists-table:visible, .m-card-stack:visible',
         expectedText: 'Todd Snider',
       },
       {
@@ -37,7 +37,7 @@ test.describe('archive data states and unknown route recovery', () => {
         searchLabel: 'Search songs',
         query: 'zzzznosongmatch',
         emptyHeading: 'No songs match that filter.',
-        tableSelector: '#songs-table',
+        tableSelector: '#songs-table:visible, .m-card-stack:visible',
         expectedText: '50s French Movie',
       },
     ];
@@ -108,8 +108,8 @@ test.describe('archive data states and unknown route recovery', () => {
     }
 
     const searchChecks = [
-      { path: '/artists', inputId: '#artist-search-input', readySelector: '#artists-table' },
-      { path: '/songs', inputId: '#song-search-input', readySelector: '#songs-table' },
+      { path: '/artists', inputId: '#artist-search-input', readySelector: '#artists-table:visible, .m-card-stack:visible' },
+      { path: '/songs', inputId: '#song-search-input', readySelector: '#songs-table:visible, .m-card-stack:visible' },
       { path: '/search', inputId: '#global-search-input', readySelector: '#global-search-input' },
     ];
     for (const { path, inputId, readySelector } of searchChecks) {
@@ -147,8 +147,8 @@ test.describe('archive data states and unknown route recovery', () => {
     await page.setViewportSize({ width: 320, height: 640 });
     for (const [path, readySelector] of [
       ['/', '#kpi-plays'],
-      ['/artists', '#artists-table'],
-      ['/songs', '#songs-table'],
+      ['/artists', '#artists-table:visible, .m-card-stack:visible'],
+      ['/songs', '#songs-table:visible, .m-card-stack:visible'],
       ['/episodes', '.m-card'],
       ['/search', '#global-search-input'],
     ]) {
