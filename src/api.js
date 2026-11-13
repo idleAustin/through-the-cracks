@@ -15,12 +15,23 @@ import {
   fetchStaticJson,
   getStaticEpisodeById,
   getStaticEpisodes,
+  getStaticPath,
   getStaticYearSpins,
   normalizeEpisodeDetail,
   normalizeEpisodeSummary,
 } from './api-static.js';
 
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '/api');
+export function resolveApiBase({
+  explicitApiUrl = import.meta.env.VITE_API_URL,
+  isDev = import.meta.env.DEV,
+  baseUrl = import.meta.env.BASE_URL,
+} = {}) {
+  if (explicitApiUrl) return String(explicitApiUrl).replace(/\/+$/, '');
+  if (isDev) return 'http://localhost:3001/api';
+  return getStaticPath('api', baseUrl);
+}
+
+const API_BASE = resolveApiBase();
 
 let currentMode = null;
 const archiveModeListeners = new Set();

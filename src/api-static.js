@@ -1,7 +1,7 @@
 // Static JSON snapshot loader, episodes index cache, and yearly playlist shard helpers.
 
-export function getStaticPath(relativePath) {
-  const base = import.meta.env.BASE_URL || '/';
+export function getStaticPath(relativePath, baseUrl = import.meta.env.BASE_URL) {
+  const base = baseUrl || '/';
   const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
   return base.endsWith('/') ? `${base}${cleanPath}` : `${base}/${cleanPath}`;
 }

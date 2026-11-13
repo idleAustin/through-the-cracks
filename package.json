@@ -10,7 +10,7 @@
     "ingest": "doppler --no-check-version run -- node scripts/ingest.js --incremental",
     "ingest:full": "doppler --no-check-version run -- node scripts/ingest.js",
     "ingest:ci": "node scripts/ingest.js --incremental",
-    "build": "vite build && cp dist/index.html dist/404.html",
+    "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "npm run test:unit && npm run test:e2e",
