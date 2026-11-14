@@ -13,6 +13,11 @@ const NAV_ITEMS = [
   { to: '/search', label: 'Search', icon: 'search', end: false },
 ];
 
+const SIDEBAR_NAV_ITEMS = [
+  ...NAV_ITEMS,
+  { to: '/playlist', label: 'Playlist', icon: 'playlist', end: false },
+];
+
 function getQuickJumpShortcut() {
   if (typeof navigator === 'undefined') return 'Ctrl+K';
   const platform = navigator.platform || navigator.userAgent || '';
@@ -60,7 +65,7 @@ export function CockpitSidebar({ archiveMode, totalSpins, onQuickJump }) {
         </button>
 
         <nav className="cockpit-nav" aria-label="Primary navigation">
-          {NAV_ITEMS.map((item) => (
+          {SIDEBAR_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -117,15 +122,28 @@ export function MobileTopBar({ archiveMode }) {
         </span>
       </div>
 
-      <button
-        type="button"
-        className="mobile-theme-btn"
-        onClick={toggleTheme}
-        aria-label={themeMeta.label}
-      >
-        <Icon name={themeMeta.icon} size="sm" />
-        <span className="mobile-theme-label">{themeMeta.shortLabel}</span>
-      </button>
+      <div className="mobile-topbar-actions">
+        <NavLink
+          to="/playlist"
+          className={({ isActive }) =>
+            isActive ? 'mobile-playlist-btn is-active' : 'mobile-playlist-btn'
+          }
+          aria-label="Playlist"
+        >
+          <Icon name="playlist" size="sm" />
+          <span className="mobile-topbar-btn-label">Playlist</span>
+        </NavLink>
+
+        <button
+          type="button"
+          className="mobile-theme-btn"
+          onClick={toggleTheme}
+          aria-label={themeMeta.label}
+        >
+          <Icon name={themeMeta.icon} size="sm" />
+          <span className="mobile-theme-label">{themeMeta.shortLabel}</span>
+        </button>
+      </div>
     </header>
   );
 }

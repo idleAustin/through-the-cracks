@@ -66,6 +66,24 @@ export const D1_TABLE_STATEMENTS = [
     total_plays INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (artist_key, album_key)
   )`,
+  `CREATE TABLE IF NOT EXISTS song_links (
+    song_key TEXT PRIMARY KEY,
+    artist TEXT NOT NULL,
+    song_title TEXT NOT NULL,
+    video_id TEXT,
+    yt_title TEXT,
+    yt_artist TEXT,
+    yt_album TEXT,
+    result_type TEXT,
+    duration_seconds INTEGER,
+    confidence_score INTEGER NOT NULL DEFAULT 0,
+    match_tier TEXT NOT NULL DEFAULT 'unmatched',
+    is_embeddable INTEGER NOT NULL DEFAULT 0,
+    us_playable INTEGER NOT NULL DEFAULT 0,
+    status_reason TEXT NOT NULL DEFAULT 'unchecked',
+    checked_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
 ];
 
 export const D1_INDEX_STATEMENTS = [
@@ -82,6 +100,8 @@ export const D1_INDEX_STATEMENTS = [
   'CREATE INDEX IF NOT EXISTS idx_song_rollups_top ON song_rollups(total_plays DESC, LOWER(song_title) ASC, LOWER(artist) ASC)',
   'CREATE INDEX IF NOT EXISTS idx_song_rollups_obscure ON song_rollups(total_plays ASC, first_played ASC, LOWER(song_title) ASC, LOWER(artist) ASC)',
   'CREATE INDEX IF NOT EXISTS idx_album_rollups_plays ON album_rollups(total_plays DESC, LOWER(artist) ASC, LOWER(album) ASC)',
+  'CREATE INDEX IF NOT EXISTS idx_song_links_random_pool ON song_links(is_embeddable, us_playable, confidence_score DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_song_links_tier ON song_links(match_tier)',
 ];
 
 export const D1_SCHEMA_STATEMENTS = [...D1_TABLE_STATEMENTS, ...D1_INDEX_STATEMENTS];

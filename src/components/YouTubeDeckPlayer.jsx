@@ -1,0 +1,228 @@
+// Singleton square-cornered 16:9 YouTube IFrame API deck player with state telemetry and blocked-embed recovery.
+import React, { useEffect, useRef, useState } from 'react';
+import Icon from './Icon';
+
+let ytIframeApiPromise = null;
+
+function loadYouTubeIframeApi() {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('YouTube IFrame API requires a browser window.'));
+  }
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (ytIframeApiPromise) return ytIframeApiPromise;
+
+  ytIframeApiPromise = new Promise((resolve, reject) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReady === 'function') {
+        try {
+          previousReady();
+        } catch {
+          // Ignore external callback errors.
+        }
+      }
+      resolve(window.YT);
+    };
+
+    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    const onError = () => {
+      ytIframeApiPromise = null;
+      reject(new Error('Failed to load YouTube IFrame API.'));
+    };
+    if (!existing) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.async = true;
+      script.onerror = onError;
+      document.head.appendChild(script);
+    } else {
+      existing.addEventListener('error', onError, { once: true });
+    }
+  });
+
+  return ytIframeApiPromise;
+}
+
+export default function YouTubeDeckPlayer({
+  videoId,
+  autoplay = false,
+  onEnded,
+  onStatusChange,
+  className = '',
+  title = 'Broadcast Deck player',
+}) {
+  const hostRef = useRef(null);
+  const playerRef = useRef(null);
+  const readyRef = useRef(false);
+  const loadedVideoIdRef = useRef('');
+  const prevAutoplayRef = useRef(autoplay);
+
+  const onEndedRef = useRef(onEnded);
+  const onStatusChangeRef = useRef(onStatusChange);
+  const videoIdRef = useRef(videoId);
+  const autoplayRef = useRef(autoplay);
+  const titleRef = useRef(title);
+
+  onEndedRef.current = onEnded;
+  onStatusChangeRef.current = onStatusChange;
+  videoIdRef.current = videoId;
+  autoplayRef.current = autoplay;
+  titleRef.current = title;
+
+  const [embedBlocked, setEmbedBlocked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const host = hostRef.current;
+    if (!host) return undefined;
+
+    const mountNode = document.createElement('div');
+    host.replaceChildren(mountNode);
+
+    loadYouTubeIframeApi()
+      .then((YT) => {
+        if (cancelled || !YT?.Player) return;
+        const initialId = videoIdRef.current || '';
+        const initialAutoplay = Boolean(autoplayRef.current);
+        loadedVideoIdRef.current = initialId;
+
+        let playerInstance = null;
+        playerInstance = new YT.Player(mountNode, {
+          videoId: initialId,
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            autoplay: initialAutoplay ? 1 : 0,
+          },
+          events: {
+            onReady: (event) => {
+              if (cancelled) return;
+              readyRef.current = true;
+              const activePlayer = playerInstance || event?.target || playerRef.current;
+              if (activePlayer) playerRef.current = activePlayer;
+
+              try {
+                const iframe = typeof activePlayer?.getIframe === 'function' ? activePlayer.getIframe() : null;
+                if (iframe && titleRef.current) iframe.setAttribute('title', titleRef.current);
+              } catch {
+                // Ignore cross-origin iframe attribute errors.
+              }
+
+              const latestId = videoIdRef.current || '';
+              const latestAutoplay = Boolean(autoplayRef.current);
+              if (latestId && latestId !== loadedVideoIdRef.current && activePlayer) {
+                loadedVideoIdRef.current = latestId;
+                setEmbedBlocked(false);
+                onStatusChangeRef.current?.(latestAutoplay ? 'buffering' : 'cued');
+                if (latestAutoplay) activePlayer.loadVideoById(latestId);
+                else activePlayer.cueVideoById(latestId);
+              } else {
+                onStatusChangeRef.current?.(initialAutoplay ? 'buffering' : 'cued');
+              }
+            },
+            onStateChange: (event) => {
+              if (cancelled) return;
+              const states = YT.PlayerState || {};
+              const code = event?.data;
+              if (code === (states.ENDED ?? 0)) {
+                onStatusChangeRef.current?.('ended');
+                onEndedRef.current?.();
+              } else if (code === (states.PLAYING ?? 1)) {
+                setEmbedBlocked(false);
+                onStatusChangeRef.current?.('playing');
+              } else if (code === (states.PAUSED ?? 2)) {
+                onStatusChangeRef.current?.('paused');
+              } else if (code === (states.BUFFERING ?? 3)) {
+                onStatusChangeRef.current?.('buffering');
+              } else if (code === (states.CUED ?? 5)) {
+                onStatusChangeRef.current?.('cued');
+              }
+            },
+            onError: () => {
+              if (cancelled) return;
+              setEmbedBlocked(true);
+              onStatusChangeRef.current?.('blocked');
+            },
+          },
+        });
+        playerRef.current = playerInstance;
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setEmbedBlocked(true);
+        onStatusChangeRef.current?.('blocked');
+      });
+
+    return () => {
+      cancelled = true;
+      readyRef.current = false;
+      const player = playerRef.current;
+      playerRef.current = null;
+      if (player && typeof player.destroy === 'function') {
+        try {
+          player.destroy();
+        } catch {
+          // Ignore teardown errors on detached containers.
+        }
+      }
+      host.replaceChildren();
+    };
+  }, []);
+
+  useEffect(() => {
+    const prevAutoplay = prevAutoplayRef.current;
+    prevAutoplayRef.current = autoplay;
+    setEmbedBlocked(false);
+
+    const player = playerRef.current;
+    if (!player || !readyRef.current || !videoId) return;
+
+    try {
+      const iframe = typeof player.getIframe === 'function' ? player.getIframe() : null;
+      if (iframe && title) iframe.setAttribute('title', title);
+
+      if (loadedVideoIdRef.current === videoId) {
+        if (autoplay && !prevAutoplay && typeof player.playVideo === 'function') {
+          onStatusChangeRef.current?.('buffering');
+          player.playVideo();
+        }
+        return;
+      }
+
+      loadedVideoIdRef.current = videoId;
+      if (autoplay) {
+        onStatusChangeRef.current?.('buffering');
+        player.loadVideoById(videoId);
+      } else {
+        onStatusChangeRef.current?.('cued');
+        player.cueVideoById(videoId);
+      }
+    } catch {
+      setEmbedBlocked(true);
+      onStatusChangeRef.current?.('blocked');
+    }
+  }, [videoId, autoplay, title]);
+
+  return (
+    <div className={`yt-deck-frame${embedBlocked ? ' is-blocked' : ''} ${className}`.trim()}>
+      <div ref={hostRef} className="yt-deck-host" />
+      {embedBlocked ? (
+        <div className="yt-deck-blocked" role="alert">
+          <p className="yt-deck-blocked-copy">
+            Blocked in embedded player. Swap song or open directly on YouTube.
+          </p>
+          <a
+            className="btn btn-secondary btn-sm"
+            href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoId || '')}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Icon name="external" size="sm" />
+            <span>Open on YouTube</span>
+          </a>
+        </div>
+      ) : null}
+    </div>
+  );
+}

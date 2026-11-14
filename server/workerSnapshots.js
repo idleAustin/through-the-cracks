@@ -10,6 +10,7 @@ export const PUBLIC_API_CACHE_CONTROL = 'public, max-age=300, s-maxage=3600, sta
 const DEFAULT_YEARS = [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 const R2_MANIFEST_TTL_MS = 60_000;
 const R2_MANIFEST_KEY = 'v1/manifest.json';
+const R2_SONG_LINKS_KEY = 'v1/song-links.json';
 const JSON_CT = 'application/json; charset=utf-8';
 
 let cacheEpoch = 1;
@@ -33,7 +34,11 @@ export function safeDecodeUri(value) {
 }
 
 export async function withEdgeCache(request, apiPath, url, ctx, makeHeaders, loader) {
-  const isCacheable = request.method === 'GET' && apiPath !== '/api/health' && apiPath !== '/api/ingest';
+  const isCacheable =
+    request.method === 'GET' &&
+    apiPath !== '/api/health' &&
+    apiPath !== '/api/ingest' &&
+    apiPath !== '/api/playlist/random';
   const cache = isCacheable ? globalThis.caches?.default : null;
   let cacheReq = null;
   if (cache) {
@@ -63,6 +68,19 @@ async function readR2JsonRaw(bucket, key) {
   const obj = await bucket.get(key);
   if (!obj) return null;
   return typeof obj.json === 'function' ? obj.json() : JSON.parse(await obj.text());
+}
+
+export async function readR2SongLinksSnapshot(env) {
+  const bucket = env?.SNAPSHOT_BUCKET;
+  if (!bucket || typeof bucket.get !== 'function') return null;
+  try {
+    const data = await readR2JsonRaw(bucket, R2_SONG_LINKS_KEY);
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.songs)) return data.songs;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 async function getR2State(bucket) {

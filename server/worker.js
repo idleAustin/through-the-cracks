@@ -1,15 +1,19 @@
 // Cloudflare Worker HTTP API, Edge Cache, R2 snapshot tier, D1 fallback, SPA asset fallback, and Cron entrypoint.
 import { ingestBloggerToD1 } from './d1Schema.js';
 import { getD1ArtistProfile } from './d1ArtistProfile.js';
+import { getD1RandomPlaylist } from './d1Playlist.js';
 import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
+import { drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
 import {
-  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
+  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, readR2SongLinksSnapshot,
+  safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const RATE_WINDOW_MS = 60_000;
 const READ_RATE_LIMIT = 180;
 const INGEST_RATE_LIMIT = 5;
@@ -190,14 +194,51 @@ async function handleReadRoutes(apiPath, url, env) {
   return { status: 200, data: await getD1Search(env.DB, query) };
 }
 
+async function handlePlaylistRandom(request, env, url, corsHeaders) {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Not found' }, 404, corsHeaders, NO_STORE_HEADERS);
+  }
+  const parsed = parsePlaylistQuery(url.searchParams);
+  if (parsed.error) {
+    return jsonResponse({ error: parsed.error }, parsed.status || 400, corsHeaders, NO_STORE_HEADERS);
+  }
+  if (env?.SNAPSHOT_BUCKET) {
+    const r2Pool = await readR2SongLinksSnapshot(env);
+    if (r2Pool !== null) {
+      return jsonResponse(
+        drawRandomPlaylist(r2Pool, url.searchParams, { assumedPlayable: true }),
+        200,
+        corsHeaders,
+        NO_STORE_HEADERS,
+      );
+    }
+  }
+  if (env?.DB) {
+    const result = await getD1RandomPlaylist(env.DB, url.searchParams);
+    if (result?.error) {
+      return jsonResponse({ error: result.error }, result.status || 400, corsHeaders, NO_STORE_HEADERS);
+    }
+    return jsonResponse(result, 200, corsHeaders, NO_STORE_HEADERS);
+  }
+  return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders, NO_STORE_HEADERS);
+}
+
 async function handleApi(request, env, apiPath, url, ctx) {
   const corsHeaders = buildCorsHeaders(request);
   if (request.method === 'OPTIONS') return withHeaders(new Response(null, { status: 204 }), corsHeaders);
 
+  const isNoStoreRoute = apiPath === '/api/playlist/random';
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   const isIngestPost = apiPath === '/api/ingest' && request.method === 'POST';
   const allowed = checkRateLimit(isIngestPost ? `ingest:${ip}` : `read:${ip}`, isIngestPost ? INGEST_RATE_LIMIT : READ_RATE_LIMIT);
-  if (!allowed) return jsonResponse({ error: 'Too many requests' }, 429, corsHeaders, { 'Retry-After': '60' });
+  if (!allowed) {
+    return jsonResponse(
+      { error: 'Too many requests' },
+      429,
+      corsHeaders,
+      isNoStoreRoute ? { 'Retry-After': '60', ...NO_STORE_HEADERS } : { 'Retry-After': '60' },
+    );
+  }
 
   try {
     if (apiPath === '/api/health' && request.method === 'GET') {
@@ -210,6 +251,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
       }, 200, corsHeaders);
     }
     if (apiPath === '/api/ingest') return await handleIngest(request, env, corsHeaders, ctx);
+    if (apiPath === '/api/playlist/random') return await handlePlaylistRandom(request, env, url, corsHeaders);
     if (!env?.DB && !env?.SNAPSHOT_BUCKET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
     if (request.method !== 'GET') return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
 
@@ -239,7 +281,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
     );
   } catch (err) {
     console.error('Worker API error:', err);
-    return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders);
+    return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders, isNoStoreRoute ? NO_STORE_HEADERS : {});
   }
 }
 

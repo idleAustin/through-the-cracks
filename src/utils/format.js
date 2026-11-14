@@ -43,6 +43,33 @@ export function formatCompactSpins(n, isCompact = false) {
   return formatInt(value);
 }
 
+export function formatDuration(seconds) {
+  if (seconds === null || seconds === undefined || seconds === '') return '—';
+  const num = Number(seconds);
+  if (!Number.isFinite(num) || num < 0) return '—';
+  const total = Math.round(num);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+export function formatPlaylistRuntime(queue) {
+  if (!Array.isArray(queue) || queue.length === 0) return 'Broadcast Queue';
+  let total = 0;
+  let counted = 0;
+  for (const item of queue) {
+    const secs = Number(item?.durationSeconds);
+    if (Number.isFinite(secs) && secs > 0) {
+      total += secs;
+      counted += 1;
+    }
+  }
+  if (counted === 0) return 'Broadcast Queue';
+  const mins = Math.floor(total / 60);
+  const secs = Math.round(total % 60);
+  return `${mins}:${String(secs).padStart(2, '0')} runtime`;
+}
+
 export function useMediaQuery(query) {
   const getMatch = () => (
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'

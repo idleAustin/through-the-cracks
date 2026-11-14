@@ -11,6 +11,7 @@ import { createOverviewRouter } from './routes/overview.js';
 import { createEpisodesRouter } from './routes/episodes.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createArtistProfileRouter } from './routes/artistProfile.js';
+import { createPlaylistRouter, playlistRouter } from './routes/playlist.js';
 
 const execAsync = promisify(exec);
 const PORT = process.env.PORT || 3001;
@@ -78,6 +79,7 @@ export function createApp({
   query = queryBigQuery,
   project = GCP_PROJECT,
   dataset = BQ_DATASET,
+  playlistSnapshotPath,
 } = {}) {
   const app = express();
 
@@ -115,6 +117,10 @@ export function createApp({
   app.use('/api', createEpisodesRouter({ query, project, dataset }));
   app.use('/api', createCatalogRouter({ query, project, dataset }));
   app.use('/api', createArtistProfileRouter({ query, project, dataset }));
+  app.use(
+    '/api/playlist',
+    playlistSnapshotPath ? createPlaylistRouter({ snapshotPath: playlistSnapshotPath }) : playlistRouter,
+  );
 
   app.post('/api/ingest', async (req, res) => {
     try {
