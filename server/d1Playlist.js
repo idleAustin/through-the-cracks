@@ -1,6 +1,19 @@
 // Pure Web-API-only D1 song_links upserts and rollup-backed random Playlist pool loader.
+import { resolveCanonicalArtist } from '../scripts/artist-aliases.js';
 import { clearD1Cache, qAll, qFirst, withCache } from './d1Rollups.js';
-import { buildSongKey, drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
+import { buildSongKey, buildSqliteSongKey, drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
+
+const ROLLUP_LOOKUP_BATCH_SIZE = 50;
+
+const ROLLUP_HYDRATE_SQL_PREFIX =
+  "SELECT (artist_key || '|||' || song_key) AS rollup_key, album, total_plays FROM song_rollups WHERE (artist_key || '|||' || song_key) IN (";
+
+const RAW_PLAYS_HYDRATE_SQL_PREFIX = `SELECT
+  (LOWER(TRIM(artist)) || '|||' || LOWER(TRIM(song_title))) AS rollup_key,
+  MAX(TRIM(COALESCE(album, ''))) AS album,
+  COUNT(*) AS total_plays
+FROM song_plays
+WHERE (LOWER(TRIM(artist)) || '|||' || LOWER(TRIM(song_title))) IN (`;
 
 export const UPSERT_SONG_LINK_SQL = `INSERT INTO song_links (
   song_key, artist, song_title, video_id, yt_title, yt_artist, yt_album,
@@ -144,11 +157,81 @@ async function hasPopulatedSongRollups(db) {
   }
 }
 
+function candidateSqliteKeysForRow(row) {
+  const artist = String(row.artist || '');
+  const songTitle = String(row.song_title || '');
+  if (!artist.trim() || !songTitle.trim()) return [];
+  const rowKey = String(row.song_key || '');
+  const canonicalArtist = resolveCanonicalArtist(artist);
+  const candidates = [
+    buildSqliteSongKey(artist, songTitle),
+    buildSqliteSongKey(canonicalArtist, songTitle),
+  ];
+  const unique = [];
+  for (const key of candidates) {
+    if (key && key !== rowKey && !unique.includes(key)) unique.push(key);
+  }
+  return unique;
+}
+
+async function hydrateMissedPlayCounts(db, rows, useRollups) {
+  const zeroRows = [];
+  const lookupKeys = new Set();
+
+  for (const row of rows) {
+    if (Number(row.total_plays ?? 0) !== 0) continue;
+    const candidates = candidateSqliteKeysForRow(row);
+    if (candidates.length === 0) continue;
+    zeroRows.push({ row, candidates });
+    for (const key of candidates) lookupKeys.add(key);
+  }
+
+  if (lookupKeys.size === 0) return false;
+
+  const keys = [...lookupKeys];
+  const rollupByKey = new Map();
+  for (let i = 0; i < keys.length; i += ROLLUP_LOOKUP_BATCH_SIZE) {
+    const chunk = keys.slice(i, i + ROLLUP_LOOKUP_BATCH_SIZE);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const sql = useRollups
+      ? `${ROLLUP_HYDRATE_SQL_PREFIX}${placeholders})`
+      : `${RAW_PLAYS_HYDRATE_SQL_PREFIX}${placeholders})\nGROUP BY LOWER(TRIM(artist)), LOWER(TRIM(song_title))`;
+    const matches = await qAll(db, sql, chunk);
+    for (const match of matches) {
+      if (match?.rollup_key) rollupByKey.set(String(match.rollup_key), match);
+    }
+  }
+
+  let hydrated = false;
+  for (const { row, candidates } of zeroRows) {
+    let bestMatch = null;
+    for (const key of candidates) {
+      const hit = rollupByKey.get(key);
+      if (hit && (!bestMatch || Number(hit.total_plays ?? 0) > Number(bestMatch.total_plays ?? 0))) {
+        bestMatch = hit;
+      }
+    }
+    if (!bestMatch) continue;
+    row.total_plays = Number(bestMatch.total_plays ?? 0);
+    row.album = String(bestMatch.album ?? row.album ?? '');
+    hydrated = true;
+  }
+  return hydrated;
+}
+
 export async function loadD1PlaylistPool(db) {
   if (!db) throw new Error('D1 database binding (DB) is not configured');
   return withCache(db, 'playlist_pool', async () => {
     const useRollups = await hasPopulatedSongRollups(db);
     const rows = await qAll(db, useRollups ? ROLLUP_POOL_SQL : RAW_PLAYS_POOL_SQL);
+    const hydrated = await hydrateMissedPlayCounts(db, rows, useRollups);
+    if (hydrated) {
+      rows.sort(
+        (a, b) =>
+          Number(b.total_plays ?? 0) - Number(a.total_plays ?? 0) ||
+          (String(a.song_key) < String(b.song_key) ? -1 : String(a.song_key) > String(b.song_key) ? 1 : 0),
+      );
+    }
     return rows.map((r) => ({
       songKey: String(r.song_key),
       artist: String(r.artist || ''),

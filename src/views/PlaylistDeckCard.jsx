@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import Tooltip from '../components/Tooltip';
 import YouTubeDeckPlayer from '../components/YouTubeDeckPlayer';
 import { formatDuration, formatInt } from '../utils/format';
+import { isValidVideoId } from '../utils/playlist-helpers';
 
 const STATUS_LABELS = {
   cued: 'Cued',
@@ -15,7 +16,10 @@ const STATUS_LABELS = {
 };
 
 function buildYtMusicUrl(videoId) {
-  return videoId ? `https://music.youtube.com/watch?v=${encodeURIComponent(videoId)}` : '';
+  const cleanId = typeof videoId === 'string' ? videoId.trim() : '';
+  return isValidVideoId(cleanId)
+    ? `https://music.youtube.com/watch?v=${encodeURIComponent(cleanId)}`
+    : '';
 }
 
 export default function PlaylistDeckCard({
@@ -43,11 +47,12 @@ export default function PlaylistDeckCard({
   const nextIndex = queue.length > 1 ? (activeIndex + 1) % queue.length : 0;
   const nextSong = queue.length > 1 ? queue[nextIndex] : null;
 
+  const ytmUrl = buildYtMusicUrl(activeSong.videoId);
   const deckButtons = [
     { key: 'prev', label: 'Previous song', short: 'Prev', icon: 'skip-back', disabled: queue.length <= 1, onClick: () => onStep(-1) },
     { key: 'next', label: 'Next song', short: 'Next', icon: 'skip-forward', disabled: queue.length <= 1, onClick: () => onStep(1) },
     { key: 'swap', label: 'Swap song', short: 'Swap', icon: 'shuffle', disabled: !canSwap || isActiveSwapping, onClick: () => onSwapIndex(activeIndex) },
-    { key: 'ytm', label: 'Open in YT Music', short: 'YT Music', icon: 'external', href: buildYtMusicUrl(activeSong.videoId) },
+    { key: 'ytm', label: 'Open in YT Music', short: 'YT Music', icon: 'external', href: ytmUrl, disabled: !ytmUrl },
     { key: 'airings', label: 'Episode airings', short: 'Airings', icon: 'calendar', pos: 'left', onClick: () => onInspectSongAirings(activeSong.songTitle, activeSong.artist) },
   ];
 

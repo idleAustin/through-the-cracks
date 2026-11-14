@@ -11,9 +11,22 @@ export const DEFAULT_MIN_SCORE = 85;
 const MAX_EXCLUDE_ITEMS = 25;
 const MAX_ARTIST_LENGTH = 160;
 const VALID_MODE_SET = new Set(VALID_PLAYLIST_MODES);
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function isValidVideoId(value) {
+  return typeof value === 'string' && VIDEO_ID_RE.test(value.trim());
+}
 
 export function buildSongKey(artist, songTitle) {
   return `${nameKey(resolveCanonicalArtist(artist))}${SONG_KEY_SEPARATOR}${nameKey(songTitle)}`;
+}
+
+export function sqliteAsciiLower(value) {
+  return String(value ?? '').trim().replace(/[A-Z]/g, (ch) => ch.toLowerCase());
+}
+
+export function buildSqliteSongKey(artist, songTitle) {
+  return `${sqliteAsciiLower(artist)}${SONG_KEY_SEPARATOR}${sqliteAsciiLower(songTitle)}`;
 }
 
 export function normalizeArtistCompareKey(artist) {
@@ -21,29 +34,32 @@ export function normalizeArtistCompareKey(artist) {
 }
 
 export function toPlaylistSongItem(row = {}) {
-  const artist = String(row.artist ?? '');
-  const songTitle = String(row.songTitle ?? row.song_title ?? row.song ?? '');
-  const rawKey = String(row.songKey ?? row.song_key ?? '').trim();
-  const rawPlays = Number(row.totalPlays ?? row.total_plays ?? 0);
-  const rawDuration = row.durationSeconds ?? row.duration_seconds;
+  const safeRow = row && typeof row === 'object' ? row : {};
+  const artist = String(safeRow.artist ?? '');
+  const songTitle = String(safeRow.songTitle ?? safeRow.song_title ?? safeRow.song ?? '');
+  const rawKey = String(safeRow.songKey ?? safeRow.song_key ?? '').trim();
+  const rawPlays = Number(safeRow.totalPlays ?? safeRow.total_plays ?? 0);
+  const rawDuration = safeRow.durationSeconds ?? safeRow.duration_seconds;
   const parsedDuration =
     rawDuration === null || rawDuration === undefined || rawDuration === ''
       ? null
       : Number(rawDuration);
-  const rawScore = Number(row.confidenceScore ?? row.confidence_score ?? 0);
+  const rawScore = Number(safeRow.confidenceScore ?? safeRow.confidence_score ?? 0);
+  const rawVideoId = safeRow.videoId ?? safeRow.video_id;
+  const videoId = isValidVideoId(rawVideoId) ? rawVideoId.trim() : '';
 
   return {
     songKey: rawKey || buildSongKey(artist, songTitle),
     artist,
     songTitle,
-    album: String(row.album ?? ''),
+    album: String(safeRow.album ?? ''),
     totalPlays: Number.isFinite(rawPlays) ? rawPlays : 0,
-    videoId: String(row.videoId ?? row.video_id ?? '').trim(),
-    ytTitle: String(row.ytTitle ?? row.yt_title ?? ''),
-    ytArtist: String(row.ytArtist ?? row.yt_artist ?? ''),
+    videoId,
+    ytTitle: String(safeRow.ytTitle ?? safeRow.yt_title ?? ''),
+    ytArtist: String(safeRow.ytArtist ?? safeRow.yt_artist ?? ''),
     durationSeconds: Number.isFinite(parsedDuration) ? parsedDuration : null,
     confidenceScore: Number.isFinite(rawScore) ? rawScore : 0,
-    matchTier: String(row.matchTier ?? row.match_tier ?? 'unmatched'),
+    matchTier: String(safeRow.matchTier ?? safeRow.match_tier ?? 'unmatched'),
   };
 }
 
@@ -149,8 +165,10 @@ function isFalsyFlag(val) {
 }
 
 function isRowPlayable(row, assumedPlayable) {
-  const rawEmbed = row?.is_embeddable ?? row?.isEmbeddable;
-  const rawUs = row?.us_playable ?? row?.usPlayable;
+  if (!row || typeof row !== 'object') return false;
+  if (!isValidVideoId(row.videoId ?? row.video_id)) return false;
+  const rawEmbed = row.is_embeddable ?? row.isEmbeddable;
+  const rawUs = row.us_playable ?? row.usPlayable;
   if (assumedPlayable) {
     return !isFalsyFlag(rawEmbed) && !isFalsyFlag(rawUs);
   }
@@ -184,7 +202,7 @@ export function drawRandomPlaylist(poolOrSnapshot, queryInput = {}, options = {}
   for (const row of rawList) {
     if (!row || !isRowPlayable(row, assumedPlayable)) continue;
     const item = toPlaylistSongItem(row);
-    if (!item.videoId) continue;
+    if (!isValidVideoId(item.videoId)) continue;
     if (item.confidenceScore < minScore) continue;
     if (mode === 'favorites' && item.totalPlays < 3) continue;
     if (mode === 'deep_cuts' && (item.totalPlays < 1 || item.totalPlays > 2)) continue;

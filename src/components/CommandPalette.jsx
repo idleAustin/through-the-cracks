@@ -112,15 +112,6 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
         { key: 'go-playlist', label: 'Playlist', meta: 'Broadcast Booth · Route', icon: 'playlist', to: '/playlist' },
         { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Episode', icon: 'playlist', to: latestUrl },
       ];
-      if (!import.meta.env.PROD) {
-        navItems.push({
-          key: 'nav-prototype',
-          label: 'Playlist Prototype',
-          meta: 'Prototype',
-          icon: 'radio',
-          to: '/prototype',
-        });
-      }
       return [
         {
           heading: 'Navigation',

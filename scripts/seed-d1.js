@@ -64,7 +64,7 @@ function createSqliteD1() {
 function sqlLit(value) {
   if (value === null || value === undefined) return 'NULL';
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'NULL';
-  return `'${String(value).replace(/'/g, "''")}'`;
+  return `'${String(value).replace(/\0/g, '').replace(/'/g, "''")}'`;
 }
 
 function appendBatchedInserts(out, table, columns, rows) {

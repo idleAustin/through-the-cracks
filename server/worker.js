@@ -110,6 +110,15 @@ async function constantTimeEquals(expected, provided) {
   return diff === 0;
 }
 
+// Strip query-string credentials from upstream fetch URLs before writing caught errors to Worker logs.
+function redactSecrets(message) {
+  return String(message ?? '').replace(/([?&](?:key|token|secret)=)[^&\s"']+/gi, '$1[REDACTED]');
+}
+
+function logWorkerError(label, err) {
+  console.error(label, redactSecrets(err?.stack || err?.message || err));
+}
+
 async function runIngestAndSync(env, incremental, ctx = null, deferSync = false, options = {}) {
   const result = await ingestBloggerToD1({
     db: env?.DB,
@@ -130,8 +139,8 @@ async function runIngestAndSync(env, incremental, ctx = null, deferSync = false,
         apiKey: env?.YOUTUBE_API_KEY,
       });
     } catch (err) {
-      console.error('Worker song_links cron error:', err);
-      linkResolution = { error: err?.message ?? String(err), changesMade: false };
+      logWorkerError('Worker song_links cron error:', err);
+      linkResolution = { error: 'Song link refresh failed', changesMade: false };
     }
     if (linkResolution?.changesMade) {
       clearD1Cache(env?.DB);
@@ -149,7 +158,7 @@ async function runIngestAndSync(env, incremental, ctx = null, deferSync = false,
     if (syncFn) {
       const syncTask = syncFn()
         .then(() => bumpWorkerCacheEpoch())
-        .catch((err) => console.error('Worker R2 snapshot sync error:', err));
+        .catch((err) => logWorkerError('Worker R2 snapshot sync error:', err));
       if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
       else await syncTask;
     }
@@ -185,6 +194,9 @@ async function handleIngest(request, env, corsHeaders, ctx) {
     try {
       body = JSON.parse(rawBody);
     } catch {
+      return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
+    }
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
       return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
     }
   }
@@ -310,14 +322,14 @@ async function handleApi(request, env, apiPath, url, ctx) {
             if (r2Hit) return r2Hit;
           } catch (err) {
             if (!env?.DB) throw err;
-            console.error('Worker R2 snapshot read failed, falling back to D1:', err);
+            logWorkerError('Worker R2 snapshot read failed, falling back to D1:', err);
           }
         }
         return await handleReadRoutes(apiPath, url, env);
       },
     );
   } catch (err) {
-    console.error('Worker API error:', err);
+    logWorkerError('Worker API error:', err);
     return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders, isNoStoreRoute ? NO_STORE_HEADERS : {});
   }
 }

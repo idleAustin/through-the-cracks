@@ -102,6 +102,7 @@ export default function PlaylistBooth({
             swappingSlots={swappingSlots}
             onSelectIndex={onSelectIndex}
             onSwapIndex={onSwapIndex}
+            onInspectArtist={onInspectArtist}
           />
         </div>
       )}

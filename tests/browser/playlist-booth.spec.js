@@ -295,7 +295,7 @@ test.describe('Broadcast Booth Ticket 02 (/playlist)', () => {
     await page.evaluate(() => window.__ytTest.emitState(2));
     await expect(page.locator('.booth-status-chip')).toHaveText('Paused');
 
-    await page.locator('.booth-table tbody tr').nth(9).click();
+    await page.locator('.booth-table tbody tr').nth(9).locator('.booth-song-btn').click();
     await expect(page.locator('.booth-deck .booth-region-title')).toContainText('10/10');
     await expect(page.locator('.booth-upnext')).toContainText('Up next · 01');
     await page.evaluate(() => window.__ytTest.emitState(0));

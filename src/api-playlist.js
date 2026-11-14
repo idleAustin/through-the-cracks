@@ -2,6 +2,7 @@
 import { drawRandomPlaylist } from '../server/playlistBuilder.js';
 import { resolveApiBase, setArchiveMode } from './api-runtime.js';
 import { fetchStaticJson } from './api-static.js';
+import { isValidVideoId } from './utils/playlist-helpers.js';
 
 const LIVE_TIMEOUT_MS = 2000;
 const MAX_EXCLUDE_ITEMS = 25;
@@ -81,22 +82,25 @@ export function buildRandomPlaylistParams(options = {}) {
 
 function normalizePlaylistResponse(payload) {
   const songs = Array.isArray(payload?.songs)
-    ? payload.songs.map((song) => ({
-      songKey: String(song?.songKey ?? ''),
-      artist: String(song?.artist ?? ''),
-      songTitle: String(song?.songTitle ?? ''),
-      album: String(song?.album ?? ''),
-      totalPlays: Number(song?.totalPlays ?? 0),
-      videoId: String(song?.videoId ?? ''),
-      ytTitle: String(song?.ytTitle ?? ''),
-      ytArtist: String(song?.ytArtist ?? ''),
-      durationSeconds:
-        song?.durationSeconds === null || song?.durationSeconds === undefined
-          ? null
-          : Number(song.durationSeconds),
-      confidenceScore: Number(song?.confidenceScore ?? 0),
-      matchTier: String(song?.matchTier ?? 'unmatched'),
-    }))
+    ? payload.songs.map((song) => {
+      const rawVideoId = typeof song?.videoId === 'string' ? song.videoId.trim() : '';
+      return {
+        songKey: String(song?.songKey ?? ''),
+        artist: String(song?.artist ?? ''),
+        songTitle: String(song?.songTitle ?? ''),
+        album: String(song?.album ?? ''),
+        totalPlays: Number(song?.totalPlays ?? 0),
+        videoId: isValidVideoId(rawVideoId) ? rawVideoId : '',
+        ytTitle: String(song?.ytTitle ?? ''),
+        ytArtist: String(song?.ytArtist ?? ''),
+        durationSeconds:
+          song?.durationSeconds === null || song?.durationSeconds === undefined
+            ? null
+            : Number(song.durationSeconds),
+        confidenceScore: Number(song?.confidenceScore ?? 0),
+        matchTier: String(song?.matchTier ?? 'unmatched'),
+      };
+    })
     : [];
 
   return {

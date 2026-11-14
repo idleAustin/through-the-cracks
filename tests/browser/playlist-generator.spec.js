@@ -153,11 +153,11 @@ test.describe('Random Playlist Generator (/playlist Broadcast Booth)', () => {
     expect(initialSongs).toHaveLength(10);
     expect(await page.evaluate(() => window.__ytTest.constructors.length)).toBe(1);
 
-    await page.locator('.booth-table tbody tr').nth(1).click();
+    await page.locator('.booth-table tbody tr').nth(1).locator('.booth-song-btn').click();
     await expect(page.locator('.booth-song-title')).toHaveText(initialSongs[1]);
     await expect(page.locator('.booth-status-chip')).toContainText('Playing');
 
-    await page.locator('.booth-table tbody tr').nth(3).click();
+    await page.locator('.booth-table tbody tr').nth(3).locator('.booth-song-btn').click();
     await expect(page.locator('.booth-song-title')).toHaveText(initialSongs[3]);
 
     const afterClicks = await page.evaluate(() => window.__ytTest);
@@ -168,12 +168,9 @@ test.describe('Random Playlist Generator (/playlist Broadcast Booth)', () => {
 
     const rollBtn = page.getByRole('button', { name: 'Roll 10' });
     await rollBtn.click();
+    await expect.poll(() => page.locator('.booth-table tbody .booth-song-btn').allTextContents()).not.toEqual(initialSongs);
     await expect(rollBtn).toBeEnabled();
     await expect(page.locator('.booth-table tbody tr')).toHaveCount(10);
-
-    const rolledSongs = await page.locator('.booth-table tbody .booth-song-btn').allTextContents();
-    expect(rolledSongs).toHaveLength(10);
-    expect(rolledSongs).not.toEqual(initialSongs);
     expect(await page.evaluate(() => window.__ytTest.constructors.length)).toBe(1);
 
     // Navigate away and reach /playlist via Control+K Command Palette.
@@ -235,10 +232,9 @@ test.describe('Random Playlist Generator (/playlist Broadcast Booth)', () => {
 
     const rollBtn = page.getByRole('button', { name: 'Roll 10' });
     await rollBtn.click();
+    await expect.poll(() => page.locator('.booth-mobile-song').allTextContents()).not.toEqual(initialSongs);
     await expect(rollBtn).toBeEnabled();
     await expect(mobileRows).toHaveCount(10);
-    const rolledSongs = await page.locator('.booth-mobile-song').allTextContents();
-    expect(rolledSongs).not.toEqual(initialSongs);
     expect(await page.evaluate(() => window.__ytTest.constructors.length)).toBe(1);
 
     await page.locator('.mobile-bottom-tabs').getByRole('link', { name: 'Overview' }).click();

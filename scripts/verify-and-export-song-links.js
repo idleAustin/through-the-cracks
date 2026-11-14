@@ -44,6 +44,10 @@ export function readCheckpointJsonl(filePath) {
   return orderedKeys.map((key) => byKey.get(key));
 }
 
+export function sanitizeErrorMessage(err) {
+  return String(err?.message ?? err).replace(/([?&](?:key|token|secret)=)[^&\s]+/gi, '$1[REDACTED]');
+}
+
 export async function fetchVideosMetadataBatch(videoIds, apiKey, fetchFn = globalThis.fetch) {
   const ids = (videoIds || []).map((id) => String(id || '').trim()).filter(Boolean);
   if (ids.length === 0) return new Map();
@@ -53,13 +57,22 @@ export async function fetchVideosMetadataBatch(videoIds, apiKey, fetchFn = globa
   url.searchParams.set('id', ids.join(','));
   url.searchParams.set('key', apiKey);
 
-  const response = await fetchFn(url.toString(), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-  });
+  let response;
+  try {
+    response = await fetchFn(url.toString(), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  } catch (err) {
+    const sanitized = sanitizeErrorMessage(err);
+    if (err instanceof Error && sanitized === err.message) throw err;
+    const safeErr = new Error(sanitized);
+    if (err?.name) safeErr.name = String(err.name);
+    throw safeErr;
+  }
   if (!response.ok) {
     const errBody = await response.text().catch(() => '');
-    throw new Error(`YouTube videos.list failed (${response.status}): ${errBody.slice(0, 300)}`);
+    throw new Error(`YouTube videos.list failed (${response.status}): ${sanitizeErrorMessage(errBody).slice(0, 300)}`);
   }
 
   const data = await response.json();
@@ -242,7 +255,7 @@ if (isDirectExecution()) {
       if (res.verification.counts) console.log(`  Compatibility summary: ${JSON.stringify(res.verification.counts)}`);
     })
     .catch((err) => {
-      console.error(`❌ Stage 3/4 failed: ${err.message || err}`);
+      console.error(`❌ Stage 3/4 failed: ${sanitizeErrorMessage(err)}`);
       process.exit(1);
     });
 }

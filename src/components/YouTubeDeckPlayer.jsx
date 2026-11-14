@@ -1,5 +1,6 @@
 // Singleton square-cornered 16:9 YouTube IFrame API deck player with state telemetry and blocked-embed recovery.
 import React, { useEffect, useRef, useState } from 'react';
+import { isValidVideoId } from '../utils/playlist-helpers';
 import Icon from './Icon';
 
 let ytIframeApiPromise = null;
@@ -57,15 +58,18 @@ export default function YouTubeDeckPlayer({
   const loadedVideoIdRef = useRef('');
   const prevAutoplayRef = useRef(autoplay);
 
+  const cleanVideoId = typeof videoId === 'string' ? videoId.trim() : '';
+  const hasValidVideoId = isValidVideoId(cleanVideoId);
+
   const onEndedRef = useRef(onEnded);
   const onStatusChangeRef = useRef(onStatusChange);
-  const videoIdRef = useRef(videoId);
+  const videoIdRef = useRef(cleanVideoId);
   const autoplayRef = useRef(autoplay);
   const titleRef = useRef(title);
 
   onEndedRef.current = onEnded;
   onStatusChangeRef.current = onStatusChange;
-  videoIdRef.current = videoId;
+  videoIdRef.current = cleanVideoId;
   autoplayRef.current = autoplay;
   titleRef.current = title;
 
@@ -76,13 +80,25 @@ export default function YouTubeDeckPlayer({
     const host = hostRef.current;
     if (!host) return undefined;
 
+    if (!hasValidVideoId) {
+      readyRef.current = false;
+      loadedVideoIdRef.current = '';
+      host.replaceChildren();
+      onStatusChangeRef.current?.('blocked');
+      return undefined;
+    }
+
     const mountNode = document.createElement('div');
     host.replaceChildren(mountNode);
 
     loadYouTubeIframeApi()
       .then((YT) => {
+        const initialId = videoIdRef.current;
         if (cancelled || !YT?.Player) return;
-        const initialId = videoIdRef.current || '';
+        if (!isValidVideoId(initialId)) {
+          onStatusChangeRef.current?.('blocked');
+          return;
+        }
         const initialAutoplay = Boolean(autoplayRef.current);
         loadedVideoIdRef.current = initialId;
 
@@ -93,6 +109,10 @@ export default function YouTubeDeckPlayer({
             rel: 0,
             modestbranding: 1,
             playsinline: 1,
+            enablejsapi: 1,
+            ...(typeof window !== 'undefined' && window.location?.origin
+              ? { origin: window.location.origin }
+              : {}),
             autoplay: initialAutoplay ? 1 : 0,
           },
           events: {
@@ -109,9 +129,13 @@ export default function YouTubeDeckPlayer({
                 // Ignore cross-origin iframe attribute errors.
               }
 
-              const latestId = videoIdRef.current || '';
+              const latestId = videoIdRef.current;
+              if (!isValidVideoId(latestId)) {
+                onStatusChangeRef.current?.('blocked');
+                return;
+              }
               const latestAutoplay = Boolean(autoplayRef.current);
-              if (latestId && latestId !== loadedVideoIdRef.current && activePlayer) {
+              if (latestId !== loadedVideoIdRef.current && activePlayer) {
                 loadedVideoIdRef.current = latestId;
                 setEmbedBlocked(false);
                 onStatusChangeRef.current?.(latestAutoplay ? 'buffering' : 'cued');
@@ -161,6 +185,7 @@ export default function YouTubeDeckPlayer({
     return () => {
       cancelled = true;
       readyRef.current = false;
+      loadedVideoIdRef.current = '';
       const player = playerRef.current;
       playerRef.current = null;
       if (player && typeof player.destroy === 'function') {
@@ -172,21 +197,26 @@ export default function YouTubeDeckPlayer({
       }
       host.replaceChildren();
     };
-  }, []);
+  }, [hasValidVideoId]);
 
   useEffect(() => {
     const prevAutoplay = prevAutoplayRef.current;
     prevAutoplayRef.current = autoplay;
     setEmbedBlocked(false);
 
+    if (!hasValidVideoId) {
+      onStatusChangeRef.current?.('blocked');
+      return;
+    }
+
     const player = playerRef.current;
-    if (!player || !readyRef.current || !videoId) return;
+    if (!player || !readyRef.current) return;
 
     try {
       const iframe = typeof player.getIframe === 'function' ? player.getIframe() : null;
       if (iframe && title) iframe.setAttribute('title', title);
 
-      if (loadedVideoIdRef.current === videoId) {
+      if (loadedVideoIdRef.current === cleanVideoId) {
         if (autoplay && !prevAutoplay && typeof player.playVideo === 'function') {
           onStatusChangeRef.current?.('buffering');
           player.playVideo();
@@ -194,37 +224,43 @@ export default function YouTubeDeckPlayer({
         return;
       }
 
-      loadedVideoIdRef.current = videoId;
+      loadedVideoIdRef.current = cleanVideoId;
       if (autoplay) {
         onStatusChangeRef.current?.('buffering');
-        player.loadVideoById(videoId);
+        player.loadVideoById(cleanVideoId);
       } else {
         onStatusChangeRef.current?.('cued');
-        player.cueVideoById(videoId);
+        player.cueVideoById(cleanVideoId);
       }
     } catch {
       setEmbedBlocked(true);
       onStatusChangeRef.current?.('blocked');
     }
-  }, [videoId, autoplay, title]);
+  }, [cleanVideoId, hasValidVideoId, autoplay, title]);
+
+  const isBlocked = !hasValidVideoId || embedBlocked;
 
   return (
-    <div className={`yt-deck-frame${embedBlocked ? ' is-blocked' : ''} ${className}`.trim()}>
+    <div className={`yt-deck-frame${isBlocked ? ' is-blocked' : ''} ${className}`.trim()}>
       <div ref={hostRef} className="yt-deck-host" />
-      {embedBlocked ? (
+      {isBlocked ? (
         <div className="yt-deck-blocked" role="alert">
           <p className="yt-deck-blocked-copy">
-            Blocked in embedded player. Swap song or open directly on YouTube.
+            {hasValidVideoId
+              ? 'Blocked in embedded player. Swap song or open directly on YouTube.'
+              : 'Video unavailable. Swap song to cue another.'}
           </p>
-          <a
-            className="btn btn-secondary btn-sm"
-            href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoId || '')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Icon name="external" size="sm" />
-            <span>Open on YouTube</span>
-          </a>
+          {hasValidVideoId ? (
+            <a
+              className="btn btn-secondary btn-sm"
+              href={`https://www.youtube.com/watch?v=${encodeURIComponent(cleanVideoId)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="external" size="sm" />
+              <span>Open on YouTube</span>
+            </a>
+          ) : null}
         </div>
       ) : null}
     </div>

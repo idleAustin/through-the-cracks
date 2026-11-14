@@ -12,8 +12,10 @@ export default function PlaylistQueueCard({
   swappingSlots,
   onSelectIndex,
   onSwapIndex,
+  onInspectArtist,
 }) {
   const totalRuntimeLabel = formatPlaylistRuntime(queue);
+  const runtimeMatch = totalRuntimeLabel.match(/^(\d+:\d{2})\s+runtime$/);
 
   return (
     <section className="surface-region booth-playlist" aria-label="Playlist queue">
@@ -21,7 +23,15 @@ export default function PlaylistQueueCard({
         <span className="booth-region-title">
           Playlist · <span className="font-mono num">{queue.length}</span> {queue.length === 1 ? 'Song' : 'Songs'}
         </span>
-        <span className="booth-pool-meta font-mono num">{totalRuntimeLabel}</span>
+        <span className="booth-pool-meta">
+          {runtimeMatch ? (
+            <>
+              <span className="font-mono num">{runtimeMatch[1]}</span> runtime
+            </>
+          ) : (
+            totalRuntimeLabel
+          )}
+        </span>
       </div>
 
       {isMobile ? (
@@ -43,7 +53,15 @@ export default function PlaylistQueueCard({
                     {item.songTitle}
                   </button>
                   <div className="booth-mobile-sub">
-                    <span>{item.artist}</span>
+                    {item.artist ? (
+                      <button
+                        type="button"
+                        className="cell-link-btn cell-link booth-row-artist-btn"
+                        onClick={() => onInspectArtist?.(item.artist)}
+                      >
+                        <span className="booth-cell-link-text">{item.artist}</span>
+                      </button>
+                    ) : null}
                     {item.album ? (
                       <>
                         <span className="booth-sep" aria-hidden="true"> · </span>
@@ -108,11 +126,22 @@ export default function PlaylistQueueCard({
                         aria-current={isActive ? 'true' : undefined}
                         onClick={(e) => { e.stopPropagation(); onSelectIndex(idx); }}
                       >
-                        {item.songTitle}
+                        <span className="booth-cell-link-text">{item.songTitle}</span>
                       </button>
                     </td>
-                    <td className="cell-truncate" title={item.artist}>
-                      {item.artist}
+                    <td className="cell-truncate" title={item.artist || undefined}>
+                      {item.artist ? (
+                        <button
+                          type="button"
+                          className="cell-link-btn cell-link booth-row-artist-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onInspectArtist?.(item.artist);
+                          }}
+                        >
+                          <span className="booth-cell-link-text">{item.artist}</span>
+                        </button>
+                      ) : '—'}
                     </td>
                     <td className="col-album cell-dim cell-truncate" title={item.album || undefined}>
                       {item.album || '—'}

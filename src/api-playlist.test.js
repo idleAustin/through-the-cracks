@@ -138,6 +138,30 @@ describe('api-playlist client adapter', () => {
     await expect(getRandomPlaylist({ mode: 'invalid_mode' })).rejects.toThrow('Invalid playlist mode');
   });
 
+  it('sanitizes invalid or injected videoIds to empty string in live playlist responses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({
+        count: 2,
+        poolSize: 2,
+        minScore: 85,
+        mode: 'all',
+        onePerArtist: true,
+        songs: [
+          { songKey: 'a|||1', artist: 'John Prine', songTitle: 'Sam Stone', videoId: '  vid_OK-1  ', confidenceScore: 98 },
+          { songKey: 'a|||2', artist: 'Injected', songTitle: 'Bad Id', videoId: 'bad/id?list=evil', confidenceScore: 95 },
+        ],
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })),
+    );
+
+    const res = await getRandomPlaylist();
+    expect(res.data.songs[0].videoId).toBe('vid_OK-1');
+    expect(res.data.songs[1].videoId).toBe('');
+  });
+
   it('aborts superseded live requests without falling back to static song-links.json', async () => {
     const controller = new AbortController();
     const fetchSpy = vi.fn((_url, init) => new Promise((_resolve, reject) => {

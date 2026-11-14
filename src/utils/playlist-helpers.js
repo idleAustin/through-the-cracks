@@ -19,6 +19,11 @@ export const PLAYLIST_SCORE_OPTIONS = Object.freeze([
 ]);
 
 const VALID_MODES = new Set(PLAYLIST_MODE_OPTIONS.map((opt) => opt.value));
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function isValidVideoId(value) {
+  return typeof value === 'string' && VIDEO_ID_RE.test(value.trim());
+}
 
 export function parsePlaylistFilters(searchParams) {
   const params = searchParams instanceof URLSearchParams
@@ -109,8 +114,9 @@ export function buildSwapExcludeArtists(queue, targetIndex, onePerArtist = true)
 export function buildYouTubeQueueUrl(queue) {
   if (!Array.isArray(queue) || queue.length === 0) return '';
   const ids = queue
-    .map((item) => encodeURIComponent(String(item?.videoId || '').trim()))
-    .filter(Boolean);
+    .map((item) => (typeof item?.videoId === 'string' ? item.videoId.trim() : ''))
+    .filter((id) => isValidVideoId(id))
+    .map((id) => encodeURIComponent(id));
   if (ids.length === 0) return '';
   return `https://www.youtube.com/watch_videos?video_ids=${ids.join(',')}`;
 }

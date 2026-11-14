@@ -10,6 +10,7 @@ import {
   buildYouTubeQueueUrl,
   copyTextToClipboard,
   formatPlaylistText,
+  isValidVideoId,
   parsePlaylistFilters,
 } from './utils/playlist-helpers.js';
 
@@ -99,6 +100,29 @@ describe('playlist-helpers', () => {
     expect(smallExcludeArtists).toHaveLength(10);
     expect(smallExcludeArtists[smallExcludeArtists.length - 1]).toBe('Crosby, Stills & Nash');
     expect(buildSwapExcludeArtists(queue, 0, false)).toEqual([]);
+  });
+
+  it('validates YouTube videoIds with a strict allowlist and filters invalid IDs out of queue URLs', () => {
+    expect(isValidVideoId('aYdxQ05nOSo')).toBe(true);
+    expect(isValidVideoId('  vid_01-AB  ')).toBe(true);
+    expect(isValidVideoId('a'.repeat(64))).toBe(true);
+
+    expect(isValidVideoId('')).toBe(false);
+    expect(isValidVideoId('   ')).toBe(false);
+    expect(isValidVideoId(null)).toBe(false);
+    expect(isValidVideoId(12345)).toBe(false);
+    expect(isValidVideoId('a'.repeat(65))).toBe(false);
+    expect(isValidVideoId('bad/id?list=evil')).toBe(false);
+    expect(isValidVideoId('abc&autoplay=1')).toBe(false);
+    expect(isValidVideoId('javascript:alert(1)')).toBe(false);
+
+    expect(buildYouTubeQueueUrl([
+      { videoId: '  abc123  ', artist: 'John Prine', songTitle: 'Sam Stone' },
+      { videoId: 'bad/id?x=1', artist: 'Bad', songTitle: 'Injected' },
+      { videoId: '', artist: 'Empty', songTitle: 'Blank' },
+      { videoId: 'def_456-7', artist: 'Todd Snider', songTitle: 'Alright Guy' },
+    ])).toBe('https://www.youtube.com/watch_videos?video_ids=abc123,def_456-7');
+    expect(buildYouTubeQueueUrl([{ videoId: '../bad' }])).toBe('');
   });
 
   it('formats YouTube queue export URLs, plain-text copy output, and handles clipboard fallbacks', async () => {

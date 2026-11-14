@@ -295,4 +295,49 @@ describe('Worker Cron, POST /api/ingest, cache epoch invalidation, and native R2
     });
     expect(db.sqlite.prepare("SELECT id FROM episodes WHERE id = 'ep-cron-throw'").get()).toEqual({ id: 'ep-cron-throw' });
   });
+
+  it('returns generic linkResolution error and redacts secrets in logs when song link refresh throws', async () => {
+    const db = await trackDb();
+    await seedSongs(db, 1);
+    const origPrepare = db.prepare.bind(db);
+    db.prepare = (sql) => {
+      if (sql.includes('FROM song_rollups')) {
+        return {
+          bind() { return this; },
+          async first() {
+            throw new Error('Request failed: https://www.googleapis.com/youtube/v3/search?key=SECRET_YT_KEY&token=SECRET_TOK&secret=SECRET_VAL');
+          },
+          async all() {
+            throw new Error('Request failed: https://www.googleapis.com/youtube/v3/search?key=SECRET_YT_KEY&token=SECRET_TOK&secret=SECRET_VAL');
+          },
+        };
+      }
+      return origPrepare(sql);
+    };
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn(async () => jsonRes({ items: [] })));
+    const env = { DB: db, INGEST_SECRET: 'sec', BLOGGER_API_KEY: 'bk', BLOGGER_BLOG_ID: 'bid', YOUTUBE_API_KEY: 'yk' };
+    const res = await worker.fetch(new Request('https://idleamericana.com/api/ingest', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer sec', 'CF-Connecting-IP': '10.0.0.44' },
+      body: JSON.stringify({ incremental: true, resolveLinks: true }),
+    }), env);
+
+    expect(res.status).toBe(200);
+    const payload = await res.json();
+    expect(payload.linkResolution).toEqual({ error: 'Song link refresh failed', changesMade: false });
+    expect(JSON.stringify(payload)).not.toContain('SECRET_YT_KEY');
+    expect(JSON.stringify(payload)).not.toContain('googleapis.com');
+
+    expect(errorSpy).toHaveBeenCalled();
+    const [label, loggedErr] = errorSpy.mock.calls[0];
+    expect(label).toBe('Worker song_links cron error:');
+    expect(loggedErr).toContain('key=[REDACTED]');
+    expect(loggedErr).toContain('token=[REDACTED]');
+    expect(loggedErr).toContain('secret=[REDACTED]');
+    expect(loggedErr).not.toContain('SECRET_YT_KEY');
+    expect(loggedErr).not.toContain('SECRET_TOK');
+    expect(loggedErr).not.toContain('SECRET_VAL');
+  });
 });

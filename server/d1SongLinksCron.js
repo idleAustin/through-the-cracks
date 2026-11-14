@@ -1,6 +1,7 @@
 // Pure Web-API-only incremental YouTube song_links discovery and rotating health recheck for Worker Cron.
 import { upsertSongLink } from './d1Playlist.js';
 import { clearD1Cache, qAll, qFirst } from './d1Rollups.js';
+import { buildSongKey } from './playlistBuilder.js';
 import { classifyYouTubeFailure, evaluateYouTubeVideoItem, pickBestSearchCandidate } from './youtubeSongMatcher.js';
 
 export const DEFAULT_MAX_NEW_SONGS = 25;
@@ -16,8 +17,8 @@ export const SELECT_UNRESOLVED_ROLLUPS_SQL = `SELECT
 FROM song_rollups sr
 LEFT JOIN song_links sl ON sl.song_key = (sr.artist_key || '|||' || sr.song_key)
 WHERE sl.song_key IS NULL AND LENGTH(TRIM(sr.artist)) > 0 AND LENGTH(TRIM(sr.song_title)) > 0
-ORDER BY sr.total_plays DESC, sr.song_key ASC
-LIMIT ?`;
+ORDER BY sr.total_plays DESC, sr.song_key ASC, sr.artist_key ASC
+LIMIT ? OFFSET ?`;
 
 export const SELECT_UNRESOLVED_PLAYS_SQL = `WITH grouped_songs AS (
   SELECT (LOWER(TRIM(sp.artist)) || '|||' || LOWER(TRIM(sp.song_title))) AS song_key,
@@ -31,7 +32,7 @@ FROM grouped_songs gs
 LEFT JOIN song_links sl ON sl.song_key = gs.song_key
 WHERE sl.song_key IS NULL
 ORDER BY gs.total_plays DESC, gs.song_key ASC
-LIMIT ?`;
+LIMIT ? OFFSET ?`;
 
 export const SELECT_RECHECK_ROWS_SQL = `SELECT song_key, video_id, is_embeddable, us_playable, status_reason, match_tier, checked_at
 FROM song_links
@@ -66,11 +67,56 @@ async function hasPopulatedSongRollups(db) {
   }
 }
 
+async function fetchExistingCanonicalKeys(db, keys) {
+  const existing = new Set();
+  for (const chunk of chunkIds(keys, VIDEOS_BATCH_SIZE)) {
+    const placeholders = chunk.map(() => '?').join(', ');
+    const rows = await qAll(db, `SELECT song_key FROM song_links WHERE song_key IN (${placeholders})`, chunk);
+    for (const row of rows) {
+      if (row?.song_key) existing.add(String(row.song_key));
+    }
+  }
+  return existing;
+}
+
 export async function selectUnresolvedSongs(db, limit = DEFAULT_MAX_NEW_SONGS) {
   const safeLimit = parseLimitOption(limit, DEFAULT_MAX_NEW_SONGS);
   if (!db || safeLimit <= 0) return [];
   const useRollups = await hasPopulatedSongRollups(db);
-  return qAll(db, useRollups ? SELECT_UNRESOLVED_ROLLUPS_SQL : SELECT_UNRESOLVED_PLAYS_SQL, [safeLimit]);
+  const sql = useRollups ? SELECT_UNRESOLVED_ROLLUPS_SQL : SELECT_UNRESOLVED_PLAYS_SQL;
+  const pageSize = Math.max(safeLimit, DEFAULT_MAX_NEW_SONGS);
+  const selected = [];
+  const seenCanonicalKeys = new Set();
+  let offset = 0;
+
+  while (selected.length < safeLimit) {
+    const page = await qAll(db, sql, [pageSize, offset]);
+    if (page.length === 0) break;
+
+    const mismatchKeys = new Set();
+    const normalizedPage = page.map((row) => {
+      const canonicalKey = buildSongKey(row.artist, row.song_title);
+      if (canonicalKey && canonicalKey !== row.song_key) mismatchKeys.add(canonicalKey);
+      return { row, canonicalKey };
+    });
+
+    const existingCanonicalKeys =
+      mismatchKeys.size > 0 ? await fetchExistingCanonicalKeys(db, [...mismatchKeys]) : new Set();
+
+    for (const { row, canonicalKey } of normalizedPage) {
+      if (selected.length >= safeLimit) break;
+      if (!canonicalKey || existingCanonicalKeys.has(canonicalKey) || seenCanonicalKeys.has(canonicalKey)) {
+        continue;
+      }
+      seenCanonicalKeys.add(canonicalKey);
+      selected.push({ ...row, song_key: canonicalKey });
+    }
+
+    if (page.length < pageSize) break;
+    offset += page.length;
+  }
+
+  return selected;
 }
 
 export async function selectRecheckRows(db, limit = DEFAULT_MAX_RECHECK, excludeKeys = null) {
@@ -154,8 +200,9 @@ async function persistDiscoveryResults({ db, candidateQueue, unmatchedQueue, ver
   for (const { song, best } of candidateQueue) {
     const compat = evaluateYouTubeVideoItem(verifiedVideoMap.get(best.videoId) ?? null);
     const ts = getNowIso();
+    const songKey = buildSongKey(song.artist, song.song_title) || song.song_key;
     await upsertSongLink(db, {
-      song_key: song.song_key, artist: song.artist, song_title: song.song_title,
+      song_key: songKey, artist: song.artist, song_title: song.song_title,
       video_id: best.videoId, yt_title: best.ytTitle, yt_artist: best.ytArtist, yt_album: null,
       result_type: best.resultType, duration_seconds: compat.durationSeconds,
       confidence_score: best.score, match_tier: best.matchTier,
@@ -163,18 +210,19 @@ async function persistDiscoveryResults({ db, candidateQueue, unmatchedQueue, ver
       status_reason: compat.statusReason, checked_at: ts, updated_at: ts,
     });
     resolvedCount += 1;
-    verifiedThisRun.add(song.song_key);
+    verifiedThisRun.add(songKey);
   }
   for (const { song, statusReason } of unmatchedQueue) {
     const ts = getNowIso();
+    const songKey = buildSongKey(song.artist, song.song_title) || song.song_key;
     await upsertSongLink(db, {
-      song_key: song.song_key, artist: song.artist, song_title: song.song_title,
+      song_key: songKey, artist: song.artist, song_title: song.song_title,
       video_id: null, yt_title: null, yt_artist: null, yt_album: null, result_type: null,
       duration_seconds: null, confidence_score: 0, match_tier: 'unmatched',
       is_embeddable: 0, us_playable: 0, status_reason: statusReason, checked_at: ts, updated_at: ts,
     });
     unmatchedCount += 1;
-    verifiedThisRun.add(song.song_key);
+    verifiedThisRun.add(songKey);
   }
   return { resolvedCount, unmatchedCount };
 }

@@ -8,7 +8,6 @@ import ArtistsView from './views/ArtistsView';
 import EpisodesView from './views/EpisodesView';
 import OverviewView from './views/OverviewView';
 import PlaylistView from './views/PlaylistView';
-import PlaylistPrototypeView from './views/prototype/PlaylistPrototypeView';
 import SearchView from './views/SearchView';
 import SongsView from './views/SongsView';
 
@@ -77,8 +76,6 @@ export default function App() {
         <Route path="/episodes" element={<EpisodesView />} />
         <Route path="/search" element={<SearchView />} />
         <Route path="/playlist" element={<PlaylistView />} />
-        <Route path="/prototype" element={<PlaylistPrototypeView />} />
-        <Route path="/prototype/playlist" element={<PlaylistPrototypeView />} />
         <Route path="*" element={<NotFoundState />} />
       </Routes>
 

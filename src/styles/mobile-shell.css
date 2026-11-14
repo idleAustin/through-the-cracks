@@ -201,7 +201,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobile-playlist-btn:active {
+  .mobile-playlist-btn:active,
+  .mobile-theme-btn:active,
+  .mobile-tab-link:active {
     transform: none;
   }
 }

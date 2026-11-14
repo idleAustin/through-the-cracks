@@ -1,18 +1,32 @@
 /* Responsive and touch rules for Broadcast Booth (/playlist) across narrow desktop, tablet, and phone viewports. */
 
+@media (min-width: 1181px) and (max-width: 1366px) {
+  .booth-table .col-album { display: none; }
+  .booth-table th.col-song,
+  .booth-table th.col-artist { width: auto; }
+}
+
 @media (max-width: 1180px) {
   .booth-cockpit { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 960px) and (min-width: 769px) {
+@media (max-width: 1024px) {
   .booth-table .col-album { display: none; }
   .booth-table th.col-song,
   .booth-table th.col-artist { width: auto; }
-  .booth-table th.col-num,
-  .booth-table td.col-num { width: 48px; }
+}
+
+@media (max-width: 960px) and (min-width: 769px) {
   .booth-table th, .booth-table td { padding-left: 8px; padding-right: 8px; }
   .booth-table th:first-child, .booth-table td:first-child { padding-left: 12px; }
   .booth-table th:last-child, .booth-table td:last-child { padding-right: 12px; }
+  .booth-table th.col-num,
+  .booth-table td.col-num {
+    min-width: 54px;
+    width: 54px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -34,7 +48,49 @@
   .booth-dock-label { display: inline; font-size: 12px; font-weight: 500; white-space: nowrap; }
   .booth-dock { gap: 8px; padding: 6px; }
   .booth-table .booth-col-action { width: 108px; }
-  .booth-artist-toggle { min-height: var(--as-tap-min); padding: 0 12px; }
+  .booth-table th.col-song,
+  .booth-table th.col-artist,
+  .booth-table th.col-album { width: auto; }
+
+  .booth-head-actions .btn,
+  .booth-export-row .btn,
+  .yt-deck-blocked .btn,
+  .booth-page .empty-state .btn,
+  .booth-mode-group .seg-btn,
+  .booth-artist-toggle {
+    min-width: var(--as-tap-min);
+    min-height: var(--as-tap-min);
+  }
+
+  .booth-mode-group { gap: 8px; }
+  .booth-artist-toggle { padding: 0 12px; }
+
+  .booth-score-select {
+    min-height: var(--as-tap-min);
+    height: var(--as-tap-min);
+    font-size: max(1rem, 16px);
+    padding: 0 12px;
+  }
+
+  button.booth-upnext { min-height: var(--as-tap-min); }
+
+  .booth-artist-link,
+  .booth-row-artist-btn,
+  .booth-song-btn,
+  .booth-mobile-song {
+    min-width: var(--as-tap-min);
+    min-height: var(--as-tap-min);
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .booth-table td.cell-truncate .cell-link-btn {
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 @media (max-width: 768px) {
@@ -44,7 +100,7 @@
     gap: 8px;
   }
 
-  .booth-mode-group { gap: 4px; }
+  .booth-mode-group { gap: 8px; }
 
   .booth-score-select {
     width: 100%;
