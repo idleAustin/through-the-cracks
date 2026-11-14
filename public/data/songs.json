@@ -1319,6 +1319,17 @@
     "lastAppearance": "2026-05-20"
   },
   {
+    "artist": "Skip Battin",
+    "songTitle": "St. Louis Browns",
+    "album": "Skip",
+    "albums": [
+      "Skip"
+    ],
+    "totalPlays": 9,
+    "firstAppearance": "2014-10-01",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Hard Working Americans",
     "songTitle": "Stomp And Holler",
     "album": "Hard Working Americans",
@@ -2493,17 +2504,6 @@
     "totalPlays": 8,
     "firstAppearance": "2023-02-01",
     "lastAppearance": "2023-07-22"
-  },
-  {
-    "artist": "Skip Battin",
-    "songTitle": "St. Louis Browns",
-    "album": "Skip",
-    "albums": [
-      "Skip"
-    ],
-    "totalPlays": 8,
-    "firstAppearance": "2014-10-01",
-    "lastAppearance": "2024-06-15"
   },
   {
     "artist": "Joy Kills Sorrow",
@@ -7379,6 +7379,17 @@
     "totalPlays": 6,
     "firstAppearance": "2013-10-05",
     "lastAppearance": "2022-11-09"
+  },
+  {
+    "artist": "Jeff Hulett",
+    "songTitle": "Me And Annie",
+    "album": "Summer Plans",
+    "albums": [
+      "Summer Plans"
+    ],
+    "totalPlays": 6,
+    "firstAppearance": "2026-08-26",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "John Kilzer",
@@ -14893,17 +14904,6 @@
     "lastAppearance": "2026-08-29"
   },
   {
-    "artist": "Jeff Hulett",
-    "songTitle": "Me And Annie",
-    "album": "Summer Plans",
-    "albums": [
-      "Summer Plans"
-    ],
-    "totalPlays": 5,
-    "firstAppearance": "2026-08-26",
-    "lastAppearance": "2026-11-04"
-  },
-  {
     "artist": "Rev Neil Down",
     "songTitle": "Meet Me",
     "album": "Every Block Needs An Alley",
@@ -17115,6 +17115,17 @@
     "totalPlays": 5,
     "firstAppearance": "2025-01-01",
     "lastAppearance": "2025-05-07"
+  },
+  {
+    "artist": "Help Yourself",
+    "songTitle": "Strange Affair",
+    "album": "Strange Affair",
+    "albums": [
+      "Strange Affair"
+    ],
+    "totalPlays": 5,
+    "firstAppearance": "2016-12-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Aaron Lee Tasjan",
@@ -20720,6 +20731,17 @@
     "totalPlays": 4,
     "firstAppearance": "2020-05-30",
     "lastAppearance": "2021-03-06"
+  },
+  {
+    "artist": "Garrison Starr",
+    "songTitle": "Better Day Coming",
+    "album": "The Gospel Truth",
+    "albums": [
+      "The Gospel Truth"
+    ],
+    "totalPlays": 4,
+    "firstAppearance": "2025-07-09",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Patterson Hood",
@@ -27437,6 +27459,17 @@
     "lastAppearance": "2019-10-30"
   },
   {
+    "artist": "Ollabelle",
+    "songTitle": "Looked Down The Line",
+    "album": "Before This Time",
+    "albums": [
+      "Before This Time"
+    ],
+    "totalPlays": 4,
+    "firstAppearance": "2016-07-30",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Ani DiFranco",
     "songTitle": "Loom",
     "album": "Little Plastic Castle",
@@ -28935,6 +28968,15 @@
     "totalPlays": 4,
     "firstAppearance": "2016-02-17",
     "lastAppearance": "2022-05-28"
+  },
+  {
+    "artist": "Keith Sykes",
+    "songTitle": "Occupational Hazard",
+    "album": "",
+    "albums": [],
+    "totalPlays": 4,
+    "firstAppearance": "2026-09-09",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Wendy Moten",
@@ -31760,17 +31802,6 @@
     "totalPlays": 4,
     "firstAppearance": "2018-12-15",
     "lastAppearance": "2024-11-20"
-  },
-  {
-    "artist": "Help Yourself",
-    "songTitle": "Strange Affair",
-    "album": "Strange Affair",
-    "albums": [
-      "Strange Affair"
-    ],
-    "totalPlays": 4,
-    "firstAppearance": "2016-12-14",
-    "lastAppearance": "2024-01-27"
   },
   {
     "artist": "Kris Delmhorst",
@@ -37620,15 +37651,6 @@
     "totalPlays": 3,
     "firstAppearance": "2017-09-16",
     "lastAppearance": "2018-07-11"
-  },
-  {
-    "artist": "Garrison Starr",
-    "songTitle": "Better Day Coming",
-    "album": "",
-    "albums": [],
-    "totalPlays": 3,
-    "firstAppearance": "2025-07-09",
-    "lastAppearance": "2025-08-20"
   },
   {
     "artist": "Serena Ryder",
@@ -44983,6 +45005,18 @@
     "lastAppearance": "2019-01-09"
   },
   {
+    "artist": "Continental Drifters",
+    "songTitle": "I Can't Let Go",
+    "album": "Drifted: In The Beginning And Beyond",
+    "albums": [
+      "Drifted: In The Beginning And Beyond",
+      "Drifted; In The Beginning & Beyond"
+    ],
+    "totalPlays": 3,
+    "firstAppearance": "2015-08-29",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Lamar Sorrento & The Mod Saints",
     "songTitle": "I Can't Stop",
     "album": "Gear",
@@ -48481,17 +48515,6 @@
     "lastAppearance": "2022-10-12"
   },
   {
-    "artist": "Ollabelle",
-    "songTitle": "Looked Down The Line",
-    "album": "Before This Time",
-    "albums": [
-      "Before This Time"
-    ],
-    "totalPlays": 3,
-    "firstAppearance": "2016-07-30",
-    "lastAppearance": "2025-04-23"
-  },
-  {
     "artist": "Steve Forbert",
     "songTitle": "Lookin' At The River In The Rain",
     "album": "The Magic Tree",
@@ -49504,6 +49527,17 @@
     "totalPlays": 3,
     "firstAppearance": "2014-12-03",
     "lastAppearance": "2022-06-15"
+  },
+  {
+    "artist": "Michelle Malone",
+    "songTitle": "Miss Miss'ippi",
+    "album": "Sugarfoot",
+    "albums": [
+      "Sugarfoot"
+    ],
+    "totalPlays": 3,
+    "firstAppearance": "2020-03-07",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "The Jayhawks",
@@ -50888,15 +50922,6 @@
     "totalPlays": 3,
     "firstAppearance": "2016-02-03",
     "lastAppearance": "2021-06-09"
-  },
-  {
-    "artist": "Keith Sykes",
-    "songTitle": "Occupational Hazard",
-    "album": "",
-    "albums": [],
-    "totalPlays": 3,
-    "firstAppearance": "2026-09-09",
-    "lastAppearance": "2026-09-23"
   },
   {
     "artist": "Amy Helm",
@@ -54204,6 +54229,17 @@
     "totalPlays": 3,
     "firstAppearance": "2017-05-13",
     "lastAppearance": "2022-03-02"
+  },
+  {
+    "artist": "Victor Mecyssne",
+    "songTitle": "Sleepy Nashville Town",
+    "album": "Personal Mercury",
+    "albums": [
+      "Personal Mercury"
+    ],
+    "totalPlays": 3,
+    "firstAppearance": "2013-10-12",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "The Roches",
@@ -62884,6 +62920,17 @@
     "lastAppearance": "2022-08-27"
   },
   {
+    "artist": "The Jayhawks",
+    "songTitle": "American Midnight",
+    "album": "Sanctuary Park",
+    "albums": [
+      "Sanctuary Park"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2026-09-16",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Dave Alvin & The Guilty Men",
     "songTitle": "American Music",
     "album": "Out In California",
@@ -69624,6 +69671,17 @@
     "lastAppearance": "2024-05-04"
   },
   {
+    "artist": "Sarah Harmer",
+    "songTitle": "Don't Get Your Back Up",
+    "album": "You Were Here",
+    "albums": [
+      "You Were Here"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2022-07-09",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Paul Kelly",
     "songTitle": "Don't Give Up On Me (w/ Meg Washington)",
     "album": "Seventy",
@@ -74081,6 +74139,17 @@
     "lastAppearance": "2022-09-21"
   },
   {
+    "artist": "The Stray Birds",
+    "songTitle": "Hands Of Man",
+    "album": "Magic Fire",
+    "albums": [
+      "Magic Fire"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2016-08-27",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Ron Sexsmith",
     "songTitle": "Hands Of Time",
     "album": "Time Being",
@@ -75181,6 +75250,18 @@
     "totalPlays": 2,
     "firstAppearance": "2021-07-14",
     "lastAppearance": "2026-10-24"
+  },
+  {
+    "artist": "Chris Smither",
+    "songTitle": "Hey, Hey, Hey",
+    "album": "Drive You Home Again",
+    "albums": [
+      "Drive You Home Again",
+      "More From The Levee"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2021-08-25",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Memphis Dawls",
@@ -76675,18 +76756,6 @@
     "totalPlays": 2,
     "firstAppearance": "2025-11-12",
     "lastAppearance": "2026-09-12"
-  },
-  {
-    "artist": "Continental Drifters",
-    "songTitle": "I Can't Let Go",
-    "album": "Drifted: In The Beginning And Beyond",
-    "albums": [
-      "Drifted: In The Beginning And Beyond",
-      "Drifted; In The Beginning & Beyond"
-    ],
-    "totalPlays": 2,
-    "firstAppearance": "2015-08-29",
-    "lastAppearance": "2015-10-10"
   },
   {
     "artist": "Madeleine Peyroux",
@@ -83633,6 +83702,17 @@
     "lastAppearance": "2024-01-13"
   },
   {
+    "artist": "Nicki Bluhm",
+    "songTitle": "Measure Of A Man",
+    "album": "Measure Of A Man (single)",
+    "albums": [
+      "Measure Of A Man (single)"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2026-11-11",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Joan Osborne",
     "songTitle": "Meat And Potatoes",
     "album": "Trouble And Strife",
@@ -84119,17 +84199,6 @@
     "totalPlays": 2,
     "firstAppearance": "2021-08-14",
     "lastAppearance": "2024-02-28"
-  },
-  {
-    "artist": "Michelle Malone",
-    "songTitle": "Miss Miss'ippi",
-    "album": "Sugarfoot",
-    "albums": [
-      "Sugarfoot"
-    ],
-    "totalPlays": 2,
-    "firstAppearance": "2020-03-07",
-    "lastAppearance": "2021-02-03"
   },
   {
     "artist": "Randall Bramblett",
@@ -91990,17 +92059,6 @@
     "lastAppearance": "2026-11-04"
   },
   {
-    "artist": "Victor Mecyssne",
-    "songTitle": "Sleepy Nashville Town",
-    "album": "Personal Mercury",
-    "albums": [
-      "Personal Mercury"
-    ],
-    "totalPlays": 2,
-    "firstAppearance": "2013-10-12",
-    "lastAppearance": "2024-07-17"
-  },
-  {
     "artist": "John Fahey",
     "songTitle": "Sligo River Blues",
     "album": "",
@@ -96479,6 +96537,17 @@
     "lastAppearance": "2025-01-25"
   },
   {
+    "artist": "Cory Branan",
+    "songTitle": "The Nothing I Know",
+    "album": "You'll Live",
+    "albums": [
+      "You'll Live"
+    ],
+    "totalPlays": 2,
+    "firstAppearance": "2026-10-28",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "John Hiatt",
     "songTitle": "The Odds Of Loving You",
     "album": "The Eclipse Sessions",
@@ -100553,6 +100622,15 @@
     "lastAppearance": "2019-05-22"
   },
   {
+    "artist": "Shannon McNally",
+    "songTitle": "What Are We Fighting For",
+    "album": "",
+    "albums": [],
+    "totalPlays": 2,
+    "firstAppearance": "2026-11-11",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Rufus Wainwright",
     "songTitle": "What Are You Doing New Year's Eve",
     "album": "The McGarrigle Christmas Hour",
@@ -103290,6 +103368,15 @@
     "lastAppearance": "2018-05-26"
   },
   {
+    "artist": "Wyly Bigger",
+    "songTitle": "You Gotta Let Me Know",
+    "album": "",
+    "albums": [],
+    "totalPlays": 2,
+    "firstAppearance": "2026-11-11",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Mavis Staples & Levon Helm",
     "songTitle": "You Gotta Serve Somebody",
     "album": "Carry Me Home",
@@ -105830,6 +105917,17 @@
     "lastAppearance": "2022-09-10"
   },
   {
+    "artist": "Miko Marks",
+    "songTitle": "Ain't Nobody Gonna Bring Me Down",
+    "album": "Hell Or High Water",
+    "albums": [
+      "Hell Or High Water"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Luther Dickinson",
     "songTitle": "Ain't Not Grave (w/ Mavis Staples)",
     "album": "Blues & Ballads (A Folksingers Songbook) Vols. 1 & 2",
@@ -106898,17 +106996,6 @@
     "lastAppearance": "2015-03-28"
   },
   {
-    "artist": "The Jayhawks",
-    "songTitle": "American Midnight",
-    "album": "Sanctuary Park",
-    "albums": [
-      "Sanctuary Park"
-    ],
-    "totalPlays": 1,
-    "firstAppearance": "2026-09-16",
-    "lastAppearance": "2026-09-16"
-  },
-  {
     "artist": "Jeffrey Foucault",
     "songTitle": "Americans In Corduroys",
     "album": "Ghost Repeater",
@@ -106929,6 +107016,17 @@
     "totalPlays": 1,
     "firstAppearance": "2026-10-17",
     "lastAppearance": "2026-10-17"
+  },
+  {
+    "artist": "Jim Infantino",
+    "songTitle": "Amy's Dates",
+    "album": "Assemble Yourself",
+    "albums": [
+      "Assemble Yourself"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Luka Bloom",
@@ -109467,6 +109565,17 @@
     "totalPlays": 1,
     "firstAppearance": "2026-03-21",
     "lastAppearance": "2026-03-21"
+  },
+  {
+    "artist": "Jack Barksdale",
+    "songTitle": "Battleground",
+    "album": "Battleground",
+    "albums": [
+      "Battleground"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Dolly Varden",
@@ -112877,6 +112986,17 @@
     "lastAppearance": "2014-04-19"
   },
   {
+    "artist": "Bruce Cockburn",
+    "songTitle": "Call Me Rose",
+    "album": "Small Source Of Comfort",
+    "albums": [
+      "Small Source Of Comfort"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Shannon McNally",
     "songTitle": "Call Me The Breeze",
     "album": "Live At Dee's",
@@ -115703,6 +115823,17 @@
     "lastAppearance": "2025-03-05"
   },
   {
+    "artist": "Marcia Ball",
+    "songTitle": "Count The Days",
+    "album": "Presumed Innocent",
+    "albums": [
+      "Presumed Innocent"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Maia Sharp",
     "songTitle": "Counterintuition",
     "album": "Tomboy",
@@ -117435,6 +117566,17 @@
     "lastAppearance": "2021-04-17"
   },
   {
+    "artist": "Jesse Winchester",
+    "songTitle": "Defying Gravity",
+    "album": "Learn To Love It",
+    "albums": [
+      "Learn To Love It"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Billy Joe Shaver",
     "songTitle": "Deja Blues",
     "album": "Freedom's Child",
@@ -118750,17 +118892,6 @@
     "totalPlays": 1,
     "firstAppearance": "2021-03-17",
     "lastAppearance": "2021-03-17"
-  },
-  {
-    "artist": "Sarah Harmer",
-    "songTitle": "Don't Get Your Back Up",
-    "album": "You Were Here",
-    "albums": [
-      "You Were Here"
-    ],
-    "totalPlays": 1,
-    "firstAppearance": "2022-07-09",
-    "lastAppearance": "2022-07-09"
   },
   {
     "artist": "Rodney Crowell",
@@ -122490,6 +122621,15 @@
     "totalPlays": 1,
     "firstAppearance": "2023-08-12",
     "lastAppearance": "2023-08-12"
+  },
+  {
+    "artist": "Eddie Lang, Joe Venuti and Their All Star Orchestra",
+    "songTitle": "Farewell Blues",
+    "album": "",
+    "albums": [],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Elvis Costello & The Imposters",
@@ -127066,17 +127206,6 @@
     "lastAppearance": "2013-10-26"
   },
   {
-    "artist": "The Stray Birds",
-    "songTitle": "Hands Of Man",
-    "album": "Magic Fire",
-    "albums": [
-      "Magic Fire"
-    ],
-    "totalPlays": 1,
-    "firstAppearance": "2016-08-27",
-    "lastAppearance": "2016-08-27"
-  },
-  {
     "artist": "Cedric Burnside",
     "songTitle": "Hands Off That Girl",
     "album": "I Be Trying",
@@ -128934,17 +129063,6 @@
     "lastAppearance": "2024-05-15"
   },
   {
-    "artist": "Chris Smither",
-    "songTitle": "Hey, Hey, Hey",
-    "album": "More From The Levee",
-    "albums": [
-      "More From The Levee"
-    ],
-    "totalPlays": 1,
-    "firstAppearance": "2021-08-25",
-    "lastAppearance": "2021-08-25"
-  },
-  {
     "artist": "Nicki Bluhm & The Gramblers",
     "songTitle": "Hey, Stranger",
     "album": "Nicki Bluhm & The Gramblers",
@@ -129352,6 +129470,17 @@
     "totalPlays": 1,
     "firstAppearance": "2026-10-07",
     "lastAppearance": "2026-10-07"
+  },
+  {
+    "artist": "Ruthie Foster",
+    "songTitle": "Hold On",
+    "album": "Just Say Yes",
+    "albums": [
+      "Just Say Yes"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Tom Waits",
@@ -135070,6 +135199,17 @@
     "totalPlays": 1,
     "firstAppearance": "2024-09-18",
     "lastAppearance": "2024-09-18"
+  },
+  {
+    "artist": "Ben Vaughn",
+    "songTitle": "Imitation Wood Grain",
+    "album": "Magnetic East: The Deer Tick Sessions",
+    "albums": [
+      "Magnetic East: The Deer Tick Sessions"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Kevin Gordon",
@@ -144379,15 +144519,6 @@
     "lastAppearance": "2014-09-27"
   },
   {
-    "artist": "Nicki Bluhm",
-    "songTitle": "Measure Of A Man",
-    "album": "",
-    "albums": [],
-    "totalPlays": 1,
-    "firstAppearance": "2026-11-11",
-    "lastAppearance": "2026-11-11"
-  },
-  {
     "artist": "Snowglobe",
     "songTitle": "Medium",
     "album": "Doing The Distance",
@@ -147880,6 +148011,17 @@
     "lastAppearance": "2026-01-17"
   },
   {
+    "artist": "Bailey Bigger",
+    "songTitle": "No Falling Out Of Love",
+    "album": "Coyote Red",
+    "albums": [
+      "Coyote Red"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Elvis Costello",
     "songTitle": "No Flag",
     "album": "Hey Clockface",
@@ -148263,6 +148405,17 @@
     "totalPlays": 1,
     "firstAppearance": "2014-03-29",
     "lastAppearance": "2014-03-29"
+  },
+  {
+    "artist": "Greg Trooper",
+    "songTitle": "Nobody In The Whole Wide World",
+    "album": "Upside-Down Town",
+    "albums": [
+      "Upside-Down Town"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "Willie Nelson",
@@ -153125,6 +153278,17 @@
     "totalPlays": 1,
     "firstAppearance": "2023-11-01",
     "lastAppearance": "2023-11-01"
+  },
+  {
+    "artist": "Circle Birds",
+    "songTitle": "Possible Hurricane",
+    "album": "Circle Birds",
+    "albums": [
+      "Circle Birds"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "artist": "David Olney",
@@ -166532,6 +166696,17 @@
     "lastAppearance": "2024-06-19"
   },
   {
+    "artist": "Elizabeth Cook & Wynona",
+    "songTitle": "The Easy Kind",
+    "album": "Great Television",
+    "albums": [
+      "Great Television"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Elizabeth Cook",
     "songTitle": "The Easy Kind (w/ Wynona)",
     "album": "Great Television",
@@ -167950,6 +168125,17 @@
     "lastAppearance": "2022-08-31"
   },
   {
+    "artist": "Margo Cilker",
+    "songTitle": "The Money",
+    "album": "Little White Cross",
+    "albums": [
+      "Little White Cross"
+    ],
+    "totalPlays": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "artist": "Rob Jungklas",
     "songTitle": "The Moon In All Its Splendor",
     "album": "Don Juan Triumphant",
@@ -168091,17 +168277,6 @@
     "totalPlays": 1,
     "firstAppearance": "2018-09-23",
     "lastAppearance": "2018-09-23"
-  },
-  {
-    "artist": "Cory Branan",
-    "songTitle": "The Nothing I Know",
-    "album": "You'll Live",
-    "albums": [
-      "You'll Live"
-    ],
-    "totalPlays": 1,
-    "firstAppearance": "2026-10-28",
-    "lastAppearance": "2026-10-28"
   },
   {
     "artist": "Paul Simon",
@@ -174934,15 +175109,6 @@
     "lastAppearance": "2022-12-17"
   },
   {
-    "artist": "Shannon McNally",
-    "songTitle": "What Are We Fighting For",
-    "album": "",
-    "albums": [],
-    "totalPlays": 1,
-    "firstAppearance": "2026-11-11",
-    "lastAppearance": "2026-11-11"
-  },
-  {
     "artist": "Bob Dylan",
     "songTitle": "What Can I Do For You?",
     "album": "Trouble No More: Bootleg Series Vol. 13",
@@ -179538,15 +179704,6 @@
     "totalPlays": 1,
     "firstAppearance": "2022-06-18",
     "lastAppearance": "2022-06-18"
-  },
-  {
-    "artist": "Wyly Bigger",
-    "songTitle": "You Gotta Let Me Know",
-    "album": "",
-    "albums": [],
-    "totalPlays": 1,
-    "firstAppearance": "2026-11-11",
-    "lastAppearance": "2026-11-11"
   },
   {
     "artist": "Eilen Jewell",

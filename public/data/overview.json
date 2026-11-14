@@ -1,16 +1,16 @@
 {
-  "lastUpdated": "2026-11-14T06:00:10.731Z",
-  "latestEpisodeId": "4423069433994810612",
-  "totalEpisodes": 1344,
-  "totalSongPlays": 37659,
-  "uniqueArtists": 1292,
-  "uniqueAlbums": 5199,
-  "uniqueSongs": 16285,
-  "oneSpinArtists": 239,
-  "oneSpinSongs": 6996,
+  "lastUpdated": "2026-11-14T19:42:37.147Z",
+  "latestEpisodeId": "5114636121541347552",
+  "totalEpisodes": 1345,
+  "totalSongPlays": 37690,
+  "uniqueArtists": 1295,
+  "uniqueAlbums": 5202,
+  "uniqueSongs": 16299,
+  "oneSpinArtists": 241,
+  "oneSpinSongs": 7002,
   "dateRange": {
     "earliest": "2013-06-22",
-    "latest": "2026-11-11"
+    "latest": "2026-11-14"
   },
   "topArtists": [
     {
@@ -197,9 +197,9 @@
     },
     {
       "year": "2026",
-      "episodeCount": 86,
-      "songCount": 2466,
-      "uniqueArtists": 726
+      "episodeCount": 87,
+      "songCount": 2497,
+      "uniqueArtists": 730
     }
   ]
 }

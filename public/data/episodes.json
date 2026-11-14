@@ -1,5 +1,296 @@
 [
   {
+    "id": "5114636121541347552",
+    "title": "Playlist for WEVL's Through The Cracks, Saturday 11/14/2026",
+    "airDate": "2026-11-14",
+    "dayOfWeek": "Saturday",
+    "episodeNumber": 843,
+    "publishedAt": "2026-11-14T11:10:21-08:00",
+    "url": "https://eddirmeyer.blogspot.com/2026/11/playlist-for-wevls-through-cracks_0616972770.html",
+    "songCount": 31,
+    "songs": [
+      {
+        "position": 1,
+        "rawLine": "Stray Birds - Hands Of Man - Magic Fire",
+        "artist": "The Stray Birds",
+        "featuredArtist": "",
+        "songTitle": "Hands Of Man",
+        "album": "Magic Fire",
+        "releaseKind": "album"
+      },
+      {
+        "position": 2,
+        "rawLine": "Jack Barksdale - Battleground - Battleground (EP)",
+        "artist": "Jack Barksdale",
+        "featuredArtist": "",
+        "songTitle": "Battleground",
+        "album": "Battleground",
+        "releaseKind": "ep"
+      },
+      {
+        "position": 3,
+        "rawLine": "Ollabelle - Looked Down The Line - Before This Time",
+        "artist": "Ollabelle",
+        "featuredArtist": "",
+        "songTitle": "Looked Down The Line",
+        "album": "Before This Time",
+        "releaseKind": "album"
+      },
+      {
+        "position": 4,
+        "rawLine": "Shannon McNally - What Are We Fighting For - single",
+        "artist": "Shannon McNally",
+        "featuredArtist": "",
+        "songTitle": "What Are We Fighting For",
+        "album": "",
+        "releaseKind": "single"
+      },
+      {
+        "position": 5,
+        "rawLine": "Help Yourself - Strange Affair - Strange Affair",
+        "artist": "Help Yourself",
+        "featuredArtist": "",
+        "songTitle": "Strange Affair",
+        "album": "Strange Affair",
+        "releaseKind": "album"
+      },
+      {
+        "position": 6,
+        "rawLine": "The Jayhawks - American Midnight - Sanctuary Park",
+        "artist": "The Jayhawks",
+        "featuredArtist": "",
+        "songTitle": "American Midnight",
+        "album": "Sanctuary Park",
+        "releaseKind": "album"
+      },
+      {
+        "position": 7,
+        "rawLine": "Bailey Bigger - No Falling Out Of Love - Coyote Red",
+        "artist": "Bailey Bigger",
+        "featuredArtist": "",
+        "songTitle": "No Falling Out Of Love",
+        "album": "Coyote Red",
+        "releaseKind": "album"
+      },
+      {
+        "position": 8,
+        "rawLine": "Circle Birds - Possible Hurricane - Circle Birds",
+        "artist": "Circle Birds",
+        "featuredArtist": "",
+        "songTitle": "Possible Hurricane",
+        "album": "Circle Birds",
+        "releaseKind": "album"
+      },
+      {
+        "position": 9,
+        "rawLine": "Skip Battin - St. Louis Browns - Skip",
+        "artist": "Skip Battin",
+        "featuredArtist": "",
+        "songTitle": "St. Louis Browns",
+        "album": "Skip",
+        "releaseKind": "album"
+      },
+      {
+        "position": 10,
+        "rawLine": "Nicki Bluhm - Measure Of A Man - Measure Of A Man (single)",
+        "artist": "Nicki Bluhm",
+        "featuredArtist": "",
+        "songTitle": "Measure Of A Man",
+        "album": "Measure Of A Man (single)",
+        "releaseKind": "album"
+      },
+      {
+        "position": 11,
+        "rawLine": "Victor Mecyssne - Sleepy Nashville Town - Personal Mercury",
+        "artist": "Victor Mecyssne",
+        "featuredArtist": "",
+        "songTitle": "Sleepy Nashville Town",
+        "album": "Personal Mercury",
+        "releaseKind": "album"
+      },
+      {
+        "position": 12,
+        "rawLine": "Jeff Hulett - Me And Annie - Summer Plans",
+        "artist": "Jeff Hulett",
+        "featuredArtist": "",
+        "songTitle": "Me And Annie",
+        "album": "Summer Plans",
+        "releaseKind": "album"
+      },
+      {
+        "position": 13,
+        "rawLine": "Sarah Harmer - Don't Get Your Back Up - You Were Here",
+        "artist": "Sarah Harmer",
+        "featuredArtist": "",
+        "songTitle": "Don't Get Your Back Up",
+        "album": "You Were Here",
+        "releaseKind": "album"
+      },
+      {
+        "position": 14,
+        "rawLine": "Ben Vaughn - Imitation Wood Grain - Magnetic East: The Deer Tick Sessions",
+        "artist": "Ben Vaughn",
+        "featuredArtist": "",
+        "songTitle": "Imitation Wood Grain",
+        "album": "Magnetic East: The Deer Tick Sessions",
+        "releaseKind": "album"
+      },
+      {
+        "position": 15,
+        "rawLine": "Jim Infantino - Amy's Dates - Assemble Yourself",
+        "artist": "Jim Infantino",
+        "featuredArtist": "",
+        "songTitle": "Amy's Dates",
+        "album": "Assemble Yourself",
+        "releaseKind": "album"
+      },
+      {
+        "position": 16,
+        "rawLine": "Margo Cilker - The Money - Little White Cross",
+        "artist": "Margo Cilker",
+        "featuredArtist": "",
+        "songTitle": "The Money",
+        "album": "Little White Cross",
+        "releaseKind": "album"
+      },
+      {
+        "position": 17,
+        "rawLine": "Marcia Ball - Count The Days - Presumed Innocent",
+        "artist": "Marcia Ball",
+        "featuredArtist": "",
+        "songTitle": "Count The Days",
+        "album": "Presumed Innocent",
+        "releaseKind": "album"
+      },
+      {
+        "position": 18,
+        "rawLine": "Keith Sykes - Occupational Hazard - single",
+        "artist": "Keith Sykes",
+        "featuredArtist": "",
+        "songTitle": "Occupational Hazard",
+        "album": "",
+        "releaseKind": "single"
+      },
+      {
+        "position": 19,
+        "rawLine": "Greg Trooper - Nobody In The Whole Wide World - Upside-Down Town",
+        "artist": "Greg Trooper",
+        "featuredArtist": "",
+        "songTitle": "Nobody In The Whole Wide World",
+        "album": "Upside-Down Town",
+        "releaseKind": "album"
+      },
+      {
+        "position": 20,
+        "rawLine": "Miko Marks - Ain't Nobody Gonna Bring Me Down - Hell Or High Water",
+        "artist": "Miko Marks",
+        "featuredArtist": "",
+        "songTitle": "Ain't Nobody Gonna Bring Me Down",
+        "album": "Hell Or High Water",
+        "releaseKind": "album"
+      },
+      {
+        "position": 21,
+        "rawLine": "Chris Smither - Hey, Hey, Hey - Drive You Home Again",
+        "artist": "Chris Smither",
+        "featuredArtist": "",
+        "songTitle": "Hey, Hey, Hey",
+        "album": "Drive You Home Again",
+        "releaseKind": "album"
+      },
+      {
+        "position": 22,
+        "rawLine": "Wyly Bigger - You Gotta Let Me Know - single",
+        "artist": "Wyly Bigger",
+        "featuredArtist": "",
+        "songTitle": "You Gotta Let Me Know",
+        "album": "",
+        "releaseKind": "single"
+      },
+      {
+        "position": 23,
+        "rawLine": "Michelle Malone - Miss Miss'ippi - Sugarfoot",
+        "artist": "Michelle Malone",
+        "featuredArtist": "",
+        "songTitle": "Miss Miss'ippi",
+        "album": "Sugarfoot",
+        "releaseKind": "album"
+      },
+      {
+        "position": 24,
+        "rawLine": "Elizabeth Cook & Wynona - The Easy Kind - Great Television",
+        "artist": "Elizabeth Cook & Wynona",
+        "featuredArtist": "",
+        "songTitle": "The Easy Kind",
+        "album": "Great Television",
+        "releaseKind": "album"
+      },
+      {
+        "position": 25,
+        "rawLine": "Jesse Winchester - Defying Gravity - Learn To Love It",
+        "artist": "Jesse Winchester",
+        "featuredArtist": "",
+        "songTitle": "Defying Gravity",
+        "album": "Learn To Love It",
+        "releaseKind": "album"
+      },
+      {
+        "position": 26,
+        "rawLine": "Cory Branan - The Nothing I Know - You'll Live",
+        "artist": "Cory Branan",
+        "featuredArtist": "",
+        "songTitle": "The Nothing I Know",
+        "album": "You'll Live",
+        "releaseKind": "album"
+      },
+      {
+        "position": 27,
+        "rawLine": "Continental Drifters - I Can't Let Go - Drifted: In The Beginning And Beyond",
+        "artist": "Continental Drifters",
+        "featuredArtist": "",
+        "songTitle": "I Can't Let Go",
+        "album": "Drifted: In The Beginning And Beyond",
+        "releaseKind": "album"
+      },
+      {
+        "position": 28,
+        "rawLine": "Ruthie Foster - Hold On - Just Say Yes",
+        "artist": "Ruthie Foster",
+        "featuredArtist": "",
+        "songTitle": "Hold On",
+        "album": "Just Say Yes",
+        "releaseKind": "album"
+      },
+      {
+        "position": 29,
+        "rawLine": "Bruce Cockburn - Call Me Rose - Small Source Of Comfort",
+        "artist": "Bruce Cockburn",
+        "featuredArtist": "",
+        "songTitle": "Call Me Rose",
+        "album": "Small Source Of Comfort",
+        "releaseKind": "album"
+      },
+      {
+        "position": 30,
+        "rawLine": "Garrison Starr - Better Day Coming - The Gospel Truth",
+        "artist": "Garrison Starr",
+        "featuredArtist": "",
+        "songTitle": "Better Day Coming",
+        "album": "The Gospel Truth",
+        "releaseKind": "album"
+      },
+      {
+        "position": 31,
+        "rawLine": "instrumental interlude: Eddie Lang, Joe Venuti and Their All Star Orchestra - Farewell Blues",
+        "artist": "Eddie Lang, Joe Venuti and Their All Star Orchestra",
+        "featuredArtist": "",
+        "songTitle": "Farewell Blues",
+        "album": "",
+        "releaseKind": "interlude"
+      }
+    ]
+  },
+  {
     "id": "4423069433994810612",
     "title": "Playlist for WEVL's Through The Cracks, Wednesday 11/11/2026",
     "airDate": "2026-11-11",
