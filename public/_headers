@@ -1,0 +1,19 @@
+# Cloudflare Workers static asset security and cache-control headers.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/through-the-cracks/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/data/*
+  Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400
+
+/through-the-cracks/data/*
+  Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400

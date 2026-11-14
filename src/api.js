@@ -56,29 +56,42 @@ export function subscribeArchiveMode(listener) {
   };
 }
 
-async function fetchApiJson(apiEndpoint, { allow404 = false } = {}) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
-  try {
-    const response = await fetch(`${API_BASE}${apiEndpoint}`, { signal: controller.signal });
-    if (allow404 && response.status === 404) {
-      const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
-      if (!contentType.includes('text/html')) {
-        setArchiveMode('live');
-        return { found: false, data: null };
+const inFlightApiRequests = new Map();
+
+function fetchApiJson(apiEndpoint, { allow404 = false } = {}) {
+  const key = `${allow404 ? '404:' : '200:'}${apiEndpoint}`;
+  const existing = inFlightApiRequests.get(key);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    try {
+      const response = await fetch(`${API_BASE}${apiEndpoint}`, { signal: controller.signal });
+      if (allow404 && response.status === 404) {
+        const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+        if (!contentType.includes('text/html')) {
+          setArchiveMode('live');
+          return { found: false, data: null };
+        }
       }
+      if (response.ok) {
+        const data = await response.json();
+        setArchiveMode('live');
+        return allow404 ? { found: true, data } : data;
+      }
+    } catch {
+      // API server unreachable or timed out -> caller falls back to static JSON
+    } finally {
+      clearTimeout(timeoutId);
     }
-    if (response.ok) {
-      const data = await response.json();
-      setArchiveMode('live');
-      return allow404 ? { found: true, data } : data;
-    }
-  } catch {
-    // API server unreachable or timed out -> caller falls back to static JSON
-  } finally {
-    clearTimeout(timeoutId);
-  }
-  return null;
+    return null;
+  })().finally(() => {
+    inFlightApiRequests.delete(key);
+  });
+
+  inFlightApiRequests.set(key, promise);
+  return promise;
 }
 
 function normalizeOverview(data) {

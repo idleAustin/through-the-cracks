@@ -368,4 +368,29 @@ describe('archive client api + express route seam', () => {
       fetchSpy.mockRestore();
     }
   });
+
+  it('deduplicates concurrent in-flight API requests without caching sequential calls', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    try {
+      const [first, second] = await Promise.all([getOverview(), getOverview()]);
+      expect(first).toEqual(second);
+      expect(first.source).toBe('express-api');
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      const [p1, p2] = await Promise.all([
+        getArtistProfile('No Such Artist'),
+        getArtistProfile('No Such Artist'),
+      ]);
+      expect(p1).toEqual({ data: null, source: 'express-api', mode: 'live' });
+      expect(p2).toEqual(p1);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+      apiMode = 'offline';
+      const afterOffline = await getOverview();
+      expect(afterOffline.source).toBe('static-json');
+      expect(fetchSpy).toHaveBeenCalledTimes(4);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
 });

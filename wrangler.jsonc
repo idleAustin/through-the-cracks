@@ -13,8 +13,15 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": true,
-    "html_handling": "none"
+    "base_path": "/through-the-cracks",
+    "html_handling": "none",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/through-the-cracks/api/*",
+      "/through-the-cracks/api",
+      "/api/*",
+      "/api"
+    ]
   },
   "d1_databases": [
     {
@@ -23,6 +30,13 @@
       "database_id": "afbc236a-df51-40f4-84c8-234bc6e003c2"
     }
   ],
+  // Enable after creating the R2 snapshot bucket via `scripts/setup-r2.sh`:
+  // "r2_buckets": [
+  //   {
+  //     "binding": "SNAPSHOT_BUCKET",
+  //     "bucket_name": "through-the-cracks-snapshots"
+  //   }
+  // ],
   "triggers": {
     "crons": ["0 6 * * SUN,THU"]
   }
