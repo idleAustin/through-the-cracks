@@ -16,30 +16,47 @@ export function SkeletonRows({ count = 6, label = 'Loading archive data' }) {
   );
 }
 
-export function EmptyFilterState({ items = 'items', onClear }) {
+export function EmptyFilterState({
+  items = 'items',
+  onClear,
+  headingLevel = 'h3',
+  title,
+  description,
+  clearLabel = 'Clear Filter',
+  clearIcon,
+}) {
+  const Heading = headingLevel === 'h2' ? 'h2' : 'h3';
   return (
     <div className="empty-state">
       <Icon name="search" size="lg" />
-      <h3>No {items} match that filter.</h3>
-      <p>Check spelling or clear the active filter to view all {items}.</p>
+      <Heading>{title ?? `No ${items} match that filter.`}</Heading>
+      <p>{description ?? `Check spelling or clear the active filter to view all ${items}.`}</p>
       {onClear ? (
         <button type="button" className="btn btn-secondary" onClick={onClear}>
-          Clear Filter
+          {clearIcon ? <Icon name={clearIcon} size="sm" /> : null}
+          {clearLabel}
         </button>
       ) : null}
     </div>
   );
 }
 
-export function ArchiveErrorState({ message = 'Could not load archive data.', onRetry }) {
+export function ArchiveErrorState({
+  message = 'Could not load archive data.',
+  onRetry,
+  headingLevel = 'h3',
+  title = 'Archive request failed.',
+  retryLabel = 'Retry Fetch',
+}) {
+  const Heading = headingLevel === 'h2' ? 'h2' : 'h3';
   return (
     <div className="empty-state is-error" role="alert">
       <Icon name="alert" size="lg" />
-      <h3>Archive request failed.</h3>
+      <Heading>{title}</Heading>
       <p>{message}</p>
       {onRetry ? (
         <button type="button" className="btn btn-secondary" onClick={onRetry}>
-          Retry Fetch
+          {retryLabel}
         </button>
       ) : null}
     </div>

@@ -1,8 +1,8 @@
-// Global Catalog Search workspace: debounced URL-synced query, search results grid, and ArtistInspector.
+// Global Catalog Search workspace: debounced URL-synced query, search results grid, auto-open, and ArtistDashboard.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { searchAll } from '../api';
-import ArtistInspector from '../components/ArtistInspector';
+import ArtistDashboard from '../components/ArtistDashboard';
 import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from '../components/DataState';
 import Icon from '../components/Icon';
 import SearchResultsGrid from '../components/SearchResultsGrid';
@@ -13,27 +13,34 @@ const EMPTY_RESULTS = { artists: [], songs: [], albums: [] };
 export default function SearchView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isNarrow = useMediaQuery('(max-width: 1024px)');
   const isCompact = useMediaQuery('(max-width: 768px)');
 
   const q = searchParams.get('q') || '';
   const selectedArtist = searchParams.get('artist') || '';
-  const selectedAlbum = searchParams.get('album') || '';
+  const trimmedQ = q.trim();
 
   const [searchInput, setSearchInput] = useState(q);
-  const [results, setResults] = useState(EMPTY_RESULTS);
+  const [searchState, setSearchState] = useState({ query: '', results: EMPTY_RESULTS });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
 
   const selectedArtistRef = useRef(selectedArtist);
   selectedArtistRef.current = selectedArtist;
+  const trimmedQRef = useRef(trimmedQ);
+  trimmedQRef.current = trimmedQ;
   const prevQRef = useRef(q);
+  const dismissedAutoOpenQueryRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const restoreSearchFocusRef = useRef(false);
 
   useEffect(() => {
     if (q !== prevQRef.current) {
       prevQRef.current = q;
       setSearchInput(q);
+      if (q.trim() !== dismissedAutoOpenQueryRef.current) {
+        dismissedAutoOpenQueryRef.current = null;
+      }
     }
   }, [q]);
 
@@ -48,6 +55,8 @@ export default function SearchView() {
           const next = new URLSearchParams(prev);
           if (trimmed) next.set('q', trimmed);
           else next.delete('q');
+          next.delete('artist');
+          next.delete('album');
           return next;
         },
         { replace: true },
@@ -57,11 +66,9 @@ export default function SearchView() {
     return () => window.clearTimeout(timer);
   }, [searchInput, q, setSearchParams]);
 
-  const trimmedQ = q.trim();
-
   useEffect(() => {
     if (trimmedQ.length < 2) {
-      setResults(EMPTY_RESULTS);
+      setSearchState({ query: '', results: EMPTY_RESULTS });
       setLoading(false);
       setError('');
       return undefined;
@@ -75,16 +82,19 @@ export default function SearchView() {
       .then((res) => {
         if (!active) return;
         const payload = res.data || {};
-        setResults({
-          artists: payload.artists || [],
-          songs: payload.songs || [],
-          albums: payload.albums || [],
+        setSearchState({
+          query: trimmedQ,
+          results: {
+            artists: payload.artists || [],
+            songs: payload.songs || [],
+            albums: payload.albums || [],
+          },
         });
         setLoading(false);
       })
       .catch((err) => {
         if (!active) return;
-        setResults(EMPTY_RESULTS);
+        setSearchState({ query: trimmedQ, results: EMPTY_RESULTS });
         setError(err?.message || 'Could not search catalog.');
         setLoading(false);
       });
@@ -94,13 +104,37 @@ export default function SearchView() {
     };
   }, [trimmedQ, retryKey]);
 
+  useEffect(() => {
+    if (trimmedQ.length < 2) return;
+    if (loading || error || selectedArtist) return;
+    if (searchState.query !== trimmedQ) return;
+    if (searchState.results.artists.length !== 1) return;
+    if (dismissedAutoOpenQueryRef.current === trimmedQ) return;
+
+    const onlyArtist = searchState.results.artists[0];
+    if (!onlyArtist?.name) return;
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('artist', onlyArtist.name);
+        next.delete('album');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [trimmedQ, loading, error, selectedArtist, searchState, setSearchParams]);
+
   const handleClearSearch = useCallback(() => {
     prevQRef.current = '';
+    dismissedAutoOpenQueryRef.current = null;
     setSearchInput('');
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.delete('q');
+        next.delete('artist');
+        next.delete('album');
         return next;
       },
       { replace: true },
@@ -119,24 +153,23 @@ export default function SearchView() {
     [setSearchParams],
   );
 
-  const handleCloseInspector = useCallback(() => {
-    const next = new URLSearchParams(window.location.search);
-    next.delete('artist');
-    next.delete('album');
-    setSearchParams(next);
+  const handleCloseDashboard = useCallback(() => {
+    dismissedAutoOpenQueryRef.current = trimmedQRef.current || null;
+    restoreSearchFocusRef.current = true;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('artist');
+      next.delete('album');
+      return next;
+    });
   }, [setSearchParams]);
 
-  const handleAlbumChange = useCallback(
-    (nextAlbum) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        if (nextAlbum) next.set('album', nextAlbum);
-        else next.delete('album');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
+  useEffect(() => {
+    if (!selectedArtist && restoreSearchFocusRef.current) {
+      restoreSearchFocusRef.current = false;
+      searchInputRef.current?.focus();
+    }
+  }, [selectedArtist]);
 
   const handleSelectSong = useCallback(
     (songTitle, artistName) => {
@@ -159,49 +192,36 @@ export default function SearchView() {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key !== 'Escape') return;
-      const hasArtist =
-        Boolean(selectedArtistRef.current) ||
-        new URLSearchParams(window.location.search).has('artist');
-      if (!hasArtist) return;
+      if (!selectedArtistRef.current) return;
       if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
-      handleCloseInspector();
+      handleCloseDashboard();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleCloseInspector]);
+  }, [handleCloseDashboard]);
 
-  if (isNarrow && selectedArtist) {
-    return (
-      <section className="search-workspace" aria-label="Catalog search">
-        <ArtistInspector
-          artistName={selectedArtist}
-          album={selectedAlbum}
-          isNarrow
-          onClose={handleCloseInspector}
-          onAlbumChange={handleAlbumChange}
-          onSelectSong={handleSelectSong}
-        />
-      </section>
-    );
-  }
-
-  const { artists, songs, albums } = results;
+  const { artists, songs, albums } = searchState.results;
   const totalMatches = artists.length + songs.length + albums.length;
 
   return (
     <section className="search-workspace" aria-label="Catalog search">
       <div className="surface-region search-hero-card">
-        <div className="search-hero-head">
-          <div>
-            <h1>Catalog Search</h1>
-            <p className="search-hero-sub">
-              Search artists, songs, and albums across every archived episode.
-            </p>
+        {!selectedArtist ? (
+          <div className="search-hero-head">
+            <div>
+              <h1>Catalog Search</h1>
+              <p className="search-hero-sub">
+                Search artists, songs, and albums across every archived episode.
+              </p>
+            </div>
+            {trimmedQ.length >= 2 && !loading && !error ? (
+              <span className="search-match-badge" aria-live="polite">
+                <span className="mono">{formatInt(totalMatches)}</span>{' '}
+                {totalMatches === 1 ? 'match' : 'matches'}
+              </span>
+            ) : null}
           </div>
-          {trimmedQ.length >= 2 && !loading && !error ? (
-            <span className="mono">{formatInt(totalMatches)} matches</span>
-          ) : null}
-        </div>
+        ) : null}
 
         <form
           className="search-hero-form"
@@ -213,14 +233,18 @@ export default function SearchView() {
               <Icon name="search" size="md" />
             </span>
             <input
+              ref={searchInputRef}
               id="global-search-input"
               type="search"
               enterKeyHint="search"
               className="search-input--hero"
               aria-label="Search the catalog"
-              placeholder="Search artists, songs, or albums..."
+              placeholder="e.g. Townes Van Zandt, Pancho & Lefty"
               value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
+              onChange={(event) => {
+                dismissedAutoOpenQueryRef.current = null;
+                setSearchInput(event.target.value);
+              }}
             />
           </div>
           {searchInput || q ? (
@@ -236,9 +260,15 @@ export default function SearchView() {
         </form>
       </div>
 
-      {trimmedQ.length < 2 ? (
+      {selectedArtist ? (
+        <ArtistDashboard
+          artistName={selectedArtist}
+          onBack={handleCloseDashboard}
+          onSelectArtist={handleSelectArtist}
+        />
+      ) : trimmedQ.length < 2 ? (
         <div className="surface-region search-guidance">
-          <p className="search-guidance-title">Search across artists, songs, and albums</p>
+          <p className="search-guidance-title">Ready to search</p>
           <p className="search-guidance-copy">
             Enter at least 2 characters to inspect artist catalogs, episode air dates, and album rotations.
           </p>
@@ -250,30 +280,17 @@ export default function SearchView() {
       ) : totalMatches === 0 ? (
         <EmptyFilterState items="archive entries" onClear={handleClearSearch} />
       ) : (
-        <div className={`catalog-cockpit${selectedArtist && !isNarrow ? ' has-inspector' : ''}`}>
-          <SearchResultsGrid
-            query={q}
-            artists={artists}
-            songs={songs}
-            albums={albums}
-            selectedArtist={selectedArtist}
-            isCompact={isCompact}
-            onSelectArtist={handleSelectArtist}
-            onSelectSong={handleSelectSong}
-            onSelectAlbum={handleSelectAlbum}
-          />
-
-          {selectedArtist && !isNarrow ? (
-            <ArtistInspector
-              artistName={selectedArtist}
-              album={selectedAlbum}
-              isNarrow={false}
-              onClose={handleCloseInspector}
-              onAlbumChange={handleAlbumChange}
-              onSelectSong={handleSelectSong}
-            />
-          ) : null}
-        </div>
+        <SearchResultsGrid
+          query={q}
+          artists={artists}
+          songs={songs}
+          albums={albums}
+          selectedArtist={selectedArtist}
+          isCompact={isCompact}
+          onSelectArtist={handleSelectArtist}
+          onSelectSong={handleSelectSong}
+          onSelectAlbum={handleSelectAlbum}
+        />
       )}
     </section>
   );
