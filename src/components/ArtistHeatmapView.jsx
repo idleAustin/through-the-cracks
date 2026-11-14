@@ -1,9 +1,8 @@
 // Artist monthly heatmap matrix, mobile month selector, intensity legend, and active month airing drawer.
 import React, { useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { formatAirDate, formatInt } from '../utils/format';
+import { formatInt, formatShortMonthYear, normalizeSongKey } from '../utils/format';
+import ArtistAiringChips, { ArtistAiringChip } from './ArtistAiringChips';
 
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const FULL_MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -11,12 +10,6 @@ const FULL_MONTHS = [
 const ROW_LABELS = ['Jan / Jul', '', 'Mar / Sep', '', 'May / Nov', ''];
 
 export const ROW_LABEL_COL_PX = 56;
-
-function formatShortMonth(monthKey) {
-  if (!monthKey || !/^\d{4}-\d{2}$/.test(monthKey)) return '—';
-  const [yr, mo] = monthKey.split('-').map(Number);
-  return `${SHORT_MONTHS[mo - 1] || mo} ’${String(yr).slice(2)}`;
-}
 
 function formatFullMonth(monthKey) {
   if (!monthKey || !/^\d{4}-\d{2}$/.test(monthKey)) return '—';
@@ -30,14 +23,6 @@ function countArchiveMonths(earliest, latest) {
   const [y1, m1] = String(latest).slice(0, 7).split('-').map(Number);
   if (![y0, m0, y1, m1].every(Number.isFinite)) return 0;
   return Math.max(0, (y1 - y0) * 12 + (m1 - m0) + 1);
-}
-
-function normalizeSongKey(title) {
-  return String(title || '').trim().toLowerCase();
-}
-
-function formatAiringSlot(airing) {
-  return airing.episodeSongCount > 0 ? `#${airing.position}/${airing.episodeSongCount}` : `#${airing.position}`;
 }
 
 export default function ArtistHeatmapView({
@@ -81,7 +66,7 @@ export default function ArtistHeatmapView({
     return best;
   }, [months]);
 
-  const selectedHits = useMemo(
+  const selectedAirings = useMemo(
     () => (selectedMonth ? airings.filter((a) => String(a.airDate || '').startsWith(selectedMonth)) : []),
     [airings, selectedMonth],
   );
@@ -181,7 +166,7 @@ export default function ArtistHeatmapView({
 
       <div className="ah-cap">
         <span className="ah-cap-summary">
-          Busiest month: <strong className="mono">{busiestMonth ? formatShortMonth(busiestMonth.month) : '—'}</strong>{' '}
+          Busiest month: <strong className="mono">{busiestMonth ? formatShortMonthYear(busiestMonth.month) : '—'}</strong>{' '}
           (<span className="mono">{formatInt(busiestMonth?.spins || 0)}</span>). On the air in{' '}
           <span className="mono">{formatInt(months.length)}</span> of{' '}
           <span className="mono">{formatInt(totalArchiveMonths)}</span> months.
@@ -200,7 +185,7 @@ export default function ArtistHeatmapView({
           <div className="ad-month-drawer-head">
             <span>
               <strong className="mono">{formatFullMonth(selectedMonth)}</strong> ·{' '}
-              <span className="mono">{formatInt(selectedHits.length)}</span> {selectedHits.length === 1 ? 'spin' : 'spins'}
+              <span className="mono">{formatInt(selectedAirings.length)}</span> {selectedAirings.length === 1 ? 'spin' : 'spins'}
             </span>
             <button type="button" className="btn btn-secondary btn-sm ad-drawer-close" onClick={handleCloseDrawer}>
               Close
@@ -208,17 +193,17 @@ export default function ArtistHeatmapView({
           </div>
 
           <ul className="ad-month-list">
-            {selectedHits.map((hit, idx) => {
-              const hitKey = normalizeSongKey(hit.songTitle);
-              const isSongExpanded = Boolean(normalizedExpanded) && normalizedExpanded === hitKey;
+            {selectedAirings.map((airing, idx) => {
+              const airingKey = normalizeSongKey(airing.songTitle);
+              const isSongExpanded = Boolean(normalizedExpanded) && normalizedExpanded === airingKey;
               const songAirings = isSongExpanded
                 ? (getAiringsForSong
-                    ? getAiringsForSong(hit.songTitle)
-                    : airings.filter((a) => normalizeSongKey(a.songTitle) === hitKey))
+                    ? getAiringsForSong(airing.songTitle)
+                    : airings.filter((a) => normalizeSongKey(a.songTitle) === airingKey))
                 : [];
               return (
                 <li
-                  key={`${hit.episodeId}-${hit.position}-${idx}`}
+                  key={`${airing.episodeId}-${airing.position}-${idx}`}
                   className={`ad-month-item${isSongExpanded ? ' is-open' : ''}`}
                 >
                   <div className="ad-month-item-row">
@@ -227,29 +212,20 @@ export default function ArtistHeatmapView({
                         type="button"
                         className="ad-drawer-song-btn"
                         aria-expanded={isSongExpanded}
-                        onClick={() => onSelectSong?.(hit.songTitle)}
+                        onClick={() => onSelectSong?.(airing.songTitle)}
                       >
-                        {hit.songTitle}
+                        {airing.songTitle}
                       </button>
-                      {hit.album ? <span className="ad-month-album">{hit.album}</span> : null}
+                      {airing.album ? <span className="ad-month-album">{airing.album}</span> : null}
                     </span>
-                    <Link to={`/episodes?episode=${encodeURIComponent(hit.episodeId)}`} className="ad-chip mono">
-                      {formatAirDate(hit.airDate)} · {formatAiringSlot(hit)}
-                    </Link>
+                    <ArtistAiringChip airing={airing} />
                   </div>
 
                   {isSongExpanded ? (
-                    <div className="ad-airing-chips" aria-label={`Air dates for ${hit.songTitle}`}>
-                      {songAirings.map((airing, chipIdx) => (
-                        <Link
-                          key={`${airing.episodeId}-${airing.position}-${chipIdx}`}
-                          to={`/episodes?episode=${encodeURIComponent(airing.episodeId)}`}
-                          className="ad-chip mono"
-                        >
-                          {formatAirDate(airing.airDate)} · {formatAiringSlot(airing)}
-                        </Link>
-                      ))}
-                    </div>
+                    <ArtistAiringChips
+                      airings={songAirings}
+                      label={`Air dates for ${airing.songTitle}`}
+                    />
                   ) : null}
                 </li>
               );

@@ -172,6 +172,30 @@ export default function ArtistYearPanel({
               ) : null}
             </div>
 
+            {years.length > 0 ? (
+              <div className="ad-year-select-wrap">
+                <select
+                  className="ad-month-select ad-year-select"
+                  aria-label="Select year"
+                  value={activeYear != null ? String(activeYear) : ''}
+                  onChange={(event) => {
+                    const nextYear = event.target.value ? Number(event.target.value) : null;
+                    setActiveYear(Number.isFinite(nextYear) ? nextYear : null);
+                    setHoveredYear(null);
+                  }}
+                >
+                  <option value="">
+                    Select a year ({formatInt(years.length)} {years.length === 1 ? 'year' : 'years'})
+                  </option>
+                  {years.map((item) => (
+                    <option key={item.year} value={String(item.year)}>
+                      {item.year} — {formatInt(item.spins)} {item.spins === 1 ? 'spin' : 'spins'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
             <div className="ad-year-cap" aria-live="polite">
               {displayYearObj ? (
                 <span>

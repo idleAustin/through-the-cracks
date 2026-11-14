@@ -1,7 +1,11 @@
-// Date, integer, compact spin formatting utilities and responsive media-query hook.
+// Date, song-key, integer, compact spin formatting utilities and responsive media-query hook.
 import { useEffect, useState } from 'react';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function normalizeSongKey(title) {
+  return String(title || '').trim().toLowerCase();
+}
 
 export function formatAirDate(iso) {
   if (!iso) return '—';
@@ -11,8 +15,20 @@ export function formatAirDate(iso) {
   const [, year, monthStr, dayStr] = match;
   const monthIdx = parseInt(monthStr, 10) - 1;
   const day = parseInt(dayStr, 10);
-  const month = MONTHS[monthIdx] || monthStr;
+  const month = SHORT_MONTHS[monthIdx] || monthStr;
   return `${month} ${day}, ${year}`;
+}
+
+export function formatShortMonthYear(iso, optionsOrApostrophe = '’') {
+  if (!iso) return '—';
+  const apostrophe = typeof optionsOrApostrophe === 'string'
+    ? optionsOrApostrophe
+    : (optionsOrApostrophe?.apostrophe ?? '’');
+  const match = String(iso).trim().match(/^(\d{4})-(\d{2})/);
+  if (!match) return formatAirDate(iso);
+  const year = match[1].slice(2);
+  const monthIdx = parseInt(match[2], 10) - 1;
+  return `${SHORT_MONTHS[monthIdx] || match[2]} ${apostrophe}${year}`;
 }
 
 export function formatInt(n) {

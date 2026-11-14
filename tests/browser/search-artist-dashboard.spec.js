@@ -112,13 +112,14 @@ test.describe('Search Artist Dashboard', () => {
     await expect(page.getByRole('heading', { name: 'Cory Branan', level: 1 })).toBeVisible();
   });
 
-  test('switches Bars <-> Heatmap, opens active month drawer with episode links, and toggles closed', async ({ page }) => {
+  test('switches Bars <-> Heatmap, opens active month drawer with episode links, and toggles closed', async ({ page }, testInfo) => {
     await page.goto('/search?artist=Cory+Branan');
     await expect(page.getByRole('heading', { name: 'Cory Branan', level: 1 })).toBeVisible();
 
     const barsBtn = page.getByRole('button', { name: 'Bars', exact: true });
     const heatmapBtn = page.getByRole('button', { name: 'Heatmap', exact: true });
     await expect(barsBtn).toHaveAttribute('aria-pressed', 'true');
+    if (testInfo.project.name === 'desktop-1440') await expect(page.locator('.ad-year-select')).toBeHidden();
 
     await heatmapBtn.click();
     await expect(heatmapBtn).toHaveAttribute('aria-pressed', 'true');
@@ -268,13 +269,34 @@ test.describe('Search Artist Dashboard', () => {
     await checkBarAlignment(page);
 
     const yearCap = page.locator('.ad-year-cap');
+    const yearSelect = page.locator('.ad-year-select');
+    const bar2024 = page.locator('button.ad-bar-col[aria-label^="2024:"]');
+    const bar2023 = page.locator('button.ad-bar-col[aria-label^="2023:"]');
     await expect(yearCap).toContainText('Peak year: 2023');
-    const bar2024 = page.getByRole('button', { name: /^2024:/ });
+    await expectTapTarget(yearSelect);
+    expect(await yearSelect.evaluate((el) => getComputedStyle(el).fontSize)).toBe('16px');
+
+    await yearSelect.selectOption('2024');
+    await expect(yearCap).toContainText('2024: 5 spins');
+    await expect(bar2024).toHaveAttribute('aria-pressed', 'true');
+
+    await bar2023.tap();
+    await expect(bar2023).toHaveAttribute('aria-pressed', 'true');
+    await expect(bar2024).toHaveAttribute('aria-pressed', 'false');
+    await expect(yearSelect).toHaveValue('2023');
+    await expect(yearCap).toContainText('2023: 25 spins');
+
+    await yearSelect.selectOption('');
+    await expect(bar2023).toHaveAttribute('aria-pressed', 'false');
+    await expect(yearCap).toContainText('Peak year: 2023');
+    await expect(yearSelect).toHaveValue('');
+
     await bar2024.tap();
     await expect(bar2024).toHaveAttribute('aria-pressed', 'true');
-    await expect(yearCap).toContainText('2024:');
+    await expect(yearSelect).toHaveValue('2024');
     await bar2024.tap();
     await expect(bar2024).toHaveAttribute('aria-pressed', 'false');
+    await expect(yearSelect).toHaveValue('');
     await expect(yearCap).toContainText('Peak year: 2023');
 
     await page.locator('#ad-top-songs button.ad-rank-row').first().tap();

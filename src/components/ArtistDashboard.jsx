@@ -1,27 +1,12 @@
 // Search Artist Dashboard shell: fetches artist profile and renders hero, 6-cell readout strip, year/rotation grids, and 3 leaderboards.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getArtistProfile } from '../api';
-import { formatAirDate, formatInt } from '../utils/format';
+import { formatAirDate, formatInt, formatShortMonthYear, normalizeSongKey } from '../utils/format';
 import ArtistLeaderboard from './ArtistLeaderboard';
 import ArtistRotationCard from './ArtistRotationCard';
 import ArtistYearPanel from './ArtistYearPanel';
 import { ArchiveErrorState, EmptyFilterState, SkeletonRows } from './DataState';
 import Icon from './Icon';
-
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function normalizeSongKey(title) {
-  return String(title || '').trim().toLowerCase();
-}
-
-function formatShortMonthYear(iso) {
-  if (!iso) return '—';
-  const match = String(iso).trim().match(/^(\d{4})-(\d{2})/);
-  if (!match) return formatAirDate(iso);
-  const year = match[1].slice(2);
-  const monthIdx = parseInt(match[2], 10) - 1;
-  return `${SHORT_MONTHS[monthIdx] || match[2]} ’${year}`;
-}
 
 export default function ArtistDashboard({ artistName, onBack, onSelectArtist }) {
   const [data, setData] = useState(null);

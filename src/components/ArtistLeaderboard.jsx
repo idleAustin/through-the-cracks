@@ -1,7 +1,7 @@
 // Reusable ranked top-10 leaderboard card for Top songs, Top albums, and Played alongside.
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { formatAirDate, formatInt } from '../utils/format';
+import { formatInt } from '../utils/format';
+import ArtistAiringChips from './ArtistAiringChips';
 
 export default function ArtistLeaderboard({
   id,
@@ -92,22 +92,10 @@ export default function ArtistLeaderboard({
                 )}
 
                 {isOpen ? (
-                  <div className="ad-airing-chips" aria-label={`Air dates for ${item.label}`}>
-                    {airings.map((airing, chipIdx) => {
-                      const slotText = airing.episodeSongCount > 0
-                        ? `#${airing.position}/${airing.episodeSongCount}`
-                        : `#${airing.position}`;
-                      return (
-                        <Link
-                          key={`${airing.episodeId}-${airing.position}-${chipIdx}`}
-                          to={`/episodes?episode=${encodeURIComponent(airing.episodeId)}`}
-                          className="ad-chip mono"
-                        >
-                          {formatAirDate(airing.airDate)} · {slotText}
-                        </Link>
-                      );
-                    })}
-                  </div>
+                  <ArtistAiringChips
+                    airings={airings}
+                    label={`Air dates for ${item.label}`}
+                  />
                 ) : null}
               </li>
             );
