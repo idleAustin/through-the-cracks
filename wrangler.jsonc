@@ -30,13 +30,12 @@
       "database_id": "afbc236a-df51-40f4-84c8-234bc6e003c2"
     }
   ],
-  // Enable after creating the R2 snapshot bucket via `scripts/setup-r2.sh`:
-  // "r2_buckets": [
-  //   {
-  //     "binding": "SNAPSHOT_BUCKET",
-  //     "bucket_name": "through-the-cracks-snapshots"
-  //   }
-  // ],
+  "r2_buckets": [
+    {
+      "binding": "SNAPSHOT_BUCKET",
+      "bucket_name": "through-the-cracks-snapshots"
+    }
+  ],
   "triggers": {
     "crons": ["0 6 * * SUN,THU"]
   }
