@@ -1,7 +1,13 @@
 // Read-only Artist Profile HTTP route handler backed by BigQuery and the shared profile builder.
 import express from 'express';
 import {
-  buildArtistProfile, computeArtistRank, normalizeArtistKey, pickArtistDisplayName,
+  buildArchiveYearAxis,
+  buildArtistProfile,
+  buildCoOccurrences,
+  buildRankMap,
+  computeArtistRank,
+  mapProfileSpinRow,
+  normalizeArtistKey,
 } from '../artistProfileBuilder.js';
 import { unwrapBqValue } from './queryUtils.js';
 
@@ -17,9 +23,9 @@ function buildQueries(project, dataset) {
       FROM ${sp} sp WHERE sp.episode_id IN (SELECT DISTINCT episode_id FROM target_spins)
       GROUP BY sp.episode_id
     )
-    SELECT sp.episode_id, sp.air_date, e.episode_number, e.title AS episode_title,
+    SELECT sp.episode_id, sp.air_date, e.episode_number,
       CASE WHEN e.song_count > 0 THEN e.song_count ELSE COALESCE(ec.cnt, 0) END AS episode_song_count,
-      sp.position, sp.artist, sp.song_title, sp.album, e.url AS blogger_url
+      sp.position, sp.artist, sp.song_title, sp.album
     FROM target_spins sp
     LEFT JOIN ${ep} e ON e.id = sp.episode_id
     LEFT JOIN ep_counts ec ON ec.episode_id = sp.episode_id
@@ -49,58 +55,6 @@ function buildQueries(project, dataset) {
   };
 }
 
-function buildArchiveYears(yearRows, earliestDate, latestDate) {
-  let minYear = 2013;
-  let maxYear = 2026;
-  const counts = new Map();
-  for (const r of yearRows) {
-    const yr = Number(r.year);
-    if (yr >= 2000 && yr < minYear) minYear = yr;
-    if (yr > maxYear) maxYear = yr;
-    counts.set(yr, Number(r.spins));
-  }
-  const ey = Number(String(earliestDate || '').slice(0, 4));
-  const ly = Number(String(latestDate || '').slice(0, 4));
-  if (ey >= 2000 && ey < minYear) minYear = ey;
-  if (ly > maxYear) maxYear = ly;
-  return Array.from({ length: maxYear - minYear + 1 }, (_, i) => ({ year: minYear + i, spins: counts.get(minYear + i) ?? 0 }));
-}
-
-function mapSpinRows(spinRows) {
-  return spinRows.map((r) => ({
-    episodeId: String(r.episode_id),
-    airDate: unwrapBqValue(r.air_date),
-    episodeNumber: r.episode_number == null ? null : Number(r.episode_number),
-    episodeTitle: r.episode_title || '',
-    episodeSongCount: Number(r.episode_song_count ?? 0),
-    position: Number(r.position),
-    artist: r.artist || '',
-    song: r.song_title || '',
-    songTitle: r.song_title || '',
-    album: r.album || '',
-    bloggerUrl: r.blogger_url || null,
-  }));
-}
-
-function buildCoOccurrences(coRows, countByKey, totalArtists) {
-  const sortedDesc = Array.from(countByKey.values()).sort((a, b) => b - a);
-  const rankBySpins = new Map();
-  for (let i = 0; i < sortedDesc.length; i += 1) {
-    if (!rankBySpins.has(sortedDesc[i])) rankBySpins.set(sortedDesc[i], i + 1);
-  }
-  const neighborMap = new Map();
-  for (const r of coRows) {
-    let entry = neighborMap.get(r.ak);
-    if (!entry) neighborMap.set(r.ak, (entry = { sharedEpisodes: Number(r.shared_episodes), variants: [] }));
-    entry.variants.push({ name: r.name, spins: Number(r.spins), airDate: unwrapBqValue(r.air_date) });
-  }
-  return Array.from(neighborMap.entries()).map(([ak, entry]) => ({
-    name: pickArtistDisplayName(entry.variants),
-    sharedEpisodes: entry.sharedEpisodes,
-    rank: rankBySpins.get(countByKey.get(ak)) ?? totalArtists,
-  }));
-}
-
 export function createArtistProfileRouter({ query, project, dataset }) {
   const router = express.Router();
   const sql = buildQueries(project, dataset);
@@ -120,10 +74,13 @@ export function createArtistProfileRouter({ query, project, dataset }) {
         query(sql.coOccurrenceSql, { artistKey: key }),
       ]);
 
-      const rows = mapSpinRows(spinRows);
+      const rows = spinRows.map(mapProfileSpinRow);
       const countByKey = new Map(artistCountRows.map((r) => [r.ak, Number(r.spins)]));
-      const { rank, totalArtists } = computeArtistRank(rows.length, countByKey.values());
-      const coOccurrences = buildCoOccurrences(coRows, countByKey, totalArtists);
+      const rankByKey = buildRankMap(countByKey);
+      const totalArtists = countByKey.size;
+      const rank = rankByKey.get(key) ?? computeArtistRank(rows.length, countByKey.values()).rank;
+      const coOccurrences = buildCoOccurrences(coRows, null, rankByKey);
+
       const archiveRow = archiveRows[0] || {};
       const earliest = unwrapBqValue(archiveRow.earliest_date) ?? null;
       const latest = unwrapBqValue(archiveRow.latest_date) ?? null;
@@ -131,7 +88,7 @@ export function createArtistProfileRouter({ query, project, dataset }) {
         totalSpins: Number(archiveRow.total_spins ?? 0),
         totalEpisodes: Number(archiveRow.total_episodes ?? 0),
         dateRange: { earliest, latest },
-        years: buildArchiveYears(yearRows, earliest, latest),
+        years: buildArchiveYearAxis(yearRows, 'year', { earliest, latest }),
       };
 
       const profile = buildArtistProfile({ rows, coOccurrences, rank, totalArtists, archive });

@@ -8,6 +8,8 @@ const textEncoder = new TextEncoder();
 
 const cmpAsc = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const cmpText = (a, b) => cmpAsc(String(a).toLowerCase(), String(b).toLowerCase()) || cmpAsc(String(a), String(b));
+const unwrapValue = (v) => (v && typeof v === 'object' && 'value' in v ? v.value : v);
+const readLookup = (lookup, key) => (!lookup ? undefined : lookup instanceof Map ? lookup.get(key) : lookup[key]);
 
 function daysBetween(a, b) {
   if (!a || !b) return null;
@@ -16,12 +18,13 @@ function daysBetween(a, b) {
   return Number.isFinite(ta) && Number.isFinite(tb) ? Math.round((tb - ta) / MS_PER_DAY) : null;
 }
 
-function addVariant(map, rawName, airDate = '', spins = 1) {
+export function addArtistVariant(variantMap, rawName, airDate = '', spins = 1) {
   const name = String(rawName ?? '').trim();
   if (!name) return;
-  const date = airDate ? String(airDate) : '';
-  const prev = map.get(name);
-  if (!prev) map.set(name, { name, spins, airDate: date });
+  const rawDate = unwrapValue(airDate);
+  const date = rawDate ? String(rawDate) : '';
+  const prev = variantMap.get(name);
+  if (!prev) variantMap.set(name, { name, spins, airDate: date });
   else {
     prev.spins += spins;
     if (date && (!prev.airDate || date < prev.airDate)) prev.airDate = date;
@@ -35,7 +38,7 @@ export function normalizeArtistKey(name) {
 export function pickArtistDisplayName(variants) {
   const merged = new Map();
   for (const v of variants || []) {
-    addVariant(merged, v?.name, v?.airDate, v?.spins == null ? 1 : Number(v.spins));
+    addArtistVariant(merged, v?.name, v?.airDate, v?.spins == null ? 1 : Number(v.spins));
   }
   let best = null;
   for (const c of merged.values()) {
@@ -71,6 +74,115 @@ export function computeArtistRank(artistSpins, allArtistSpinCounts) {
     if (Number(rawCount) > spins) higher += 1;
   }
   return { rank: 1 + higher, totalArtists };
+}
+
+export function buildRankMap(countByKey) {
+  const entries = countByKey instanceof Map
+    ? Array.from(countByKey.entries())
+    : Array.isArray(countByKey)
+      ? countByKey
+      : Object.entries(countByKey || {});
+  const sorted = entries
+    .map(([key, count]) => {
+      const n = Number(count ?? 0);
+      return [key, Number.isFinite(n) ? n : 0];
+    })
+    .sort((a, b) => b[1] - a[1]);
+  const rankByKey = new Map();
+  let prevCount = null;
+  let currentRank = 0;
+  for (let i = 0; i < sorted.length; i += 1) {
+    const [key, count] = sorted[i];
+    if (i === 0 || count !== prevCount) {
+      currentRank = i + 1;
+      prevCount = count;
+    }
+    rankByKey.set(key, currentRank);
+  }
+  return rankByKey;
+}
+
+export function buildArchiveYearAxis(yearRows, yearField = 'year', dateRange = null) {
+  let minYear = 2013;
+  let maxYear = 2026;
+  const counts = new Map();
+  for (const row of yearRows || []) {
+    const rawYear = unwrapValue(row?.[yearField]);
+    const yr = typeof rawYear === 'number' ? rawYear : Number(String(rawYear ?? '').slice(0, 4));
+    if (!Number.isFinite(yr) || yr < 2000) continue;
+    if (yr < minYear) minYear = yr;
+    if (yr > maxYear) maxYear = yr;
+    counts.set(yr, (counts.get(yr) ?? 0) + Number(row?.spins ?? 0));
+  }
+  const ey = Number(String(unwrapValue(dateRange?.earliest) ?? '').slice(0, 4));
+  const ly = Number(String(unwrapValue(dateRange?.latest) ?? '').slice(0, 4));
+  if (Number.isFinite(ey) && ey >= 2000 && ey < minYear) minYear = ey;
+  if (Number.isFinite(ly) && ly > maxYear) maxYear = ly;
+  return Array.from({ length: maxYear - minYear + 1 }, (_, i) => ({
+    year: minYear + i,
+    spins: counts.get(minYear + i) ?? 0,
+  }));
+}
+
+export function buildCoOccurrences(coRows, displayNameByKey, rankByKey) {
+  if (!coRows) return [];
+  const fallbackRank = rankByKey instanceof Map ? rankByKey.size : Object.keys(rankByKey || {}).length;
+  if (coRows instanceof Map) {
+    const out = [];
+    for (const [key, sharedEpisodes] of coRows.entries()) {
+      const shared = Number(sharedEpisodes ?? 0);
+      const name = readLookup(displayNameByKey, key) || '';
+      if (!key || !name || shared <= 0) continue;
+      out.push({ name, sharedEpisodes: shared, rank: readLookup(rankByKey, key) ?? fallbackRank });
+    }
+    return out;
+  }
+
+  const neighborMap = new Map();
+  for (const row of coRows) {
+    const rawKey = row?.neighbor_key ?? row?.neighborKey ?? row?.ak ?? row?.key;
+    const key = rawKey != null ? String(rawKey).trim() : normalizeArtistKey(row?.name);
+    const shared = Number(row?.shared_episodes ?? row?.sharedEpisodes ?? 0);
+    if (!key || shared <= 0) continue;
+    let entry = neighborMap.get(key);
+    if (!entry) {
+      entry = { sharedEpisodes: shared, variants: new Map() };
+      neighborMap.set(key, entry);
+    }
+    if (row?.name != null) {
+      addArtistVariant(
+        entry.variants,
+        row.name,
+        row.airDate ?? row.air_date ?? '',
+        row.spins == null ? 1 : Number(row.spins),
+      );
+    }
+  }
+
+  const out = [];
+  for (const [key, entry] of neighborMap.entries()) {
+    const name = readLookup(displayNameByKey, key) || pickArtistDisplayName(entry.variants.values());
+    if (!name) continue;
+    out.push({ name, sharedEpisodes: entry.sharedEpisodes, rank: readLookup(rankByKey, key) ?? fallbackRank });
+  }
+  return out;
+}
+
+export function mapProfileSpinRow(row = {}) {
+  const rawAirDate = unwrapValue(row.airDate ?? row.air_date);
+  const rawEpNum = row.episodeNumber ?? row.episode_number;
+  const rawSongCount = row.episodeSongCount ?? row.episode_song_count;
+  const rawSong = row.song ?? row.songTitle ?? row.song_title;
+  return {
+    episodeId: String(row.episodeId ?? row.episode_id ?? ''),
+    airDate: rawAirDate == null ? '' : String(rawAirDate),
+    episodeNumber: rawEpNum == null ? null : Number(rawEpNum),
+    episodeSongCount: Number(rawSongCount ?? 0),
+    position: Number(row.position ?? 0),
+    artist: String(row.artist ?? ''),
+    song: String(rawSong ?? ''),
+    album: String(row.album ?? ''),
+  };
 }
 
 function buildRotationStats(airDates, airings, episodeCount) {
@@ -113,7 +225,7 @@ function buildPlayedAlongside(coOccurrences, selfKey) {
     if (!entry) { entry = { sharedEpisodes: 0, rank, variants: new Map() }; grouped.set(key, entry); }
     entry.sharedEpisodes += shared;
     if (rank > 0 && (entry.rank <= 0 || rank < entry.rank)) entry.rank = rank;
-    addVariant(entry.variants, item?.name, '', shared);
+    addArtistVariant(entry.variants, item?.name, '', shared);
   }
   return Array.from(grouped.values())
     .map((e) => ({ name: pickArtistDisplayName(e.variants.values()), sharedEpisodes: e.sharedEpisodes, rank: e.rank }))
@@ -147,7 +259,7 @@ export function buildArtistProfile({ rows = [], coOccurrences = [], rank = 1, to
     const songKey = normalizeArtistKey(rawSong);
     const albumKey = normalizeArtistKey(rawAlbum);
 
-    addVariant(artistVariants, row.artist, airDate);
+    addArtistVariant(artistVariants, row.artist, airDate);
     if (episodeId) episodeIds.add(episodeId);
     if (airDate) {
       airDates.add(airDate);
@@ -162,7 +274,7 @@ export function buildArtistProfile({ rows = [], coOccurrences = [], rank = 1, to
     let songEntry = songMap.get(songKey);
     if (!songEntry) { songEntry = { variants: new Map(), totalPlays: 0, albumCounts: new Map() }; songMap.set(songKey, songEntry); }
     songEntry.totalPlays += 1;
-    addVariant(songEntry.variants, rawSong, airDate);
+    addArtistVariant(songEntry.variants, rawSong, airDate);
 
     if (albumKey) {
       songEntry.albumCounts.set(albumKey, (songEntry.albumCounts.get(albumKey) ?? 0) + 1);
@@ -171,7 +283,7 @@ export function buildArtistProfile({ rows = [], coOccurrences = [], rank = 1, to
       albumEntry.totalPlays += 1;
       albumEntry.uniqueSongs.add(songKey);
       if (airDate && (!albumEntry.firstAppearance || airDate < albumEntry.firstAppearance)) albumEntry.firstAppearance = airDate;
-      addVariant(albumEntry.variants, rawAlbum, airDate);
+      addArtistVariant(albumEntry.variants, rawAlbum, airDate);
     }
 
     parsedRows.push({

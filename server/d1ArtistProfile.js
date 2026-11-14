@@ -1,12 +1,19 @@
 // Cloudflare D1 Artist Profile query module returning full profile data via the shared Web-API builder.
-import { buildArtistProfile, computeArtistRank, normalizeArtistKey, pickArtistDisplayName } from './artistProfileBuilder.js';
+import {
+  buildArchiveYearAxis,
+  buildArtistProfile,
+  buildCoOccurrences,
+  buildRankMap,
+  computeArtistRank,
+  mapProfileSpinRow,
+  normalizeArtistKey,
+} from './artistProfileBuilder.js';
 import { qAll, qFirst, withCache } from './d1Queries.js';
 
 const SPIN_ROWS_SQL = `SELECT
   sp.episode_id AS episode_id,
   sp.air_date AS air_date,
   e.episode_number AS episode_number,
-  e.title AS episode_title,
   CASE
     WHEN e.song_count > 0 THEN e.song_count
     ELSE (SELECT COUNT(1) FROM song_plays sp2 WHERE sp2.episode_id = sp.episode_id)
@@ -14,8 +21,7 @@ const SPIN_ROWS_SQL = `SELECT
   sp.position AS position,
   sp.artist AS artist,
   sp.song_title AS song_title,
-  sp.album AS album,
-  e.url AS blogger_url
+  sp.album AS album
 FROM song_plays sp
 LEFT JOIN episodes e ON e.id = sp.episode_id
 WHERE LOWER(TRIM(sp.artist)) = ?
@@ -53,29 +59,9 @@ neighbor_variants AS (
   WHERE LOWER(TRIM(sp.artist)) IN (SELECT ak FROM co_counts)
   GROUP BY ak, TRIM(sp.artist)
 )
-SELECT nv.ak, nv.name, nv.spins, nv.air_date, cc.shared_episodes
+SELECT nv.ak AS neighbor_key, nv.name, nv.spins, nv.air_date, cc.shared_episodes
 FROM neighbor_variants nv
 JOIN co_counts cc ON cc.ak = nv.ak`;
-
-function buildArchiveYears(yearRows, earliestDate, latestDate) {
-  let minYear = 2013;
-  let maxYear = 2026;
-  const counts = new Map();
-  for (const r of yearRows) {
-    const yr = Number(r.year);
-    if (yr >= 2000 && yr < minYear) minYear = yr;
-    if (yr > maxYear) maxYear = yr;
-    counts.set(yr, Number(r.spins));
-  }
-  const ey = Number(String(earliestDate || '').slice(0, 4));
-  const ly = Number(String(latestDate || '').slice(0, 4));
-  if (ey >= 2000 && ey < minYear) minYear = ey;
-  if (ly > maxYear) maxYear = ly;
-  return Array.from({ length: maxYear - minYear + 1 }, (_, i) => ({
-    year: minYear + i,
-    spins: counts.get(minYear + i) ?? 0,
-  }));
-}
 
 export async function getD1ArtistProfile(db, artistName) {
   const key = normalizeArtistKey(artistName);
@@ -92,42 +78,12 @@ export async function getD1ArtistProfile(db, artistName) {
       qAll(db, CO_OCCURRENCE_SQL, [key, key]),
     ]);
 
-    const rows = spinRows.map((r) => ({
-      episodeId: String(r.episode_id),
-      airDate: r.air_date,
-      episodeNumber: r.episode_number == null ? null : Number(r.episode_number),
-      episodeTitle: r.episode_title || '',
-      episodeSongCount: Number(r.episode_song_count ?? 0),
-      position: Number(r.position),
-      artist: r.artist || '',
-      song: r.song_title || '',
-      songTitle: r.song_title || '',
-      album: r.album || '',
-      bloggerUrl: r.blogger_url || null,
-    }));
-
-    const allCounts = artistCountRows.map((r) => Number(r.spins));
+    const rows = spinRows.map(mapProfileSpinRow);
     const countByKey = new Map(artistCountRows.map((r) => [r.ak, Number(r.spins)]));
-    const { rank, totalArtists } = computeArtistRank(rows.length, allCounts);
-
-    const sortedDesc = [...allCounts].sort((a, b) => b - a);
-    const rankBySpins = new Map();
-    for (let i = 0; i < sortedDesc.length; i += 1) {
-      if (!rankBySpins.has(sortedDesc[i])) rankBySpins.set(sortedDesc[i], i + 1);
-    }
-
-    const neighborMap = new Map();
-    for (const r of coRows) {
-      let entry = neighborMap.get(r.ak);
-      if (!entry) { entry = { sharedEpisodes: Number(r.shared_episodes), variants: [] }; neighborMap.set(r.ak, entry); }
-      entry.variants.push({ name: r.name, spins: Number(r.spins), airDate: r.air_date });
-    }
-
-    const coOccurrences = Array.from(neighborMap.entries()).map(([ak, entry]) => ({
-      name: pickArtistDisplayName(entry.variants),
-      sharedEpisodes: entry.sharedEpisodes,
-      rank: rankBySpins.get(countByKey.get(ak)) ?? totalArtists,
-    }));
+    const rankByKey = buildRankMap(countByKey);
+    const totalArtists = countByKey.size;
+    const rank = rankByKey.get(key) ?? computeArtistRank(rows.length, countByKey.values()).rank;
+    const coOccurrences = buildCoOccurrences(coRows, null, rankByKey);
 
     const earliest = archiveRow?.earliest_date ?? null;
     const latest = archiveRow?.latest_date ?? null;
@@ -135,7 +91,7 @@ export async function getD1ArtistProfile(db, artistName) {
       totalSpins: Number(archiveRow?.total_spins ?? 0),
       totalEpisodes: Number(archiveRow?.total_episodes ?? 0),
       dateRange: { earliest, latest },
-      years: buildArchiveYears(yearRows, earliest, latest),
+      years: buildArchiveYearAxis(yearRows, 'year', { earliest, latest }),
     };
 
     return buildArtistProfile({ rows, coOccurrences, rank, totalArtists, archive });

@@ -3,7 +3,11 @@ import { mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSy
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  addArtistVariant,
+  buildArchiveYearAxis,
   buildArtistProfile,
+  buildCoOccurrences,
+  buildRankMap,
   encodeArtistProfileKey,
   normalizeArtistKey,
   pickArtistDisplayName,
@@ -11,17 +15,6 @@ import {
 
 function cmpAsc(a, b) {
   return a < b ? -1 : a > b ? 1 : 0;
-}
-
-function buildYearAxis(episodes) {
-  let minY = 2013;
-  let maxY = 2026;
-  for (const ep of episodes) {
-    const yr = Number((ep.airDate || '').slice(0, 4));
-    if (yr >= 2000 && yr < minY) minY = yr;
-    if (yr > maxY) maxY = yr;
-  }
-  return Array.from({ length: maxY - minY + 1 }, (_, idx) => minY + idx);
 }
 
 function updateBounds(entry, airDate) {
@@ -34,7 +27,7 @@ function aggregateSnapshots(episodesData) {
   const sorted = [...episodesData].sort(
     (a, b) => cmpAsc(b.airDate || '', a.airDate || '') || cmpAsc(String(b.id), String(a.id)),
   );
-  const years = buildYearAxis(sorted);
+  const years = buildArchiveYearAxis(sorted, 'airDate').map((y) => y.year);
   const yearIdxMap = new Map(years.map((y, idx) => [y, idx]));
   const archive = new Array(years.length).fill(0);
 
@@ -241,8 +234,7 @@ export function writeArtistProfileSnapshots(episodesData, dataDir) {
   mkdirSync(profilesDir, { recursive: true });
 
   const episodes = episodesData || [];
-  const years = buildYearAxis(episodes);
-  const yearCountMap = new Map(years.map((y) => [y, 0]));
+  const yearCountMap = new Map();
   const rowsByArtist = new Map();
   const variantsByArtist = new Map();
   const coMap = new Map();
@@ -265,7 +257,7 @@ export function writeArtistProfileSnapshots(episodesData, dataDir) {
 
     for (const s of ordered) {
       totalSpins += 1;
-      if (yearCountMap.has(yr)) yearCountMap.set(yr, yearCountMap.get(yr) + 1);
+      if (Number.isFinite(yr) && yr >= 2000) yearCountMap.set(yr, (yearCountMap.get(yr) ?? 0) + 1);
       const rawArtist = String(s.artist || '').trim();
       const ak = normalizeArtistKey(rawArtist);
       if (!ak) continue;
@@ -285,12 +277,7 @@ export function writeArtistProfileSnapshots(episodesData, dataDir) {
 
       let vMap = variantsByArtist.get(ak);
       if (!vMap) { vMap = new Map(); variantsByArtist.set(ak, vMap); }
-      const prev = vMap.get(rawArtist);
-      if (!prev) vMap.set(rawArtist, { name: rawArtist, spins: 1, airDate });
-      else {
-        prev.spins += 1;
-        if (airDate && (!prev.airDate || airDate < prev.airDate)) prev.airDate = airDate;
-      }
+      addArtistVariant(vMap, rawArtist, airDate);
     }
 
     const keysInEp = Array.from(epArtistKeys);
@@ -309,30 +296,22 @@ export function writeArtistProfileSnapshots(episodesData, dataDir) {
     displayByKey.set(ak, pickArtistDisplayName(variantsByArtist.get(ak).values()));
     countByKey.set(ak, rows.length);
   }
-  const sortedDesc = Array.from(countByKey.values()).sort((a, b) => b - a);
-  const rankBySpins = new Map();
-  for (let i = 0; i < sortedDesc.length; i += 1) {
-    if (!rankBySpins.has(sortedDesc[i])) rankBySpins.set(sortedDesc[i], i + 1);
-  }
+  const rankByKey = buildRankMap(countByKey);
   const totalArtists = countByKey.size;
+  const yearRows = Array.from(yearCountMap, ([year, spins]) => ({ year, spins }));
   const archive = {
     totalSpins,
     totalEpisodes: episodes.length,
     dateRange: { earliest, latest },
-    years: years.map((year) => ({ year, spins: yearCountMap.get(year) ?? 0 })),
+    years: buildArchiveYearAxis(yearRows, 'year', { earliest, latest }),
   };
 
   const writtenFiles = new Set();
   for (const [ak, rows] of rowsByArtist.entries()) {
-    const coOccurrences = Array.from(coMap.get(ak)?.entries() || []).map(([otherAk, sharedEpisodes]) => ({
-      name: displayByKey.get(otherAk),
-      sharedEpisodes,
-      rank: rankBySpins.get(countByKey.get(otherAk)) ?? totalArtists,
-    }));
     const profile = buildArtistProfile({
       rows,
-      coOccurrences,
-      rank: rankBySpins.get(rows.length) ?? totalArtists,
+      coOccurrences: buildCoOccurrences(coMap.get(ak), displayByKey, rankByKey),
+      rank: rankByKey.get(ak) ?? totalArtists,
       totalArtists,
       archive,
     });
