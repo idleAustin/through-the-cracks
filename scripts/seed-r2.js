@@ -19,9 +19,10 @@ const TOP_LEVEL_FILES = [
   'albums.json',
   'years.json',
 ];
+const OPTIONAL_TOP_LEVEL_FILES = ['song-links.json'];
 
-function collectSubdirJson(dirName) {
-  const fullDir = path.join(DATA_DIR, dirName);
+function collectSubdirJson(dataDir, dirName) {
+  const fullDir = path.join(dataDir, dirName);
   if (!existsSync(fullDir)) return [];
   return readdirSync(fullDir, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
@@ -29,18 +30,22 @@ function collectSubdirJson(dirName) {
     .sort();
 }
 
-export function collectSnapshotPlan() {
+export function collectSnapshotPlan(dataDir = DATA_DIR) {
   const entries = [];
   for (const name of TOP_LEVEL_FILES) {
-    const filePath = path.join(DATA_DIR, name);
+    const filePath = path.join(dataDir, name);
     if (!existsSync(filePath)) throw new Error(`Missing required snapshot file: ${filePath}`);
     entries.push({ relPath: name, filePath });
   }
-  for (const relPath of [...collectSubdirJson('playlists'), ...collectSubdirJson('artist-profiles')]) {
-    entries.push({ relPath, filePath: path.join(DATA_DIR, relPath) });
+  for (const name of OPTIONAL_TOP_LEVEL_FILES) {
+    const filePath = path.join(dataDir, name);
+    if (existsSync(filePath)) entries.push({ relPath: name, filePath });
+  }
+  for (const relPath of [...collectSubdirJson(dataDir, 'playlists'), ...collectSubdirJson(dataDir, 'artist-profiles')]) {
+    entries.push({ relPath, filePath: path.join(dataDir, relPath) });
   }
 
-  const overview = JSON.parse(readFileSync(path.join(DATA_DIR, 'overview.json'), 'utf8'));
+  const overview = JSON.parse(readFileSync(path.join(dataDir, 'overview.json'), 'utf8'));
   const manifest = {
     version: 1,
     updatedAt: new Date().toISOString(),
@@ -103,7 +108,7 @@ async function main() {
 
   if (dryRun) {
     const sampleKeys = [
-      ...entries.slice(0, 7).map((e) => `v1/${e.relPath}`),
+      ...entries.filter((e) => !e.relPath.includes('/')).map((e) => `v1/${e.relPath}`),
       ...entries.filter((e) => e.relPath.startsWith('playlists/')).slice(0, 2).map((e) => `v1/${e.relPath}`),
       ...entries.filter((e) => e.relPath.startsWith('artist-profiles/')).slice(0, 3).map((e) => `v1/${e.relPath}`),
       'v1/manifest.json',

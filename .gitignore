@@ -37,6 +37,8 @@ out/
 
 # ── Cache & Temporary Files ────────────────
 .cache/
+__pycache__/
+*.py[cod]
 .temp/
 tmp/
 *.tmp

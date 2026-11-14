@@ -1,5 +1,5 @@
 // Generates .cache/d1-seed.sql from server/schema.sql and public/data/episodes.json for remote D1 seeding.
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,16 @@ import { ensureD1Schema, upsertEpisodesIntoD1 } from '../server/d1Schema.js';
 const __filename = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(__filename), '..');
 const BATCH_SIZE = 50;
+
+// General archive reseeds MUST NEVER drop song_links (preserves backfill links and manual overrides).
+export const ARCHIVE_DROP_TABLES = Object.freeze([
+  'cache_blobs',
+  'album_rollups',
+  'song_rollups',
+  'artist_rollups',
+  'song_plays',
+  'episodes',
+]);
 
 function createSqliteD1() {
   const sqlite = new DatabaseSync(':memory:');
@@ -81,15 +91,15 @@ async function buildCacheBlobRows(episodes, now) {
   }
 }
 
-async function main() {
-  const schemaSql = readFileSync(path.join(ROOT, 'server', 'schema.sql'), 'utf8').trim();
-  const episodes = JSON.parse(readFileSync(path.join(ROOT, 'public', 'data', 'episodes.json'), 'utf8'));
-  const now = new Date().toISOString();
+export async function buildArchiveSeedSql({ schemaSql, episodes, now = new Date().toISOString() }) {
+  if (ARCHIVE_DROP_TABLES.includes('song_links')) {
+    throw new Error('ARCHIVE_DROP_TABLES must never include song_links');
+  }
 
   const episodeValues = [];
   const songValues = [];
 
-  for (const ep of episodes) {
+  for (const ep of episodes || []) {
     if (!ep || !/^\d{4}-\d{2}-\d{2}$/.test(ep.airDate || '')) continue;
     const epId = String(ep.id);
     const songs = ep.songs || [];
@@ -127,17 +137,16 @@ async function main() {
     }
   }
 
-  const blobValues = await buildCacheBlobRows(episodes, now);
+  const blobValues = await buildCacheBlobRows(episodes || [], now);
+  const dropLines = ARCHIVE_DROP_TABLES.map((tbl) => `DROP TABLE IF EXISTS ${tbl};`);
+  if (dropLines.some((line) => /\bsong_links\b/i.test(line))) {
+    throw new Error('Archive seed SQL must never emit DROP TABLE IF EXISTS song_links');
+  }
 
   const lines = [
-    'DROP TABLE IF EXISTS cache_blobs;',
-    'DROP TABLE IF EXISTS album_rollups;',
-    'DROP TABLE IF EXISTS song_rollups;',
-    'DROP TABLE IF EXISTS artist_rollups;',
-    'DROP TABLE IF EXISTS song_plays;',
-    'DROP TABLE IF EXISTS episodes;',
+    ...dropLines,
     '',
-    schemaSql,
+    String(schemaSql || '').trim(),
     '',
   ];
 
@@ -166,14 +175,36 @@ async function main() {
     blobValues,
   );
 
+  return {
+    sql: `${lines.join('\n')}\n`,
+    counts: { episodes: episodeValues.length, songPlays: songValues.length, cacheBlobs: blobValues.length },
+  };
+}
+
+async function main() {
+  const schemaSql = readFileSync(path.join(ROOT, 'server', 'schema.sql'), 'utf8').trim();
+  const episodes = JSON.parse(readFileSync(path.join(ROOT, 'public', 'data', 'episodes.json'), 'utf8'));
+  const { sql, counts } = await buildArchiveSeedSql({ schemaSql, episodes });
+
   const cacheDir = path.join(ROOT, '.cache');
   mkdirSync(cacheDir, { recursive: true });
   const outPath = path.join(cacheDir, 'd1-seed.sql');
-  writeFileSync(outPath, `${lines.join('\n')}\n`);
-  console.log(`✓ Generated ${outPath} (${episodeValues.length} episodes, ${songValues.length} song_plays, ${blobValues.length} cache_blobs)`);
+  writeFileSync(outPath, sql);
+  console.log(`✓ Generated ${outPath} (${counts.episodes} episodes, ${counts.songPlays} song_plays, ${counts.cacheBlobs} cache_blobs)`);
 }
 
-main().catch((err) => {
-  console.error('❌ Failed to generate D1 seed SQL:', err);
-  process.exit(1);
-});
+function isDirectExecution() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(path.resolve(process.argv[1])) === realpathSync(__filename);
+  } catch {
+    return path.resolve(process.argv[1]) === __filename;
+  }
+}
+
+if (isDirectExecution()) {
+  main().catch((err) => {
+    console.error('❌ Failed to generate D1 seed SQL:', err);
+    process.exit(1);
+  });
+}
