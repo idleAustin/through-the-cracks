@@ -1,7 +1,13 @@
 // Generates pre-computed static JSON snapshots and year shards in public/data/ from episodes data.
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  buildArtistProfile,
+  encodeArtistProfileKey,
+  normalizeArtistKey,
+  pickArtistDisplayName,
+} from '../server/artistProfileBuilder.js';
 
 function cmpAsc(a, b) {
   return a < b ? -1 : a > b ? 1 : 0;
@@ -230,6 +236,118 @@ function aggregateSnapshots(episodesData) {
   return { normalizedEpisodes, episodesIndex: { episodes: episodesIndexList, songEpisodes }, playlistsByYear, yearSpins: { years, archive, artists: artistYearSpins, songs: songYearSpins }, artists, albums, songs, overview };
 }
 
+export function writeArtistProfileSnapshots(episodesData, dataDir) {
+  const profilesDir = path.join(dataDir, 'artist-profiles');
+  mkdirSync(profilesDir, { recursive: true });
+
+  const episodes = episodesData || [];
+  const years = buildYearAxis(episodes);
+  const yearCountMap = new Map(years.map((y) => [y, 0]));
+  const rowsByArtist = new Map();
+  const variantsByArtist = new Map();
+  const coMap = new Map();
+  let totalSpins = 0;
+  let earliest = null;
+  let latest = null;
+
+  for (const ep of episodes) {
+    const epId = String(ep.id);
+    const airDate = ep.airDate || '';
+    const epNum = ep.episodeNumber == null ? null : Number(ep.episodeNumber);
+    const ordered = [...(ep.songs || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    const epSongCount = ordered.length || Number(ep.songCount ?? 0);
+    if (airDate) {
+      if (!earliest || airDate < earliest) earliest = airDate;
+      if (!latest || airDate > latest) latest = airDate;
+    }
+    const yr = Number(airDate.slice(0, 4));
+    const epArtistKeys = new Set();
+
+    for (const s of ordered) {
+      totalSpins += 1;
+      if (yearCountMap.has(yr)) yearCountMap.set(yr, yearCountMap.get(yr) + 1);
+      const rawArtist = String(s.artist || '').trim();
+      const ak = normalizeArtistKey(rawArtist);
+      if (!ak) continue;
+      epArtistKeys.add(ak);
+
+      if (!rowsByArtist.has(ak)) rowsByArtist.set(ak, []);
+      rowsByArtist.get(ak).push({
+        episodeId: epId,
+        airDate,
+        episodeNumber: epNum,
+        episodeSongCount: epSongCount,
+        position: Number(s.position),
+        artist: rawArtist,
+        songTitle: s.songTitle || s.song || '',
+        album: s.album || '',
+      });
+
+      let vMap = variantsByArtist.get(ak);
+      if (!vMap) { vMap = new Map(); variantsByArtist.set(ak, vMap); }
+      const prev = vMap.get(rawArtist);
+      if (!prev) vMap.set(rawArtist, { name: rawArtist, spins: 1, airDate });
+      else {
+        prev.spins += 1;
+        if (airDate && (!prev.airDate || airDate < prev.airDate)) prev.airDate = airDate;
+      }
+    }
+
+    const keysInEp = Array.from(epArtistKeys);
+    for (const ak of keysInEp) {
+      let neighbors = coMap.get(ak);
+      if (!neighbors) { neighbors = new Map(); coMap.set(ak, neighbors); }
+      for (const otherAk of keysInEp) {
+        if (otherAk !== ak) neighbors.set(otherAk, (neighbors.get(otherAk) ?? 0) + 1);
+      }
+    }
+  }
+
+  const displayByKey = new Map();
+  const countByKey = new Map();
+  for (const [ak, rows] of rowsByArtist.entries()) {
+    displayByKey.set(ak, pickArtistDisplayName(variantsByArtist.get(ak).values()));
+    countByKey.set(ak, rows.length);
+  }
+  const sortedDesc = Array.from(countByKey.values()).sort((a, b) => b - a);
+  const rankBySpins = new Map();
+  for (let i = 0; i < sortedDesc.length; i += 1) {
+    if (!rankBySpins.has(sortedDesc[i])) rankBySpins.set(sortedDesc[i], i + 1);
+  }
+  const totalArtists = countByKey.size;
+  const archive = {
+    totalSpins,
+    totalEpisodes: episodes.length,
+    dateRange: { earliest, latest },
+    years: years.map((year) => ({ year, spins: yearCountMap.get(year) ?? 0 })),
+  };
+
+  const writtenFiles = new Set();
+  for (const [ak, rows] of rowsByArtist.entries()) {
+    const coOccurrences = Array.from(coMap.get(ak)?.entries() || []).map(([otherAk, sharedEpisodes]) => ({
+      name: displayByKey.get(otherAk),
+      sharedEpisodes,
+      rank: rankBySpins.get(countByKey.get(otherAk)) ?? totalArtists,
+    }));
+    const profile = buildArtistProfile({
+      rows,
+      coOccurrences,
+      rank: rankBySpins.get(rows.length) ?? totalArtists,
+      totalArtists,
+      archive,
+    });
+    const fileName = `${encodeArtistProfileKey(ak)}.json`;
+    writtenFiles.add(fileName);
+    writeFileSync(path.join(profilesDir, fileName), JSON.stringify(profile));
+  }
+
+  for (const entry of readdirSync(profilesDir, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.json') && !writtenFiles.has(entry.name)) {
+      rmSync(path.join(profilesDir, entry.name), { force: true });
+    }
+  }
+}
+
 export function writeStaticSnapshots(episodesData, dataDir, { writeEpisodesFile = false } = {}) {
   const playlistsDir = path.join(dataDir, 'playlists');
   mkdirSync(playlistsDir, { recursive: true });
@@ -248,6 +366,7 @@ export function writeStaticSnapshots(episodesData, dataDir, { writeEpisodesFile 
   writeFileSync(path.join(dataDir, 'songs.json'), JSON.stringify(songs, null, 2));
   writeFileSync(path.join(dataDir, 'years.json'), JSON.stringify(overview.yearSummary, null, 2));
   writeFileSync(path.join(dataDir, 'overview.json'), JSON.stringify(overview, null, 2));
+  writeArtistProfileSnapshots(episodesData, dataDir);
 }
 
 function isDirectExecution() {
