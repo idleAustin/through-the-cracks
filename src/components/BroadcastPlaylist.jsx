@@ -4,6 +4,35 @@ import { formatAirDate, formatInt, useMediaQuery } from '../utils/format';
 import { ArchiveErrorState, EmptyArchiveState, SkeletonRows } from './DataState';
 import Icon from './Icon';
 
+const RELEASE_KIND_LABELS = { single: 'Single', interlude: 'Interlude', ep: 'EP' };
+
+function getReleaseKindLabel(track) {
+  if (track.album) return '';
+  return Object.hasOwn(RELEASE_KIND_LABELS, track.releaseKind)
+    ? RELEASE_KIND_LABELS[track.releaseKind]
+    : '';
+}
+
+function renderArtistCredit(track, onSelectArtist) {
+  return (
+    <>
+      <button
+        type="button"
+        className="cell-link-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectArtist?.(track.artist);
+        }}
+      >
+        {track.artist}
+      </button>
+      {track.featuredArtist && (
+        <span className="playlist-featured"> w/ {track.featuredArtist}</span>
+      )}
+    </>
+  );
+}
+
 export default function BroadcastPlaylist({
   episode,
   loading = false,
@@ -40,6 +69,8 @@ export default function BroadcastPlaylist({
 
   const tracks = episode.playlist || episode.songs || [];
   const spinCount = Number(episode.songCount ?? episode.song_count ?? tracks.length);
+  const rawSourceUrl = typeof episode.url === 'string' ? episode.url.trim() : '';
+  const safeSourceUrl = /^https?:\/\//i.test(rawSourceUrl) ? rawSourceUrl : '';
   const normalizedSong = String(activeSong || '').trim().toLowerCase();
   const normalizedArtist = String(activeArtist || '').trim().toLowerCase();
 
@@ -64,10 +95,10 @@ export default function BroadcastPlaylist({
           </p>
         </div>
 
-        {episode.url && (
+        {safeSourceUrl && (
           <a
             className="source-post-link"
-            href={episode.url}
+            href={safeSourceUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -87,6 +118,7 @@ export default function BroadcastPlaylist({
             const posLabel = String(track.position || idx + 1).padStart(2, '0');
             const songTitle = track.songTitle || track.song || '';
             const matched = isTrackMatch(track);
+            const releaseLabel = getReleaseKindLabel(track);
             return (
               <li
                 key={`${episode.id}-${posLabel}-${idx}`}
@@ -102,17 +134,17 @@ export default function BroadcastPlaylist({
                     {songTitle}
                   </button>
                   <div className="playlist-mobile-meta">
-                    <button
-                      type="button"
-                      className="cell-link-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectArtist?.(track.artist);
-                      }}
-                    >
-                      {track.artist}
-                    </button>
-                    {track.album && <span className="playlist-album"> · {track.album}</span>}
+                    <span className="playlist-artist-wrap">
+                      {renderArtistCredit(track, onSelectArtist)}
+                    </span>
+                    {track.album ? (
+                      <span className="playlist-album"> · {track.album}</span>
+                    ) : releaseLabel ? (
+                      <span className="playlist-album">
+                        {' · '}
+                        <span className="playlist-release-kind">{releaseLabel}</span>
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </li>
@@ -135,6 +167,7 @@ export default function BroadcastPlaylist({
                 const posLabel = String(track.position || idx + 1).padStart(2, '0');
                 const songTitle = track.songTitle || track.song || '';
                 const matched = isTrackMatch(track);
+                const releaseLabel = getReleaseKindLabel(track);
                 return (
                   <tr
                     key={`${episode.id}-${posLabel}-${idx}`}
@@ -154,19 +187,12 @@ export default function BroadcastPlaylist({
                         {songTitle}
                       </button>
                     </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="cell-link-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectArtist?.(track.artist);
-                        }}
-                      >
-                        {track.artist}
-                      </button>
+                    <td>{renderArtistCredit(track, onSelectArtist)}</td>
+                    <td className="cell-dim">
+                      {track.album || (releaseLabel ? (
+                        <span className="playlist-release-kind">{releaseLabel}</span>
+                      ) : '—')}
                     </td>
-                    <td className="cell-dim">{track.album || '—'}</td>
                   </tr>
                 );
               })}

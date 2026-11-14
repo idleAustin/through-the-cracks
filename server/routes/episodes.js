@@ -104,7 +104,7 @@ export function createEpisodesRouter({ query, project, dataset }) {
         WHERE id = @id
       `;
       const songsQuery = `
-        SELECT position, artist, song_title, album
+        SELECT position, artist, featured_artist, song_title, album, release_kind
         FROM \`${project}.${dataset}.song_plays\`
         WHERE episode_id = @id
         ORDER BY position ASC
@@ -121,7 +121,9 @@ export function createEpisodesRouter({ query, project, dataset }) {
         song: s.song_title,
         songTitle: s.song_title,
         artist: s.artist,
+        ...(s.featured_artist ? { featuredArtist: s.featured_artist } : {}),
         album: s.album || '',
+        ...(s.release_kind && s.release_kind !== 'album' ? { releaseKind: s.release_kind } : {}),
       }));
 
       res.json({

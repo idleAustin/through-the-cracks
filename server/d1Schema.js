@@ -1,7 +1,7 @@
 // Cloudflare D1 schema DDL, idempotent episode/spin upserts, and Blogger-to-D1 ingestion pipeline.
 import { computeIncrementalStartDate, fetchBloggerPosts, parsePost } from '../scripts/blogger-parser.js';
 
-export const D1_SCHEMA_STATEMENTS = [
+export const D1_TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS episodes (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL DEFAULT '',
@@ -19,29 +19,51 @@ export const D1_SCHEMA_STATEMENTS = [
     air_date TEXT NOT NULL,
     position INTEGER NOT NULL,
     artist TEXT NOT NULL DEFAULT '',
+    featured_artist TEXT NOT NULL DEFAULT '',
     song_title TEXT NOT NULL DEFAULT '',
     album TEXT NOT NULL DEFAULT '',
+    release_kind TEXT NOT NULL DEFAULT 'album',
     raw_line TEXT NOT NULL DEFAULT '',
     ingested_at TEXT NOT NULL
   )`,
+];
+
+export const D1_INDEX_STATEMENTS = [
   'CREATE INDEX IF NOT EXISTS idx_episodes_air_date ON episodes(air_date DESC, id DESC)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_episode_pos ON song_plays(episode_id, position ASC)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_air_date ON song_plays(air_date)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_artist ON song_plays(artist)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_artist_lower ON song_plays(LOWER(TRIM(artist)))',
+  'CREATE INDEX IF NOT EXISTS idx_song_plays_featured_lower ON song_plays(LOWER(featured_artist))',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_song_lower ON song_plays(LOWER(TRIM(song_title)))',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_album_lower ON song_plays(LOWER(TRIM(album)))',
 ];
+
+export const D1_SCHEMA_STATEMENTS = [...D1_TABLE_STATEMENTS, ...D1_INDEX_STATEMENTS];
+export const DDL_STATEMENTS = D1_SCHEMA_STATEMENTS;
 
 const DELETE_SONGS_SQL = 'DELETE FROM song_plays WHERE episode_id = ?';
 const UPSERT_EPISODE_SQL =
   'INSERT OR REPLACE INTO episodes (id, title, air_date, day_of_week, episode_number, published_at, url, song_count, ingested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 const UPSERT_SONG_SQL =
-  'INSERT OR REPLACE INTO song_plays (id, episode_id, air_date, position, artist, song_title, album, raw_line, ingested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  'INSERT OR REPLACE INTO song_plays (id, episode_id, air_date, position, artist, featured_artist, song_title, album, release_kind, raw_line, ingested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
 export async function ensureD1Schema(db) {
   if (!db) throw new Error('D1 database binding (DB) is not configured');
-  await db.batch(D1_SCHEMA_STATEMENTS.map((sql) => db.prepare(sql)));
+  await db.batch(D1_TABLE_STATEMENTS.map((sql) => db.prepare(sql)));
+  const info = await db.prepare('PRAGMA table_info(song_plays)').all();
+  const cols = new Set((info?.results || []).map((row) => row.name));
+  if (cols.size > 0) {
+    const alters = [];
+    if (!cols.has('featured_artist')) {
+      alters.push(db.prepare("ALTER TABLE song_plays ADD COLUMN featured_artist TEXT NOT NULL DEFAULT ''"));
+    }
+    if (!cols.has('release_kind')) {
+      alters.push(db.prepare("ALTER TABLE song_plays ADD COLUMN release_kind TEXT NOT NULL DEFAULT 'album'"));
+    }
+    if (alters.length > 0) await db.batch(alters);
+  }
+  await db.batch(D1_INDEX_STATEMENTS.map((sql) => db.prepare(sql)));
 }
 
 export async function upsertEpisodesIntoD1(
@@ -89,8 +111,10 @@ export async function upsertEpisodesIntoD1(
           ep.airDate,
           pos,
           song.artist || '',
+          song.featuredArtist || '',
           song.songTitle || song.song || '',
           song.album || '',
+          song.releaseKind || 'album',
           song.rawLine || '',
           now,
         ),

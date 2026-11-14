@@ -51,7 +51,7 @@ export async function getD1Overview(db) {
       (SELECT COUNT(1) FROM episodes) AS total_episodes,
       (SELECT COUNT(1) FROM song_plays) AS total_song_plays,
       (SELECT COUNT(DISTINCT LOWER(TRIM(artist))) FROM song_plays) AS unique_artists,
-      (SELECT COUNT(DISTINCT (LOWER(TRIM(artist)) || '|||' || LOWER(TRIM(COALESCE(album, ''))))) FROM song_plays) AS unique_albums,
+      (SELECT COUNT(DISTINCT CASE WHEN LENGTH(TRIM(COALESCE(album, ''))) > 0 THEN (LOWER(TRIM(artist)) || '|||' || LOWER(TRIM(album))) END) FROM song_plays) AS unique_albums,
       (SELECT COUNT(DISTINCT (LOWER(TRIM(song_title)) || CHAR(9) || LOWER(TRIM(artist)))) FROM song_plays) AS unique_songs,
       (SELECT MIN(air_date) FROM episodes) AS earliest_date,
       (SELECT MAX(air_date) FROM episodes) AS latest_date,
@@ -146,10 +146,18 @@ export async function getD1EpisodeById(db, id) {
   return withCache(db, `episode:${epId}`, async () => {
     const [epRow, songRows] = await Promise.all([
       qFirst(db, 'SELECT id, air_date, url, song_count FROM episodes WHERE id = ?', [epId]),
-      qAll(db, 'SELECT position, artist, song_title, album FROM song_plays WHERE episode_id = ? ORDER BY position ASC', [epId]),
+      qAll(db, 'SELECT position, artist, featured_artist, song_title, album, release_kind FROM song_plays WHERE episode_id = ? ORDER BY position ASC', [epId]),
     ]);
     if (!epRow) return null;
-    const playlist = songRows.map((s) => ({ position: Number(s.position), song: s.song_title, songTitle: s.song_title, artist: s.artist, album: s.album || '' }));
+    const playlist = songRows.map((s) => ({
+      position: Number(s.position),
+      song: s.song_title,
+      songTitle: s.song_title,
+      artist: s.artist,
+      ...(s.featured_artist ? { featuredArtist: s.featured_artist } : {}),
+      album: s.album || '',
+      ...(s.release_kind && s.release_kind !== 'album' ? { releaseKind: s.release_kind } : {}),
+    }));
     return { ...mapEpisodeRow(epRow), playlist, songs: playlist };
   });
 }
@@ -171,7 +179,7 @@ export async function getD1Artists(db, queryParams = {}) {
 
     const listSql = `SELECT MIN(TRIM(artist)) AS name, COUNT(1) AS total_plays,
       COUNT(DISTINCT LOWER(TRIM(song_title))) AS unique_songs,
-      COUNT(DISTINCT LOWER(TRIM(COALESCE(album, '')))) AS unique_albums,
+      COUNT(DISTINCT CASE WHEN LENGTH(TRIM(COALESCE(album, ''))) > 0 THEN LOWER(TRIM(album)) END) AS unique_albums,
       MIN(air_date) AS first_appearance, MAX(air_date) AS last_appearance
       FROM song_plays ${where} GROUP BY LOWER(TRIM(artist)) ${orderBy} LIMIT ? OFFSET ?`;
     const rows = effectiveLimit > 0 ? await qAll(db, listSql, [...params, effectiveLimit, offset]) : [];
@@ -194,11 +202,13 @@ export async function getD1Songs(db, queryParams = {}) {
   const { page, limit } = parsePageParams(queryParams);
 
   return withCache(db, `songs:${search}:${sort}:${cap ?? ''}:${page}:${limit}`, async () => {
-    const where = search ? "WHERE LOWER(TRIM(artist)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(song_title)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(album)) LIKE ? ESCAPE '\\'" : '';
-    const params = search ? [escapeLike(search), escapeLike(search), escapeLike(search)] : [];
+    const having = search
+      ? "HAVING MAX(CASE WHEN LOWER(TRIM(artist)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(COALESCE(featured_artist, ''))) LIKE ? ESCAPE '\\' OR LOWER(TRIM(song_title)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(album)) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END) = 1"
+      : '';
+    const params = search ? [escapeLike(search), escapeLike(search), escapeLike(search), escapeLike(search)] : [];
     const orderBy = sort === 'obscure' ? 'ORDER BY total_plays ASC, first_played ASC, LOWER(song_title) ASC, LOWER(artist) ASC' : 'ORDER BY total_plays DESC, LOWER(song_title) ASC, LOWER(artist) ASC';
 
-    const countRow = await qFirst(db, `SELECT COUNT(1) AS total FROM (SELECT 1 FROM song_plays ${where} GROUP BY LOWER(TRIM(artist)), LOWER(TRIM(song_title)))`, params);
+    const countRow = await qFirst(db, `SELECT COUNT(1) AS total FROM (SELECT 1 FROM song_plays GROUP BY LOWER(TRIM(artist)), LOWER(TRIM(song_title)) ${having})`, params);
     const rawTotal = Number(countRow?.total ?? 0);
     const { total, effectiveLimit, offset, totalPages } = computeCappedPagination({ rawTotal, cap, page, limit });
 
@@ -206,7 +216,7 @@ export async function getD1Songs(db, queryParams = {}) {
         SELECT LOWER(TRIM(artist)) AS ak, LOWER(TRIM(song_title)) AS sk,
           MIN(TRIM(artist)) AS artist, MIN(TRIM(song_title)) AS song_title,
           COUNT(1) AS total_plays, MIN(air_date) AS first_played, MAX(air_date) AS last_played
-        FROM song_plays ${where} GROUP BY ak, sk ${orderBy} LIMIT ? OFFSET ?
+        FROM song_plays GROUP BY ak, sk ${having} ${orderBy} LIMIT ? OFFSET ?
       ), album_counts AS (
         SELECT LOWER(TRIM(sp.artist)) AS ak, LOWER(TRIM(sp.song_title)) AS sk, TRIM(sp.album) AS album, COUNT(1) AS cnt
         FROM song_plays sp JOIN grouped g ON LOWER(TRIM(sp.artist)) = g.ak AND LOWER(TRIM(sp.song_title)) = g.sk
@@ -235,7 +245,7 @@ export async function getD1ArtistSongs(db, artistName) {
   return withCache(db, `artistSongs:${trimmed.toLowerCase()}`, async () => {
     const [summary, pairRows] = await Promise.all([
       qFirst(db, `SELECT COUNT(1) AS total_plays, COUNT(DISTINCT LOWER(TRIM(song_title))) AS unique_songs,
-        COUNT(DISTINCT LOWER(TRIM(COALESCE(album, '')))) AS unique_albums, MIN(air_date) AS first_appearance, MAX(air_date) AS last_appearance
+        COUNT(DISTINCT CASE WHEN LENGTH(TRIM(COALESCE(album, ''))) > 0 THEN LOWER(TRIM(album)) END) AS unique_albums, MIN(air_date) AS first_appearance, MAX(air_date) AS last_appearance
         FROM song_plays WHERE LOWER(TRIM(artist)) = LOWER(TRIM(?))`, [trimmed]),
       qAll(db, `SELECT LOWER(TRIM(song_title)) AS sk, MIN(TRIM(song_title)) AS song_title, TRIM(COALESCE(album, '')) AS album,
         COUNT(1) AS cnt, MIN(air_date) AS first_played, MAX(air_date) AS last_played
@@ -291,9 +301,29 @@ export async function getD1Search(db, queryParams = {}) {
 
   return withCache(db, `search:${q}`, async () => {
     const like = escapeLike(q);
+    const searchSongsSql = `WITH matched_keys AS (
+        SELECT DISTINCT LOWER(TRIM(artist)) AS ak, LOWER(TRIM(song_title)) AS sk
+        FROM song_plays
+        WHERE LOWER(TRIM(song_title)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(COALESCE(featured_artist, ''))) LIKE ? ESCAPE '\\'
+      ), grouped AS (
+        SELECT LOWER(TRIM(sp.artist)) AS ak, LOWER(TRIM(sp.song_title)) AS sk,
+          MIN(TRIM(sp.artist)) AS artist, MIN(TRIM(sp.song_title)) AS song_title, COUNT(1) AS plays
+        FROM song_plays sp
+        JOIN matched_keys m ON LOWER(TRIM(sp.artist)) = m.ak AND LOWER(TRIM(sp.song_title)) = m.sk
+        GROUP BY ak, sk ORDER BY plays DESC, LOWER(song_title) ASC LIMIT 10
+      ), album_counts AS (
+        SELECT LOWER(TRIM(sp.artist)) AS ak, LOWER(TRIM(sp.song_title)) AS sk, TRIM(sp.album) AS album, COUNT(1) AS cnt
+        FROM song_plays sp JOIN grouped g ON LOWER(TRIM(sp.artist)) = g.ak AND LOWER(TRIM(sp.song_title)) = g.sk
+        WHERE LENGTH(TRIM(COALESCE(sp.album, ''))) > 0 GROUP BY ak, sk, TRIM(sp.album)
+      ), ranked_albums AS (
+        SELECT ak, sk, album, ROW_NUMBER() OVER (PARTITION BY ak, sk ORDER BY cnt DESC, LOWER(album) ASC) AS rn FROM album_counts
+      )
+      SELECT g.artist, g.song_title, COALESCE(ra.album, '') AS album, g.plays
+      FROM grouped g LEFT JOIN ranked_albums ra ON g.ak = ra.ak AND g.sk = ra.sk AND ra.rn = 1
+      ORDER BY g.plays DESC, LOWER(g.song_title) ASC`;
     const [artists, songs, albums] = await Promise.all([
       qAll(db, "SELECT MIN(TRIM(artist)) AS name, COUNT(1) AS plays, COUNT(DISTINCT LOWER(TRIM(song_title))) AS unique_songs FROM song_plays WHERE LOWER(TRIM(artist)) LIKE ? ESCAPE '\\' GROUP BY LOWER(TRIM(artist)) ORDER BY plays DESC, LOWER(name) ASC LIMIT 10", [like]),
-      qAll(db, "SELECT MIN(TRIM(artist)) AS artist, MIN(TRIM(song_title)) AS song_title, MIN(TRIM(COALESCE(album, ''))) AS album, COUNT(1) AS plays FROM song_plays WHERE LOWER(TRIM(song_title)) LIKE ? ESCAPE '\\' GROUP BY LOWER(TRIM(artist)), LOWER(TRIM(song_title)), LOWER(TRIM(COALESCE(album, ''))) ORDER BY plays DESC LIMIT 10", [like]),
+      qAll(db, searchSongsSql, [like, like]),
       qAll(db, "SELECT MIN(TRIM(artist)) AS artist, MIN(TRIM(album)) AS album, COUNT(1) AS plays FROM song_plays WHERE LOWER(TRIM(album)) LIKE ? ESCAPE '\\' AND LENGTH(TRIM(COALESCE(album, ''))) > 0 GROUP BY LOWER(TRIM(artist)), LOWER(TRIM(album)) ORDER BY plays DESC LIMIT 10", [like]),
     ]);
     return {

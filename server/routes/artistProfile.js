@@ -16,7 +16,7 @@ function buildQueries(project, dataset) {
   const ep = `\`${project}.${dataset}.episodes\``;
   return {
     spinRowsSql: `WITH target_spins AS (
-      SELECT sp.episode_id, sp.air_date, sp.position, sp.artist, sp.song_title, sp.album
+      SELECT sp.episode_id, sp.air_date, sp.position, sp.artist, sp.featured_artist, sp.song_title, sp.album, sp.release_kind
       FROM ${sp} sp WHERE LOWER(TRIM(sp.artist)) = @artistKey
     ), ep_counts AS (
       SELECT sp.episode_id, COUNT(1) AS cnt
@@ -25,7 +25,7 @@ function buildQueries(project, dataset) {
     )
     SELECT sp.episode_id, sp.air_date, e.episode_number,
       CASE WHEN e.song_count > 0 THEN e.song_count ELSE COALESCE(ec.cnt, 0) END AS episode_song_count,
-      sp.position, sp.artist, sp.song_title, sp.album
+      sp.position, sp.artist, sp.featured_artist, sp.song_title, sp.album, sp.release_kind
     FROM target_spins sp
     LEFT JOIN ${ep} e ON e.id = sp.episode_id
     LEFT JOIN ep_counts ec ON ec.episode_id = sp.episode_id

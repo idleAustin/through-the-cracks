@@ -64,7 +64,7 @@ describe('Ticket 08 Blogger Atom ingestion & snapshot generation', () => {
       url: 'https://eddirmeyer.blogspot.com/2026/07/102.html',
     });
     expect(noWeekday.episode.airDate).toBe('2026-07-01');
-    expect(noWeekday.episode.dayOfWeek).toBeNull();
+    expect(noWeekday.episode.dayOfWeek).toBe('Wednesday');
     expect(noWeekday.episode.episodeNumber).toBe(20);
     expect(noWeekday.songs).toHaveLength(1);
     expect(noWeekday.songs[0].artist).toBe('Artist Three');
@@ -78,7 +78,49 @@ describe('Ticket 08 Blogger Atom ingestion & snapshot generation', () => {
     });
     expect(themed.episode.airDate).toBe('2026-10-31');
     expect(themed.songs).toHaveLength(1);
-    expect(themed.songs[0].album).toBe('Green Onions (Instrumental Interlude)');
+    expect(themed.songs[0]).toMatchObject({ album: 'Green Onions', releaseKind: 'interlude' });
+  });
+
+  it('parsePost splits glued HTML blocks, drops editorial lines, preserves feat., and normalizes 2-segment singles', () => {
+    const glued = parsePost({
+      id: '104',
+      title: "Playlist for WEVL's Through The Cracks, Wednesday 11/11/2026",
+      content: '<div>Artist A - Song A - Album A<div>Artist B - Song B - Album B</div>',
+      published: '2026-11-11T18:00:00-06:00',
+      url: 'https://eddirmeyer.blogspot.com/2026/11/104.html',
+    });
+    expect(glued.songs).toHaveLength(2);
+    expect(glued.songs.map((s) => [s.artist, s.songTitle, s.album])).toEqual([
+      ['Artist A', 'Song A', 'Album A'],
+      ['Artist B', 'Song B', 'Album B'],
+    ]);
+
+    const mixed = parsePost({
+      id: '105',
+      title: "Playlist for WEVL's Through The Cracks, Saturday 11/14/2026",
+      content: [
+        '<p>Thanks to everyone who pledged during fall drive! Donate at wevl.org<br />',
+        'Todd Snider feat. Jason Isbell - Play A Train Song - East Nashville Skyline<br />',
+        'John Moreland - Hang Me in the Tulsa County Stars</p>',
+      ].join(''),
+      published: '2026-11-14T18:00:00-06:00',
+      url: 'https://eddirmeyer.blogspot.com/2026/11/105.html',
+    });
+    expect(mixed.songs).toHaveLength(2);
+    expect(mixed.songs[0]).toMatchObject({
+      artist: 'Todd Snider',
+      featuredArtist: 'Jason Isbell',
+      songTitle: 'Play A Train Song',
+      album: 'East Nashville Skyline',
+      releaseKind: 'album',
+    });
+    expect(mixed.songs[1]).toMatchObject({
+      artist: 'John Moreland',
+      featuredArtist: '',
+      songTitle: 'Hang Me in the Tulsa County Stars',
+      album: '',
+      releaseKind: 'single',
+    });
   });
 
   it('mergeIncrementalEpisodes upserts edited episodes by String(id) and sorts airDate DESC, id DESC', () => {

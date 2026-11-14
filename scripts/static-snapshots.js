@@ -2,6 +2,7 @@
 import { mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeArchiveEpisodes } from './archive-normalizer.js';
 import {
   addArtistVariant,
   buildArchiveYearAxis,
@@ -61,8 +62,10 @@ function aggregateSnapshots(episodesData) {
         position: Number(s.position),
         rawLine: s.rawLine || '',
         artist: s.artist || '',
+        featuredArtist: s.featuredArtist || '',
         songTitle: s.songTitle || s.song || '',
         album: s.album || '',
+        releaseKind: s.releaseKind || 'album',
       })),
     });
 
@@ -72,7 +75,15 @@ function aggregateSnapshots(episodesData) {
       if (!playlistsByYear.has(yearStr)) playlistsByYear.set(yearStr, {});
       playlistsByYear.get(yearStr)[epId] = ordered.map((s) => {
         const title = s.songTitle || s.song || '';
-        return { position: Number(s.position), song: title, songTitle: title, artist: s.artist || '', album: s.album || '' };
+        return {
+          position: Number(s.position),
+          song: title,
+          songTitle: title,
+          artist: s.artist || '',
+          ...(s.featuredArtist ? { featuredArtist: s.featuredArtist } : {}),
+          album: s.album || '',
+          ...(s.releaseKind && s.releaseKind !== 'album' ? { releaseKind: s.releaseKind } : {}),
+        };
       });
     }
 
@@ -97,20 +108,16 @@ function aggregateSnapshots(episodesData) {
 
       yStat.uniqueArtists.add(artistLower);
 
-      const albumKey = `${artistLower}|||${albumLower}`;
-      if (!albumMap.has(albumKey)) {
-        albumMap.set(albumKey, {
-          artist: rawArtist,
-          album: albumTrim,
-          totalPlays: 0,
-          uniqueSongs: new Set(),
-          firstAppearance: airDate,
-        });
+      if (albumLower) {
+        const albumKey = `${artistLower}|||${albumLower}`;
+        if (!albumMap.has(albumKey)) {
+          albumMap.set(albumKey, { artist: rawArtist, album: albumTrim, totalPlays: 0, uniqueSongs: new Set(), firstAppearance: airDate });
+        }
+        const alEntry = albumMap.get(albumKey);
+        alEntry.totalPlays++;
+        alEntry.uniqueSongs.add(titleLower);
+        updateBounds(alEntry, airDate);
       }
-      const alEntry = albumMap.get(albumKey);
-      alEntry.totalPlays++;
-      alEntry.uniqueSongs.add(titleLower);
-      updateBounds(alEntry, airDate);
 
       const songIdxKey = `${titleLower}\t${artistLower}`;
       if (!songEpisodes[songIdxKey]) songEpisodes[songIdxKey] = [epId];
@@ -131,7 +138,7 @@ function aggregateSnapshots(episodesData) {
       const aEntry = artistMap.get(artistLower);
       aEntry.totalPlays++;
       aEntry.uniqueSongs.add(titleLower);
-      aEntry.uniqueAlbums.add(albumLower);
+      if (albumLower) aEntry.uniqueAlbums.add(albumLower);
       aEntry.episodeIds.add(epId);
       updateBounds(aEntry, airDate);
       if (yearIdx !== undefined) aEntry.yearSpins[yearIdx]++;
@@ -141,6 +148,7 @@ function aggregateSnapshots(episodesData) {
           artist: rawArtist,
           songTitle: rawTitle,
           albumCounts: new Map(),
+          featuredArtists: new Set(),
           totalPlays: 0,
           firstAppearance: airDate,
           lastAppearance: airDate,
@@ -149,6 +157,8 @@ function aggregateSnapshots(episodesData) {
       }
       const sEntry = songMap.get(songIdxKey);
       sEntry.totalPlays++;
+      const featuredTrim = (s.featuredArtist || '').trim();
+      if (featuredTrim) sEntry.featuredArtists.add(featuredTrim);
       if (albumTrim) sEntry.albumCounts.set(albumTrim, (sEntry.albumCounts.get(albumTrim) || 0) + 1);
       updateBounds(sEntry, airDate);
       if (yearIdx !== undefined) sEntry.yearSpins[yearIdx]++;
@@ -194,6 +204,7 @@ function aggregateSnapshots(episodesData) {
         songTitle: s.songTitle,
         album: songAlbums[0] || '',
         albums: songAlbums,
+        ...(s.featuredArtists.size ? { featuredArtists: [...s.featuredArtists].sort() } : {}),
         totalPlays: s.totalPlays,
         firstAppearance: s.firstAppearance,
         lastAppearance: s.lastAppearance,
@@ -271,8 +282,10 @@ export function writeArtistProfileSnapshots(episodesData, dataDir) {
         episodeSongCount: epSongCount,
         position: Number(s.position),
         artist: rawArtist,
+        featuredArtist: s.featuredArtist || '',
         songTitle: s.songTitle || s.song || '',
         album: s.album || '',
+        releaseKind: s.releaseKind || 'album',
       });
 
       let vMap = variantsByArtist.get(ak);
@@ -346,6 +359,7 @@ export function writeStaticSnapshots(episodesData, dataDir, { writeEpisodesFile 
   writeFileSync(path.join(dataDir, 'years.json'), JSON.stringify(overview.yearSummary, null, 2));
   writeFileSync(path.join(dataDir, 'overview.json'), JSON.stringify(overview, null, 2));
   writeArtistProfileSnapshots(episodesData, dataDir);
+  return overview;
 }
 
 function isDirectExecution() {
@@ -361,7 +375,11 @@ function isDirectExecution() {
 if (isDirectExecution()) {
   const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const dataDir = path.join(rootDir, 'public', 'data');
-  const episodesData = JSON.parse(readFileSync(path.join(dataDir, 'episodes.json'), 'utf8'));
-  writeStaticSnapshots(episodesData, dataDir);
-  console.log(`✓ Wrote static snapshots to ${dataDir}`);
+  const normalizeFlag = process.argv.includes('--normalize-episodes');
+  const rawEpisodes = JSON.parse(readFileSync(path.join(dataDir, 'episodes.json'), 'utf8'));
+  const episodesData = normalizeFlag ? normalizeArchiveEpisodes(rawEpisodes) : rawEpisodes;
+  const overview = writeStaticSnapshots(episodesData, dataDir, { writeEpisodesFile: normalizeFlag });
+  console.log(
+    `✓ Wrote static snapshots to ${dataDir} (${overview.totalEpisodes} episodes, ${overview.totalSongPlays} spins, ${overview.uniqueArtists} artists, ${overview.uniqueAlbums} albums, ${overview.uniqueSongs} songs)`,
+  );
 }

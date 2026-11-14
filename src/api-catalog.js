@@ -104,6 +104,9 @@ export async function getStaticSongs({ search, sort, cap, page, limit }) {
     ? allSongs.filter((s) => {
       if (String(s.songTitle || '').toLowerCase().includes(q)) return true;
       if (String(s.artist || '').toLowerCase().includes(q)) return true;
+      if (Array.isArray(s.featuredArtists) && s.featuredArtists.some((fa) => String(fa ?? '').toLowerCase().includes(q))) {
+        return true;
+      }
       const albumList = Array.isArray(s.albums) ? s.albums : (s.album ? [s.album] : []);
       return albumList.some((alb) => String(alb || '').toLowerCase().includes(q));
     })
@@ -188,7 +191,11 @@ export async function getStaticSearchAll(query) {
   const term = query.toLowerCase();
   const matchedArtists = artistsRes.filter((a) => a.name.toLowerCase().includes(term)).slice(0, 10);
   const matchedSongs = songsRes
-    .filter((s) => s.songTitle.toLowerCase().includes(term) || s.artist.toLowerCase().includes(term))
+    .filter((s) => (
+      String(s.songTitle || '').toLowerCase().includes(term)
+      || String(s.artist || '').toLowerCase().includes(term)
+      || (Array.isArray(s.featuredArtists) && s.featuredArtists.some((fa) => String(fa ?? '').toLowerCase().includes(term)))
+    ))
     .slice(0, 10);
   const matchedAlbums = albumsRes
     .filter((a) => a.album.toLowerCase().includes(term) || a.artist.toLowerCase().includes(term))

@@ -56,8 +56,10 @@ function main() {
           sqlLit(ep.airDate),
           sqlLit(pos),
           sqlLit(s.artist || ''),
+          sqlLit(s.featuredArtist || ''),
           sqlLit(s.songTitle || s.song || ''),
           sqlLit(s.album || ''),
+          sqlLit(s.releaseKind || 'album'),
           sqlLit(s.rawLine || ''),
           sqlLit(now),
         ].join(', ')})`,
@@ -66,10 +68,10 @@ function main() {
   }
 
   const lines = [
-    schemaSql,
+    'DROP TABLE IF EXISTS song_plays;',
+    'DROP TABLE IF EXISTS episodes;',
     '',
-    'DELETE FROM song_plays;',
-    'DELETE FROM episodes;',
+    schemaSql,
     '',
   ];
 
@@ -82,7 +84,7 @@ function main() {
   appendBatchedInserts(
     lines,
     'song_plays',
-    ['id', 'episode_id', 'air_date', 'position', 'artist', 'song_title', 'album', 'raw_line', 'ingested_at'],
+    ['id', 'episode_id', 'air_date', 'position', 'artist', 'featured_artist', 'song_title', 'album', 'release_kind', 'raw_line', 'ingested_at'],
     songValues,
   );
 

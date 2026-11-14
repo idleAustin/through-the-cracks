@@ -8,7 +8,10 @@ const readJson = (rel) => JSON.parse(readFileSync(path.join(DATA_DIR, rel), 'utf
 const overview = readJson('overview.json');
 const episodesIndex = readJson('episodes-index.json');
 const yearSpins = readJson('year-spins.json');
+const artists = readJson('artists.json');
 const songs = readJson('songs.json');
+const coryBranan = artists.find((a) => a.name === 'Cory Branan');
+const coryBrananRank = coryBranan ? 1 + artists.filter((a) => a.totalPlays > coryBranan.totalPlays).length : 34;
 
 const latestAirDate = overview.dateRange?.latest || '';
 const latestYear = latestAirDate.slice(0, 4);
@@ -41,4 +44,5 @@ export const EXPECTED = {
   yearCount: (yearSpins.years || []).length,
   yearRangeLabel: `${yearSpins.years[0]}–${yearSpins.years[yearSpins.years.length - 1]}`,
   toddSniderPeakSpins: String(Math.max(...(yearSpins.artists?.['Todd Snider'] || [0]))),
+  coryBrananRank,
 };

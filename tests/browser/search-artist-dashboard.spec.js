@@ -1,5 +1,6 @@
 // End-to-end Playwright specs for the Search Artist Dashboard: auto-open, year/month visualizations, leaderboards, states, theme, and 320px mobile checks.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 const trackErrors = (page) => {
   const errors = [];
@@ -56,10 +57,10 @@ test.describe('Search Artist Dashboard', () => {
       return [u.searchParams.get('q'), u.searchParams.get('artist')];
     }).toEqual(['Cory Branan', 'Cory Branan']);
 
-    const dashboard = page.getByLabel('Cory Branan dashboard');
+    const dashboard = page.getByLabel('Cory Branan dashboard', { exact: true });
     await expect(dashboard).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Cory Branan', level: 1 })).toBeVisible();
-    await expect(dashboard).toContainText(/#40\s*of 1,917 artists by spins/);
+    await expect(dashboard).toContainText(new RegExp(`#${EXPECTED.coryBrananRank}\\s*of ${EXPECTED.uniqueArtistsFmt} artists by spins`));
 
     const kpiGrid = page.getByLabel('Artist summary metrics');
     await expect(kpiGrid.locator('.ad-kpi')).toHaveCount(6);
@@ -352,9 +353,9 @@ test.describe('Search Artist Dashboard', () => {
     await checkBarAlignment(page);
     await checkNoOverflow(page);
 
-    await page.goto(`/search?artist=${encodeURIComponent('A Tribute To Guy Clark (November 6, 1941')}`);
-    await expect(page.getByRole('heading', { name: 'A Tribute To Guy Clark (November 6, 1941', level: 1 })).toBeVisible();
-    await expect(page.locator('.ad-kpi', { hasText: 'Last spin' }).locator('.ad-kpi-val')).toContainText('3,825d');
+    await page.goto(`/search?artist=${encodeURIComponent('Jim Lauderdale & The North Mississippi Allstars')}`);
+    await expect(page.getByRole('heading', { name: 'Jim Lauderdale & The North Mississippi Allstars', level: 1 })).toBeVisible();
+    await expect(page.locator('.ad-kpi', { hasText: 'Last spin' }).locator('.ad-kpi-val')).toContainText(/\d,\d{3}d/);
     const kpiFits = await page.evaluate(() =>
       Array.from(document.querySelectorAll('.ad-kpi')).every((cell) => {
         const val = cell.querySelector('.ad-kpi-val');

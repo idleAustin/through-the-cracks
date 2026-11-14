@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { normalizeArchiveEpisodes } from './archive-normalizer.js';
 import {
   computeIncrementalStartDate,
   fetchBloggerPosts,
@@ -98,8 +99,10 @@ const SONG_PLAYS_SCHEMA = {
     { name: 'air_date', type: 'DATE' },
     { name: 'position', type: 'INT64' },
     { name: 'artist', type: 'STRING' },
+    { name: 'featured_artist', type: 'STRING' },
     { name: 'song_title', type: 'STRING' },
     { name: 'album', type: 'STRING' },
+    { name: 'release_kind', type: 'STRING' },
     { name: 'raw_line', type: 'STRING' },
     { name: 'ingested_at', type: 'TIMESTAMP' },
   ],
@@ -136,8 +139,10 @@ async function writeToBigQuery(episodesData) {
           air_date: ep.airDate,
           position: song.position,
           artist: song.artist || '',
+          featured_artist: song.featuredArtist || '',
           song_title: song.songTitle || '',
           album: song.album || '',
+          release_kind: song.releaseKind || 'album',
           raw_line: song.rawLine || '',
           ingested_at: now,
         });
@@ -167,6 +172,7 @@ async function writeToBigQuery(episodesData) {
       sourceFormat: 'NEWLINE_DELIMITED_JSON',
       writeDisposition: 'WRITE_TRUNCATE',
       autodetect: false,
+      schemaUpdateOptions: ['ALLOW_FIELD_ADDITION'],
       schema: SONG_PLAYS_SCHEMA,
     });
     if (songsJob.status?.errors?.length) {
@@ -212,7 +218,9 @@ async function main() {
     parsed.push(result);
   }
 
-  const mergedEpisodes = mergeIncrementalEpisodes(INCREMENTAL ? existingEpisodes : [], parsed);
+  const mergedEpisodes = normalizeArchiveEpisodes(
+    mergeIncrementalEpisodes(INCREMENTAL ? existingEpisodes : [], parsed),
+  );
   console.log(`✅ Parsed ${parsed.length} playlist posts -> ${mergedEpisodes.length} total episodes`);
 
   if (bqReady) await writeToBigQuery(mergedEpisodes);

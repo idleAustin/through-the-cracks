@@ -54,12 +54,16 @@ export function normalizeEpisodeSummary(ep) {
 
 export function normalizeTrack(track, index) {
   const songTitle = track.songTitle ?? track.song_title ?? track.song ?? '';
+  const featuredArtist = track.featuredArtist || track.featured_artist || '';
+  const releaseKind = track.releaseKind || track.release_kind || '';
   return {
     position: Number(track.position ?? index + 1),
     song: track.song ?? songTitle,
     songTitle,
     artist: track.artist || '',
+    ...(featuredArtist ? { featuredArtist } : {}),
     album: track.album || '',
+    ...(releaseKind && releaseKind !== 'album' ? { releaseKind } : {}),
   };
 }
 
