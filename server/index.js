@@ -10,6 +10,7 @@ import { promisify } from 'util';
 import { createOverviewRouter } from './routes/overview.js';
 import { createEpisodesRouter } from './routes/episodes.js';
 import { createCatalogRouter } from './routes/catalog.js';
+import { createArtistProfileRouter } from './routes/artistProfile.js';
 
 const execAsync = promisify(exec);
 const PORT = process.env.PORT || 3001;
@@ -113,6 +114,7 @@ export function createApp({
   app.use('/api', createOverviewRouter({ query, project, dataset }));
   app.use('/api', createEpisodesRouter({ query, project, dataset }));
   app.use('/api', createCatalogRouter({ query, project, dataset }));
+  app.use('/api', createArtistProfileRouter({ query, project, dataset }));
 
   app.post('/api/ingest', async (req, res) => {
     try {
@@ -131,6 +133,16 @@ export function createApp({
       res.sendFile(path.join(DIST_DIR, 'index.html'));
     });
   }
+
+  // JSON error handler so malformed route params or middleware errors never leak HTML stack traces
+  app.use((err, _req, res, next) => {
+    if (res.headersSent) return next(err);
+    const isBadRequest = err instanceof URIError || err?.status === 400;
+    if (!isBadRequest) console.error('Express error:', err);
+    return res.status(isBadRequest ? 400 : 500).json({
+      error: isBadRequest ? 'Invalid request' : 'Internal server error',
+    });
+  });
 
   return app;
 }

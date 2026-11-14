@@ -9,7 +9,7 @@ export function clearD1Cache(db) {
   if (db) dbCache.delete(db);
 }
 
-async function withCache(db, key, loader) {
+export async function withCache(db, key, loader) {
   let store = dbCache.get(db);
   if (!store) {
     store = new Map();
@@ -24,12 +24,12 @@ async function withCache(db, key, loader) {
   return value;
 }
 
-const qAll = async (db, sql, params = []) => {
+export const qAll = async (db, sql, params = []) => {
   const stmt = params.length ? db.prepare(sql).bind(...params) : db.prepare(sql);
   return (await stmt.all())?.results ?? [];
 };
 
-const qFirst = async (db, sql, params = []) => {
+export const qFirst = async (db, sql, params = []) => {
   const stmt = params.length ? db.prepare(sql).bind(...params) : db.prepare(sql);
   return (await stmt.first()) ?? null;
 };

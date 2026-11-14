@@ -1,10 +1,11 @@
 // Unit tests for Ticket 08 Blogger Atom feed normalization, post parsing, incremental merge, and static snapshot generation.
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mergeIncrementalEpisodes, normalizeAtomFeedEntry, parsePost } from '../scripts/blogger-parser.js';
-import { writeStaticSnapshots } from '../scripts/static-snapshots.js';
+import { writeArtistProfileSnapshots, writeStaticSnapshots } from '../scripts/static-snapshots.js';
+import { encodeArtistProfileKey } from '../server/artistProfileBuilder.js';
 
 const tempDirs = [];
 const createTempDir = () => {
@@ -214,5 +215,51 @@ describe('Ticket 08 Blogger Atom ingestion & snapshot generation', () => {
     expect(overview.totalSongPlays).toBe(3);
     expect(overview.latestEpisodeId).toBe('301');
     expect(overview.dateRange.latest).toBe('2026-11-11');
+  });
+
+  it('writeArtistProfileSnapshots prunes stale artist JSON files while keeping current profiles', () => {
+    const dir = createTempDir();
+    const profilesDir = path.join(dir, 'artist-profiles');
+
+    writeArtistProfileSnapshots([
+      {
+        id: '10',
+        airDate: '2026-11-01',
+        episodeNumber: 840,
+        songs: [
+          { position: 1, artist: 'Todd Snider', songTitle: 'Alright Guy', album: 'Daily Planet' },
+          { position: 2, artist: 'Removed Artist', songTitle: 'Gone Track', album: 'Old LP' },
+        ],
+      },
+    ], dir);
+
+    const staleGenerated = `${encodeArtistProfileKey('removed artist')}.json`;
+    const strayStale = 'obsolete-manual-profile.json';
+    writeFileSync(path.join(profilesDir, strayStale), '{"artist":"Obsolete"}');
+    expect(existsSync(path.join(profilesDir, staleGenerated))).toBe(true);
+    expect(existsSync(path.join(profilesDir, strayStale))).toBe(true);
+
+    writeArtistProfileSnapshots([
+      {
+        id: '11',
+        airDate: '2026-11-11',
+        episodeNumber: 842,
+        songs: [
+          { position: 1, artist: 'Todd Snider', songTitle: 'Alright Guy', album: 'Daily Planet' },
+          { position: 2, artist: 'Carrie Rodriguez', songTitle: '50s French Movie', album: 'Seven Angels' },
+        ],
+      },
+    ], dir);
+
+    const expectedCurrent = [
+      `${encodeArtistProfileKey('carrie rodriguez')}.json`,
+      `${encodeArtistProfileKey('todd snider')}.json`,
+    ].sort();
+
+    expect(existsSync(path.join(profilesDir, staleGenerated))).toBe(false);
+    expect(existsSync(path.join(profilesDir, strayStale))).toBe(false);
+    expect(readdirSync(profilesDir).filter((f) => f.endsWith('.json')).sort()).toEqual(expectedCurrent);
+    expect(readJson(path.join(profilesDir, `${encodeArtistProfileKey('todd snider')}.json`)).artist).toBe('Todd Snider');
+    expect(readJson(path.join(profilesDir, `${encodeArtistProfileKey('carrie rodriguez')}.json`)).artist).toBe('Carrie Rodriguez');
   });
 });

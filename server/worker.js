@@ -1,5 +1,6 @@
 // Cloudflare Worker HTTP API, D1 ingestion, SPA asset fallback, and Cron entrypoint.
 import { ingestBloggerToD1 } from './d1Schema.js';
+import { getD1ArtistProfile } from './d1ArtistProfile.js';
 import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
@@ -152,6 +153,15 @@ async function handleReadRoutes(apiPath, url, env, corsHeaders) {
   }
 
   if (apiPath === '/api/artists') return jsonResponse(await getD1Artists(env.DB, query), 200, corsHeaders);
+  const profileMatch = apiPath.match(/^\/api\/artists\/([^/]+)\/profile$/);
+  if (profileMatch) {
+    const decoded = safeDecode(profileMatch[1]);
+    if (!decoded.ok) return jsonResponse({ error: 'Invalid artist name' }, 400, corsHeaders);
+    if (!decoded.value.trim()) return jsonResponse({ error: 'Artist name is required' }, 400, corsHeaders);
+    const profile = await getD1ArtistProfile(env.DB, decoded.value);
+    if (!profile) return jsonResponse({ error: 'Artist not found' }, 404, corsHeaders);
+    return jsonResponse(profile, 200, corsHeaders);
+  }
   const artistMatch = apiPath.match(/^\/api\/artists\/([^/]+)\/songs$/);
   if (artistMatch) {
     const decoded = safeDecode(artistMatch[1]);

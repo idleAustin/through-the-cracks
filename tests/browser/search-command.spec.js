@@ -63,15 +63,18 @@ test.describe('Search workspace and global Command Palette (⌘K / Ctrl+K)', () 
     }
 
     await main.getByText('Todd Snider').first().click();
-    await expect(page).toHaveURL(/artist=Todd(%20|\+)Snider/);
+    await expect(page).toHaveURL(/[?&]artist=Todd(\+|%20)Snider/);
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('.inline-inspector, .push-view')).toHaveCount(0);
 
-    const inspector = isMobile ? page.locator('.push-view') : page.locator('.inline-inspector');
-    await expect(inspector).toBeVisible();
+    const dashboard = main.getByLabel('Todd Snider dashboard');
+    await expect(dashboard).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Todd Snider', level: 1 })).toBeVisible();
+    await expect(dashboard).toContainText(/#1\s*of 1,917 artists by spins/);
+    await expect(page.getByRole('button', { name: 'Back to results' })).toBeVisible();
     if (!isMobile) {
-      const box = await inspector.boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(360);
-      expect(box.width).toBeLessThanOrEqual(440);
+      const box = await dashboard.boundingBox();
+      expect(box.width).toBeGreaterThan(440);
     }
   });
 

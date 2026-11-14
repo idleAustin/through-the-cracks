@@ -7,10 +7,10 @@
 }
 
 .search-hero-card {
-  padding: 18px 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -24,20 +24,27 @@
 
 .search-hero-head h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 28px;
   line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 
 .search-hero-sub {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--as-text-secondary);
+}
+
+.search-match-badge {
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  white-space: nowrap;
 }
 
 .search-hero-form {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -50,7 +57,7 @@
 
 .search-input-icon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--as-text-secondary);
@@ -61,7 +68,7 @@
 .search-input--hero {
   width: 100%;
   min-height: var(--as-tap-min);
-  padding: 10px 14px 10px 42px;
+  padding: 8px 12px 8px 40px;
   background: var(--as-bg-base);
   border: 1px solid var(--as-border-strong);
   border-radius: var(--as-radius-md);
@@ -101,7 +108,7 @@
 }
 
 .search-guidance {
-  padding: 32px 20px;
+  padding: 32px 16px;
   text-align: center;
   color: var(--as-text-secondary);
   font-size: 14px;
@@ -109,10 +116,10 @@
 }
 
 .search-guidance-title {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--as-text-primary);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .search-guidance-copy {
@@ -134,7 +141,7 @@
 
 .search-row-tag {
   display: inline-block;
-  margin-left: 6px;
+  margin-left: 8px;
   font-family: var(--as-font-body);
   font-size: 11px;
   color: var(--as-text-secondary);
