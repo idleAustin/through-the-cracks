@@ -9,6 +9,7 @@ import {
   normalizeArtistKey,
 } from './artistProfileBuilder.js';
 import { qAll, qFirst, withCache } from './d1Queries.js';
+import { getRollupArtistProfileMeta } from './d1Rollups.js';
 
 const SPIN_ROWS_SQL = `SELECT
   sp.episode_id AS episode_id,
@@ -73,6 +74,18 @@ export async function getD1ArtistProfile(db, artistName) {
     const spinRows = await qAll(db, SPIN_ROWS_SQL, [key]);
     if (spinRows.length === 0) return null;
 
+    const rows = spinRows.map(mapProfileSpinRow);
+    const meta = await getRollupArtistProfileMeta(db, key);
+    if (meta) {
+      return buildArtistProfile({
+        rows,
+        coOccurrences: meta.coOccurrences,
+        rank: meta.rank,
+        totalArtists: meta.totalArtists,
+        archive: meta.archive,
+      });
+    }
+
     const [archiveRow, yearRows, artistCountRows, coRows] = await Promise.all([
       qFirst(db, ARCHIVE_TOTALS_SQL),
       qAll(db, YEAR_SPINS_SQL),
@@ -80,7 +93,6 @@ export async function getD1ArtistProfile(db, artistName) {
       qAll(db, CO_OCCURRENCE_SQL, [key, key]),
     ]);
 
-    const rows = spinRows.map(mapProfileSpinRow);
     const countByKey = new Map(artistCountRows.map((r) => [r.ak, Number(r.spins)]));
     const rankByKey = buildRankMap(countByKey);
     const totalArtists = countByKey.size;

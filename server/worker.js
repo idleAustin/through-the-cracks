@@ -1,10 +1,13 @@
-// Cloudflare Worker HTTP API, D1 ingestion, SPA asset fallback, and Cron entrypoint.
+// Cloudflare Worker HTTP API, Edge Cache, R2 snapshot tier, D1 fallback, SPA asset fallback, and Cron entrypoint.
 import { ingestBloggerToD1 } from './d1Schema.js';
 import { getD1ArtistProfile } from './d1ArtistProfile.js';
 import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
+import {
+  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
+} from './workerSnapshots.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
 const RATE_WINDOW_MS = 60_000;
@@ -33,6 +36,16 @@ const ALLOWED_ORIGINS = new Set([
 const rateBuckets = new Map();
 export function resetWorkerRateLimits() {
   rateBuckets.clear();
+  bumpWorkerCacheEpoch();
+}
+
+function buildJsonHeaders(corsHeaders = {}, extraHeaders = {}) {
+  return {
+    ...SECURITY_HEADERS,
+    ...corsHeaders,
+    'Content-Type': 'application/json; charset=utf-8',
+    ...extraHeaders,
+  };
 }
 
 function withHeaders(response, extraHeaders = {}) {
@@ -45,10 +58,10 @@ function withHeaders(response, extraHeaders = {}) {
 }
 
 function jsonResponse(data, status = 200, corsHeaders = {}, extraHeaders = {}) {
-  return withHeaders(
-    new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' } }),
-    { ...corsHeaders, ...extraHeaders },
-  );
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: buildJsonHeaders(corsHeaders, extraHeaders),
+  });
 }
 
 function buildCorsHeaders(request) {
@@ -91,15 +104,26 @@ async function constantTimeEquals(expected, provided) {
   return diff === 0;
 }
 
-function safeDecode(value) {
-  try {
-    return { ok: true, value: decodeURIComponent(value) };
-  } catch {
-    return { ok: false, value: '' };
+async function runIngestAndSync(env, incremental, ctx = null, deferSync = false) {
+  const result = await ingestBloggerToD1({
+    db: env?.DB,
+    blogId: env?.BLOGGER_BLOG_ID || DEFAULT_BLOG_ID,
+    apiKey: env?.BLOGGER_API_KEY || '',
+    incremental,
+  });
+  clearD1Cache(env?.DB);
+  bumpWorkerCacheEpoch();
+  if (env?.SNAPSHOT_BUCKET && result?.episodesUpserted > 0) {
+    const syncTask = syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
+      .then(() => bumpWorkerCacheEpoch())
+      .catch((err) => console.error('Worker R2 snapshot sync error:', err));
+    if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
+    else await syncTask;
   }
+  return result;
 }
 
-async function handleIngest(request, env, corsHeaders) {
+async function handleIngest(request, env, corsHeaders, ctx) {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);
   if (!env?.INGEST_SECRET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
 
@@ -127,54 +151,46 @@ async function handleIngest(request, env, corsHeaders) {
     }
   }
   if (!env?.DB) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
-
-  const result = await ingestBloggerToD1({
-    db: env.DB,
-    blogId: env.BLOGGER_BLOG_ID || DEFAULT_BLOG_ID,
-    apiKey: env.BLOGGER_API_KEY || '',
-    incremental: body?.incremental !== false,
-  });
-  clearD1Cache(env.DB);
-  return jsonResponse(result, 200, corsHeaders);
+  return jsonResponse(await runIngestAndSync(env, body?.incremental !== false, ctx, true), 200, corsHeaders);
 }
 
-async function handleReadRoutes(apiPath, url, env, corsHeaders) {
+const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
+
+async function handleReadRoutes(apiPath, url, env) {
   const query = Object.fromEntries(url.searchParams.entries());
-  if (apiPath === '/api/overview') return jsonResponse(await getD1Overview(env.DB), 200, corsHeaders);
-  if (apiPath === '/api/years') return jsonResponse(await getD1YearSpins(env.DB, query), 200, corsHeaders);
-  if (apiPath === '/api/episodes') return jsonResponse(await getD1Episodes(env.DB, query), 200, corsHeaders);
-
   const epMatch = apiPath.match(/^\/api\/episodes\/([^/]+)$/);
-  if (epMatch) {
-    const decoded = safeDecode(epMatch[1]);
-    if (!decoded.ok) return jsonResponse({ error: 'Invalid episode id' }, 400, corsHeaders);
-    const ep = await getD1EpisodeById(env.DB, decoded.value);
-    return ep ? jsonResponse(ep, 200, corsHeaders) : jsonResponse({ error: 'Episode not found' }, 404, corsHeaders);
-  }
-
-  if (apiPath === '/api/artists') return jsonResponse(await getD1Artists(env.DB, query), 200, corsHeaders);
   const profileMatch = apiPath.match(/^\/api\/artists\/([^/]+)\/profile$/);
-  if (profileMatch) {
-    const decoded = safeDecode(profileMatch[1]);
-    if (!decoded.ok) return jsonResponse({ error: 'Invalid artist name' }, 400, corsHeaders);
-    if (!decoded.value.trim()) return jsonResponse({ error: 'Artist name is required' }, 400, corsHeaders);
-    const profile = await getD1ArtistProfile(env.DB, decoded.value);
-    if (!profile) return jsonResponse({ error: 'Artist not found' }, 404, corsHeaders);
-    return jsonResponse(profile, 200, corsHeaders);
-  }
   const artistMatch = apiPath.match(/^\/api\/artists\/([^/]+)\/songs$/);
-  if (artistMatch) {
-    const decoded = safeDecode(artistMatch[1]);
-    if (!decoded.ok) return jsonResponse({ error: 'Invalid artist name' }, 400, corsHeaders);
-    return jsonResponse(await getD1ArtistSongs(env.DB, decoded.value), 200, corsHeaders);
+  if (!READ_EXACT_ROUTES.has(apiPath) && !epMatch && !profileMatch && !artistMatch) {
+    return { status: 404, data: { error: 'Not found' } };
   }
+  const epDec = epMatch ? safeDecodeUri(epMatch[1]) : null;
+  const profDec = profileMatch ? safeDecodeUri(profileMatch[1]) : null;
+  const artDec = artistMatch ? safeDecodeUri(artistMatch[1]) : null;
+  if (epDec && !epDec.ok) return { status: 400, data: { error: 'Invalid episode id' } };
+  if (profDec && !profDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
+  if (profDec && !profDec.value.trim()) return { status: 400, data: { error: 'Artist name is required' } };
+  if (artDec && !artDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
+  if (!env?.DB) return { status: 503, data: { error: 'Service unavailable' } };
 
-  if (apiPath === '/api/songs') return jsonResponse(await getD1Songs(env.DB, query), 200, corsHeaders);
-  if (apiPath === '/api/search') return jsonResponse(await getD1Search(env.DB, query), 200, corsHeaders);
-  return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+  if (apiPath === '/api/overview') return { status: 200, data: await getD1Overview(env.DB) };
+  if (apiPath === '/api/years') return { status: 200, data: await getD1YearSpins(env.DB, query) };
+  if (apiPath === '/api/episodes') return { status: 200, data: await getD1Episodes(env.DB, query) };
+  if (epDec) {
+    const ep = await getD1EpisodeById(env.DB, epDec.value);
+    return ep ? { status: 200, data: ep } : { status: 404, data: { error: 'Episode not found' } };
+  }
+  if (apiPath === '/api/artists') return { status: 200, data: await getD1Artists(env.DB, query) };
+  if (profDec) {
+    const profile = await getD1ArtistProfile(env.DB, profDec.value);
+    return profile ? { status: 200, data: profile } : { status: 404, data: { error: 'Artist not found' } };
+  }
+  if (artDec) return { status: 200, data: await getD1ArtistSongs(env.DB, artDec.value) };
+  if (apiPath === '/api/songs') return { status: 200, data: await getD1Songs(env.DB, query) };
+  return { status: 200, data: await getD1Search(env.DB, query) };
 }
 
-async function handleApi(request, env, apiPath, url) {
+async function handleApi(request, env, apiPath, url, ctx) {
   const corsHeaders = buildCorsHeaders(request);
   if (request.method === 'OPTIONS') return withHeaders(new Response(null, { status: 204 }), corsHeaders);
 
@@ -189,13 +205,38 @@ async function handleApi(request, env, apiPath, url) {
         status: 'ok',
         runtime: 'cloudflare-worker',
         database: env?.DB ? 'd1' : 'unconfigured',
+        snapshots: env?.SNAPSHOT_BUCKET ? 'r2' : 'disabled',
         timestamp: new Date().toISOString(),
       }, 200, corsHeaders);
     }
-    if (apiPath === '/api/ingest') return await handleIngest(request, env, corsHeaders);
-    if (!env?.DB) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
+    if (apiPath === '/api/ingest') return await handleIngest(request, env, corsHeaders, ctx);
+    if (!env?.DB && !env?.SNAPSHOT_BUCKET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
     if (request.method !== 'GET') return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
-    return await handleReadRoutes(apiPath, url, env, corsHeaders);
+
+    return await withEdgeCache(
+      request,
+      apiPath,
+      url,
+      ctx,
+      (status, extraHeaders = {}) =>
+        buildJsonHeaders(corsHeaders, {
+          ...(status === 200 ? { 'Cache-Control': PUBLIC_API_CACHE_CONTROL } : {}),
+          ...extraHeaders,
+        }),
+      async () => {
+        const query = Object.fromEntries(url.searchParams.entries());
+        if (env?.SNAPSHOT_BUCKET) {
+          try {
+            const r2Hit = await tryServeFromR2(apiPath, query, env, ctx);
+            if (r2Hit) return r2Hit;
+          } catch (err) {
+            if (!env?.DB) throw err;
+            console.error('Worker R2 snapshot read failed, falling back to D1:', err);
+          }
+        }
+        return await handleReadRoutes(apiPath, url, env);
+      },
+    );
   } catch (err) {
     console.error('Worker API error:', err);
     return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders);
@@ -224,25 +265,16 @@ async function handleAssets(request, env, url) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const isApi = url.pathname === '/api' || url.pathname.startsWith('/api/') ||
       url.pathname === '/through-the-cracks/api' || url.pathname.startsWith('/through-the-cracks/api/');
-    if (isApi) return handleApi(request, env, url.pathname.replace(/^\/through-the-cracks(?=\/api(?:\/|$))/, ''), url);
+    if (isApi) return handleApi(request, env, url.pathname.replace(/^\/through-the-cracks(?=\/api(?:\/|$))/, ''), url, ctx);
     return handleAssets(request, env, url);
   },
 
   async scheduled(_controller, env, ctx) {
-    const task = (async () => {
-      const res = await ingestBloggerToD1({
-        db: env?.DB,
-        blogId: env?.BLOGGER_BLOG_ID || DEFAULT_BLOG_ID,
-        apiKey: env?.BLOGGER_API_KEY || '',
-        incremental: true,
-      });
-      clearD1Cache(env?.DB);
-      return res;
-    })();
+    const task = runIngestAndSync(env, true);
     ctx?.waitUntil?.(task);
     return await task;
   },

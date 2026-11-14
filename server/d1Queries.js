@@ -1,52 +1,27 @@
-// Cloudflare D1 read-only SQL query layer with per-binding TTL cache and static-snapshot parity.
+// Cloudflare D1 read-only SQL query layer with per-binding TTL cache, rollup fast-paths, and static-snapshot parity.
+import {
+  escapeLike,
+  getRollupArtists,
+  getRollupEpisodes,
+  getRollupOverview,
+  getRollupSearch,
+  getRollupSongs,
+  getRollupYearSpins,
+  mapEpisodeRow,
+  qAll,
+  qFirst,
+  stripControlChars,
+  withCache,
+} from './d1Rollups.js';
 import { computeCappedPagination, parseCapParam, parsePageParams, parseSortParam } from './routes/queryUtils.js';
 
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const MAX_CACHE_ENTRIES = 200;
-const dbCache = new WeakMap();
-
-export function clearD1Cache(db) {
-  if (db) dbCache.delete(db);
-}
-
-export async function withCache(db, key, loader) {
-  let store = dbCache.get(db);
-  if (!store) {
-    store = new Map();
-    dbCache.set(db, store);
-  }
-  const hit = store.get(key);
-  if (hit && Date.now() < hit.expiresAt) return hit.value;
-
-  const value = await loader();
-  if (store.size >= MAX_CACHE_ENTRIES) store.delete(store.keys().next().value);
-  store.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, value });
-  return value;
-}
-
-export const qAll = async (db, sql, params = []) => {
-  const stmt = params.length ? db.prepare(sql).bind(...params) : db.prepare(sql);
-  return (await stmt.all())?.results ?? [];
-};
-
-export const qFirst = async (db, sql, params = []) => {
-  const stmt = params.length ? db.prepare(sql).bind(...params) : db.prepare(sql);
-  return (await stmt.first()) ?? null;
-};
-
-const escapeLike = (s) => `%${String(s).slice(0, 120).replace(/[\\%_]/g, '\\$&')}%`;
-
-const mapEpisodeRow = (row) => ({
-  id: String(row.id),
-  air_date: row.air_date,
-  airDate: row.air_date,
-  song_count: Number(row.song_count ?? 0),
-  songCount: Number(row.song_count ?? 0),
-  url: row.url || null,
-});
+export { clearD1Cache, qAll, qFirst, withCache } from './d1Rollups.js';
 
 export async function getD1Overview(db) {
   return withCache(db, 'overview', async () => {
+    const rollup = await getRollupOverview(db);
+    if (rollup) return rollup;
+
     const statsSql = `SELECT
       (SELECT COUNT(1) FROM episodes) AS total_episodes,
       (SELECT COUNT(1) FROM song_plays) AS total_song_plays,
@@ -98,6 +73,9 @@ export async function getD1YearSpins(db, queryParams = {}) {
   const artist = typeof queryParams.artist === 'string' ? queryParams.artist.trim() : '';
   const song = typeof queryParams.song === 'string' ? queryParams.song.trim() : '';
   return withCache(db, `years:${artist.toLowerCase()}:${song.toLowerCase()}`, async () => {
+    const rollup = await getRollupYearSpins(db, { artist, song });
+    if (rollup) return rollup;
+
     const conds = [];
     const params = [];
     if (artist) { conds.push('LOWER(TRIM(artist)) = LOWER(?)'); params.push(artist); }
@@ -122,6 +100,9 @@ export async function getD1Episodes(db, queryParams = {}) {
   const artist = typeof queryParams.artist === 'string' ? queryParams.artist.trim().toLowerCase() : '';
 
   return withCache(db, `episodes:${year}:${song}:${artist}:${page}:${limit}`, async () => {
+    const rollup = await getRollupEpisodes(db, { year, song, artist, page, limit, offset });
+    if (rollup) return rollup;
+
     const conds = [];
     const spConds = [];
     const params = [];
@@ -163,12 +144,15 @@ export async function getD1EpisodeById(db, id) {
 }
 
 export async function getD1Artists(db, queryParams = {}) {
-  const search = typeof queryParams.search === 'string' ? queryParams.search.trim().toLowerCase() : '';
+  const search = stripControlChars(typeof queryParams.search === 'string' ? queryParams.search : '').trim().toLowerCase();
   const sort = parseSortParam(queryParams.sort);
   const cap = parseCapParam(queryParams.cap);
   const { page, limit } = parsePageParams(queryParams);
 
   return withCache(db, `artists:${search}:${sort}:${cap ?? ''}:${page}:${limit}`, async () => {
+    const rollup = await getRollupArtists(db, { search, sort, cap, page, limit });
+    if (rollup) return rollup;
+
     const where = search ? "WHERE LOWER(TRIM(artist)) LIKE ? ESCAPE '\\'" : '';
     const params = search ? [escapeLike(search)] : [];
     const orderBy = sort === 'obscure' ? 'ORDER BY total_plays ASC, first_appearance ASC, LOWER(name) ASC' : 'ORDER BY total_plays DESC, LOWER(name) ASC';
@@ -196,12 +180,15 @@ export async function getD1Artists(db, queryParams = {}) {
 }
 
 export async function getD1Songs(db, queryParams = {}) {
-  const search = typeof queryParams.search === 'string' ? queryParams.search.trim().toLowerCase() : '';
+  const search = stripControlChars(typeof queryParams.search === 'string' ? queryParams.search : '').trim().toLowerCase();
   const sort = parseSortParam(queryParams.sort);
   const cap = parseCapParam(queryParams.cap);
   const { page, limit } = parsePageParams(queryParams);
 
   return withCache(db, `songs:${search}:${sort}:${cap ?? ''}:${page}:${limit}`, async () => {
+    const rollup = await getRollupSongs(db, { search, sort, cap, page, limit });
+    if (rollup) return rollup;
+
     const having = search
       ? "HAVING MAX(CASE WHEN LOWER(TRIM(artist)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(COALESCE(featured_artist, ''))) LIKE ? ESCAPE '\\' OR LOWER(TRIM(song_title)) LIKE ? ESCAPE '\\' OR LOWER(TRIM(album)) LIKE ? ESCAPE '\\' THEN 1 ELSE 0 END) = 1"
       : '';
@@ -296,10 +283,13 @@ export async function getD1ArtistSongs(db, artistName) {
 }
 
 export async function getD1Search(db, queryParams = {}) {
-  const q = typeof queryParams.q === 'string' ? queryParams.q.trim().slice(0, 120).toLowerCase() : '';
+  const q = stripControlChars(typeof queryParams.q === 'string' ? queryParams.q : '').trim().slice(0, 120).toLowerCase();
   if (!q || q.length < 2) return { artists: [], songs: [], albums: [] };
 
   return withCache(db, `search:${q}`, async () => {
+    const rollup = await getRollupSearch(db, { q });
+    if (rollup) return rollup;
+
     const like = escapeLike(q);
     const searchSongsSql = `WITH matched_keys AS (
         SELECT DISTINCT LOWER(TRIM(artist)) AS ak, LOWER(TRIM(song_title)) AS sk

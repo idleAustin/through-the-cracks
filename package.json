@@ -17,6 +17,7 @@
     "db:seed:sql": "node scripts/seed-d1.js",
     "db:d1:init": "doppler --no-check-version run -- wrangler d1 execute through-the-cracks-db --remote --file=server/schema.sql",
     "db:d1:seed": "node scripts/seed-d1.js && doppler --no-check-version run -- wrangler d1 execute through-the-cracks-db --remote --file=.cache/d1-seed.sql",
+    "db:r2:seed": "doppler --no-check-version run -- node scripts/seed-r2.js",
     "deploy:worker": "npm run build && doppler --no-check-version run -- wrangler deploy",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run src",
