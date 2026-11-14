@@ -15,14 +15,26 @@ export async function fetchStaticJson(relativePath) {
   return response.json();
 }
 
-async function fetchStaticJsonAllow404(relativePath) {
+export async function fetchStaticJsonAllow404(relativePath) {
   const fullStaticPath = getStaticPath(relativePath);
   const response = await fetch(fullStaticPath);
   if (response.status === 404) return null;
   if (!response.ok) {
     throw new Error(`Failed to load data from ${fullStaticPath} (${response.status})`);
   }
-  return response.json();
+  const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+  if (contentType.includes('text/html') || contentType.includes('application/xhtml+xml')) {
+    return null;
+  }
+  if (typeof response.text !== 'function') return response.json();
+  const trimmed = (await response.text()).trim();
+  if (!trimmed || trimmed.startsWith('<')) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch (err) {
+    if (!contentType.includes('json')) return null;
+    throw err;
+  }
 }
 
 export function normalizeEpisodeSummary(ep) {

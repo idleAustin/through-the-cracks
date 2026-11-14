@@ -1,6 +1,8 @@
 // Integration smoke tests at the client archive data-access and Express route boundary.
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  getArchiveMode,
+  getArtistProfile,
   getArtistSongs,
   getArtists,
   getEpisodeById,
@@ -9,8 +11,10 @@ import {
   getSongs,
   resolveApiBase,
   searchAll,
+  subscribeArchiveMode,
 } from './api.js';
-import { getStaticPath } from './api-static.js';
+import { getStaticArtistProfile } from './api-catalog.js';
+import { fetchStaticJsonAllow404, getStaticPath } from './api-static.js';
 import { createApp } from '../server/index.js';
 
 const STATIC_DATA = {
@@ -312,5 +316,56 @@ describe('archive client api + express route seam', () => {
     ).toBe('https://idleamericana.com/through-the-cracks/api');
     expect(resolveApiBase({ isDev: true, baseUrl: '/through-the-cracks/' })).toBe('http://localhost:3001/api');
     expect(getStaticPath('/data/overview.json', '/through-the-cracks/')).toBe('/through-the-cracks/data/overview.json');
+  });
+
+  it('returns null static artist profile for blank or whitespace names without calling fetch', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    try {
+      expect(await getStaticArtistProfile('')).toEqual({ data: null, source: 'static-json', mode: 'static' });
+      expect(await getStaticArtistProfile('  \t\n ')).toEqual({ data: null, source: 'static-json', mode: 'static' });
+      expect(await getArtistProfile('   ')).toEqual({ data: null, source: 'static-json', mode: 'static' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('keeps live mode on clean Express HTTP 404 from getArtistProfile without static fallback', async () => {
+    await getOverview();
+    expect(getArchiveMode()).toBe('live');
+
+    const modeChanges = [];
+    const unsubscribe = subscribeArchiveMode((mode) => modeChanges.push(mode));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    try {
+      const res = await getArtistProfile('No Such Artist');
+      expect(res).toEqual({ data: null, source: 'express-api', mode: 'live' });
+      expect(getArchiveMode()).toBe('live');
+      expect(modeChanges).toEqual([]);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(String(fetchSpy.mock.calls[0][0])).toContain('/api/artists/No%20Such%20Artist/profile');
+    } finally {
+      unsubscribe();
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('returns null in fetchStaticJsonAllow404 for 200 HTML SPA fallback and rejects on 503 or network failure', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    try {
+      fetchSpy
+        .mockResolvedValueOnce(new Response('<!doctype html><html></html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        }))
+        .mockResolvedValueOnce(new Response('Service Unavailable', { status: 503 }))
+        .mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+      await expect(fetchStaticJsonAllow404('/data/artist-profiles/missing.json')).resolves.toBeNull();
+      await expect(fetchStaticJsonAllow404('/data/artist-profiles/missing.json')).rejects.toThrow(/503/);
+      await expect(fetchStaticJsonAllow404('/data/artist-profiles/missing.json')).rejects.toThrow('ECONNREFUSED');
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 });

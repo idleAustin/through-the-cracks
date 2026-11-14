@@ -1,5 +1,6 @@
 // Static JSON fallback helpers, sorting, depth caps, and pagination for Artists, Songs, and Search.
-import { fetchStaticJson } from './api-static.js';
+import { encodeArtistProfileKey, normalizeArtistKey } from '../server/artistProfileBuilder.js';
+import { fetchStaticJson, fetchStaticJsonAllow404 } from './api-static.js';
 
 export function parseCatalogOptions(optionsOrSearch = '', maybePage = 1, maybeLimit = 25) {
   if (typeof optionsOrSearch === 'object' && optionsOrSearch !== null) {
@@ -166,6 +167,15 @@ export async function getStaticArtistSongs(artistName) {
     albums,
     songs,
   };
+}
+
+export async function getStaticArtistProfile(artistName) {
+  if (!normalizeArtistKey(artistName)) {
+    return { data: null, source: 'static-json', mode: 'static' };
+  }
+  const key = encodeArtistProfileKey(artistName);
+  const data = await fetchStaticJsonAllow404(`/data/artist-profiles/${key}.json`);
+  return { data, source: 'static-json', mode: 'static' };
 }
 
 export async function getStaticSearchAll(query) {

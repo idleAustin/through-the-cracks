@@ -5,6 +5,7 @@
  * If the API is offline or unreachable, falls back to pre-computed JSON files in /data/
  */
 import {
+  getStaticArtistProfile,
   getStaticArtistSongs,
   getStaticArtists,
   getStaticSearchAll,
@@ -55,19 +56,27 @@ export function subscribeArchiveMode(listener) {
   };
 }
 
-async function fetchApiJson(apiEndpoint) {
+async function fetchApiJson(apiEndpoint, { allow404 = false } = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
     const response = await fetch(`${API_BASE}${apiEndpoint}`, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    if (allow404 && response.status === 404) {
+      const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+      if (!contentType.includes('text/html')) {
+        setArchiveMode('live');
+        return { found: false, data: null };
+      }
+    }
     if (response.ok) {
       const data = await response.json();
       setArchiveMode('live');
-      return data;
+      return allow404 ? { found: true, data } : data;
     }
   } catch {
     // API server unreachable or timed out -> caller falls back to static JSON
+  } finally {
+    clearTimeout(timeoutId);
   }
   return null;
 }
@@ -225,6 +234,20 @@ export async function getArtistSongs(artistName) {
   const data = await getStaticArtistSongs(artistName);
   setArchiveMode('static');
   return { data, source: 'static-json', mode: 'static' };
+}
+
+export async function getArtistProfile(artistName) {
+  if (!String(artistName ?? '').trim()) {
+    return getStaticArtistProfile(artistName);
+  }
+  const liveResult = await fetchApiJson(`/artists/${encodeURIComponent(artistName)}/profile`, { allow404: true });
+  if (liveResult !== null) {
+    return { data: liveResult.data, source: 'express-api', mode: 'live' };
+  }
+
+  const staticResult = await getStaticArtistProfile(artistName);
+  setArchiveMode('static');
+  return staticResult;
 }
 
 export async function searchAll(query) {
