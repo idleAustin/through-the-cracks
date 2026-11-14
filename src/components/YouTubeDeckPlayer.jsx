@@ -117,6 +117,10 @@ export default function YouTubeDeckPlayer({
                 onStatusChangeRef.current?.(latestAutoplay ? 'buffering' : 'cued');
                 if (latestAutoplay) activePlayer.loadVideoById(latestId);
                 else activePlayer.cueVideoById(latestId);
+              } else if (latestAutoplay && !initialAutoplay && typeof activePlayer?.playVideo === 'function') {
+                setEmbedBlocked(false);
+                onStatusChangeRef.current?.('buffering');
+                activePlayer.playVideo();
               } else {
                 onStatusChangeRef.current?.(initialAutoplay ? 'buffering' : 'cued');
               }
@@ -216,7 +220,7 @@ export default function YouTubeDeckPlayer({
             className="btn btn-secondary btn-sm"
             href={`https://www.youtube.com/watch?v=${encodeURIComponent(videoId || '')}`}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             <Icon name="external" size="sm" />
             <span>Open on YouTube</span>

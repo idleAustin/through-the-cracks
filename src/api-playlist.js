@@ -109,10 +109,25 @@ function normalizePlaylistResponse(payload) {
   };
 }
 
-async function fetchLiveRandomPlaylist(params) {
+function createAbortError() {
+  return Object.assign(new Error('Playlist request aborted.'), { name: 'AbortError' });
+}
+
+async function fetchLiveRandomPlaylist(params, externalSignal) {
+  if (externalSignal?.aborted) {
+    throw createAbortError();
+  }
+
   const apiBase = resolveApiBase();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, LIVE_TIMEOUT_MS);
+
+  const onExternalAbort = () => controller.abort();
+  externalSignal?.addEventListener?.('abort', onExternalAbort, { once: true });
 
   try {
     const response = await fetch(`${apiBase}/playlist/random?${params.toString()}`, {
@@ -137,10 +152,14 @@ async function fetchLiveRandomPlaylist(params) {
       }
     }
   } catch (err) {
+    if (externalSignal?.aborted && !timedOut) {
+      throw createAbortError();
+    }
     if (err?.status === 400) throw err;
     // Live API unreachable, timed out, 503, or returned non-JSON SPA HTML -> fall back to static snapshot.
   } finally {
     clearTimeout(timeoutId);
+    externalSignal?.removeEventListener?.('abort', onExternalAbort);
   }
 
   return null;
@@ -169,16 +188,25 @@ async function loadStaticSongLinksPool() {
 
 export async function getRandomPlaylist(options = {}) {
   const params = buildRandomPlaylistParams(options);
+  const externalSignal = options.signal;
   const staticOnly = import.meta.env.VITE_STATIC_MODE === 'true' || options.staticOnly === true;
 
+  if (externalSignal?.aborted) {
+    throw createAbortError();
+  }
+
   if (!staticOnly) {
-    const liveData = await fetchLiveRandomPlaylist(params);
+    const liveData = await fetchLiveRandomPlaylist(params, externalSignal);
     if (liveData !== null) {
       return { data: liveData, source: 'express-api', mode: 'live' };
     }
   }
 
   const pool = await loadStaticSongLinksPool();
+  if (externalSignal?.aborted) {
+    throw createAbortError();
+  }
+
   const drawn = drawRandomPlaylist(pool, params, { assumedPlayable: true });
   if (drawn?.error) {
     throw Object.assign(new Error(drawn.error), { status: drawn.status || 400 });

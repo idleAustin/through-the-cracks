@@ -137,4 +137,154 @@ describe('api-playlist client adapter', () => {
 
     await expect(getRandomPlaylist({ mode: 'invalid_mode' })).rejects.toThrow('Invalid playlist mode');
   });
+
+  it('aborts superseded live requests without falling back to static song-links.json', async () => {
+    const controller = new AbortController();
+    const fetchSpy = vi.fn((_url, init) => new Promise((_resolve, reject) => {
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+      init?.signal?.addEventListener('abort', () => {
+        reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+      });
+    }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const promise = getRandomPlaylist({ mode: 'favorites', signal: controller.signal });
+    controller.abort();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][1].signal.aborted).toBe(true);
+  });
+
+  it('sends repeated comma-safe excludeArtist params and bypasses dedup for concurrent swap calls', async () => {
+    const controllers = [];
+    const requests = [];
+    const resolvers = [];
+    const fetchSpy = vi.fn((url, init) => {
+      const parsed = new URL(String(url), 'http://127.0.0.1');
+      requests.push({ url: parsed, signal: init?.signal, cache: init?.cache });
+      return new Promise((resolve) => {
+        resolvers.push(resolve);
+      });
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const swapCtrlA = new AbortController();
+    const swapCtrlB = new AbortController();
+    controllers.push(swapCtrlA, swapCtrlB);
+
+    const swapPromiseA = getRandomPlaylist({
+      count: 1,
+      mode: 'all',
+      minScore: 85,
+      onePerArtist: true,
+      exclude: ['vid-01', 'vid-02'],
+      excludeArtist: ['Crosby, Stills & Nash', 'Simon & Garfunkel'],
+      signal: swapCtrlA.signal,
+    });
+    const swapPromiseB = getRandomPlaylist({
+      count: 1,
+      mode: 'all',
+      minScore: 85,
+      onePerArtist: true,
+      exclude: ['vid-01', 'vid-03'],
+      excludeArtist: ['Crosby, Stills & Nash', 'John Prine'],
+      signal: swapCtrlB.signal,
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(requests[0].signal).toBeInstanceOf(AbortSignal);
+    expect(requests[1].signal).toBeInstanceOf(AbortSignal);
+    expect(requests[0].signal).not.toBe(requests[1].signal);
+    expect(requests[0].cache).toBe('no-store');
+    expect(requests[1].cache).toBe('no-store');
+    expect(requests[0].url.searchParams.get('count')).toBe('1');
+    expect(requests[0].url.searchParams.get('exclude')).toBe('vid-01,vid-02');
+    expect(requests[0].url.searchParams.getAll('excludeArtist')).toEqual([
+      'Crosby, Stills & Nash',
+      'Simon & Garfunkel',
+    ]);
+    expect(requests[1].url.searchParams.getAll('excludeArtist')).toEqual([
+      'Crosby, Stills & Nash',
+      'John Prine',
+    ]);
+
+    // Resolve swap B before swap A to verify concurrent swap isolation.
+    resolvers[1](new Response(
+      JSON.stringify({
+        count: 1,
+        poolSize: 40,
+        songs: [{ songKey: 'a|||b', artist: 'Replacement B', songTitle: 'Swap B', videoId: 'rep-b', confidenceScore: 95 }],
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    ));
+    resolvers[0](new Response(
+      JSON.stringify({
+        count: 1,
+        poolSize: 40,
+        songs: [{ songKey: 'a|||a', artist: 'Replacement A', songTitle: 'Swap A', videoId: 'rep-a', confidenceScore: 98 }],
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    ));
+
+    const [resA, resB] = await Promise.all([swapPromiseA, swapPromiseB]);
+    expect(resA.data.songs[0].videoId).toBe('rep-a');
+    expect(resB.data.songs[0].videoId).toBe('rep-b');
+  });
+
+  it('aborts pending static fallback cleanly and enforces diversity/pass-2 fill in staticOnly mode', async () => {
+    const sparseStaticPool = [
+      ...Array.from({ length: 4 }, (_, i) => ({
+        songKey: `jason isbell|||ji${i}`,
+        artist: i % 2 === 0 ? '  Jason Isbell  ' : 'jason isbell',
+        songTitle: `JI ${i}`,
+        totalPlays: 5,
+        videoId: `ji-${i}`,
+        confidenceScore: 96,
+      })),
+      ...Array.from({ length: 4 }, (_, i) => ({
+        songKey: `todd snider|||ts${i}`,
+        artist: i % 2 === 0 ? 'Todd Snider' : ' TODD SNIDER ',
+        songTitle: `TS ${i}`,
+        totalPlays: 4,
+        videoId: `ts-${i}`,
+        confidenceScore: 92,
+      })),
+      ...Array.from({ length: 4 }, (_, i) => ({
+        songKey: `john prine|||jp${i}`,
+        artist: 'John Prine',
+        songTitle: `JP ${i}`,
+        totalPlays: 3,
+        videoId: `jp-${i}`,
+        confidenceScore: 90,
+      })),
+    ];
+
+    let releaseStatic;
+    const fetchSpy = vi.fn(() => new Promise((resolve) => {
+      releaseStatic = () => resolve(new Response(JSON.stringify(sparseStaticPool), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }));
+    }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const abortCtrl = new AbortController();
+    const abortedStatic = getRandomPlaylist({ staticOnly: true, signal: abortCtrl.signal });
+    abortCtrl.abort();
+    releaseStatic();
+    await expect(abortedStatic).rejects.toMatchObject({ name: 'AbortError' });
+
+    const staticDraw = await getRandomPlaylist({
+      staticOnly: true,
+      count: 10,
+      mode: 'favorites',
+      minScore: 85,
+      onePerArtist: true,
+    });
+    expect(staticDraw.mode).toBe('static');
+    expect(staticDraw.data.poolSize).toBe(12);
+    expect(staticDraw.data.count).toBe(10);
+    expect(new Set(staticDraw.data.songs.slice(0, 3).map((s) => s.artist.trim().toLowerCase())).size).toBe(3);
+  });
 });
