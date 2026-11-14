@@ -6,11 +6,13 @@ import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
+import { runIncrementalSongLinksCron } from './d1SongLinksCron.js';
 import { drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
 import {
   PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, readR2SongLinksSnapshot,
   safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
+import { syncR2SongLinksFromD1 } from './workerSnapshotSync.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
@@ -108,23 +110,55 @@ async function constantTimeEquals(expected, provided) {
   return diff === 0;
 }
 
-async function runIngestAndSync(env, incremental, ctx = null, deferSync = false) {
+async function runIngestAndSync(env, incremental, ctx = null, deferSync = false, options = {}) {
   const result = await ingestBloggerToD1({
     db: env?.DB,
     blogId: env?.BLOGGER_BLOG_ID || DEFAULT_BLOG_ID,
     apiKey: env?.BLOGGER_API_KEY || '',
     incremental,
   });
-  clearD1Cache(env?.DB);
-  bumpWorkerCacheEpoch();
-  if (env?.SNAPSHOT_BUCKET && result?.episodesUpserted > 0) {
-    const syncTask = syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
-      .then(() => bumpWorkerCacheEpoch())
-      .catch((err) => console.error('Worker R2 snapshot sync error:', err));
-    if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
-    else await syncTask;
+  if (result?.episodesUpserted > 0) {
+    clearD1Cache(env?.DB);
+    bumpWorkerCacheEpoch();
   }
-  return result;
+
+  let linkResolution = null;
+  if (options?.resolveLinks === true) {
+    try {
+      linkResolution = await runIncrementalSongLinksCron({
+        db: env?.DB,
+        apiKey: env?.YOUTUBE_API_KEY,
+      });
+    } catch (err) {
+      console.error('Worker song_links cron error:', err);
+      linkResolution = { error: err?.message ?? String(err), changesMade: false };
+    }
+    if (linkResolution?.changesMade) {
+      clearD1Cache(env?.DB);
+      bumpWorkerCacheEpoch();
+    }
+  }
+
+  if (env?.SNAPSHOT_BUCKET) {
+    const syncFn =
+      result?.episodesUpserted > 0
+        ? () => syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
+        : linkResolution?.changesMade
+          ? () => syncR2SongLinksFromD1(env.DB, env.SNAPSHOT_BUCKET)
+          : null;
+    if (syncFn) {
+      const syncTask = syncFn()
+        .then(() => bumpWorkerCacheEpoch())
+        .catch((err) => console.error('Worker R2 snapshot sync error:', err));
+      if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
+      else await syncTask;
+    }
+  }
+
+  return {
+    ...result,
+    ...(linkResolution ? { linkResolution } : {}),
+  };
 }
 
 async function handleIngest(request, env, corsHeaders, ctx) {
@@ -155,7 +189,10 @@ async function handleIngest(request, env, corsHeaders, ctx) {
     }
   }
   if (!env?.DB) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
-  return jsonResponse(await runIngestAndSync(env, body?.incremental !== false, ctx, true), 200, corsHeaders);
+  const payload = await runIngestAndSync(env, body?.incremental !== false, ctx, true, {
+    resolveLinks: body?.resolveLinks === true,
+  });
+  return jsonResponse(payload, 200, corsHeaders);
 }
 
 const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
@@ -316,7 +353,7 @@ export default {
   },
 
   async scheduled(_controller, env, ctx) {
-    const task = runIngestAndSync(env, true);
+    const task = runIngestAndSync(env, true, ctx, false, { resolveLinks: true });
     ctx?.waitUntil?.(task);
     return await task;
   },

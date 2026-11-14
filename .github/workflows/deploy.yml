@@ -136,7 +136,7 @@ jobs:
             exit 1
           fi
           doppler --no-check-version run -- npx --no-install wrangler deploy
-          doppler --no-check-version run -- node -e "const { execFileSync } = require('node:child_process'); for (const key of ['BLOGGER_API_KEY', 'BLOGGER_BLOG_ID', 'INGEST_SECRET']) { if (!process.env[key]) throw new Error('Missing Doppler secret: ' + key); execFileSync('npx', ['--no-install', 'wrangler', 'secret', 'put', key], { input: process.env[key], stdio: ['pipe', 'inherit', 'inherit'] }); }"
+          doppler --no-check-version run -- node -e "const { execFileSync } = require('node:child_process'); const put = (k) => execFileSync('npx', ['--no-install', 'wrangler', 'secret', 'put', k], { input: process.env[k], stdio: ['pipe', 'inherit', 'inherit'] }); for (const key of ['BLOGGER_API_KEY', 'BLOGGER_BLOG_ID', 'INGEST_SECRET']) { if (!process.env[key]) throw new Error('Missing Doppler secret: ' + key); put(key); } for (const key of ['YOUTUBE_API_KEY']) { if (process.env[key]) put(key); }"
 
   release:
     name: Tag Release & Publish Notes
