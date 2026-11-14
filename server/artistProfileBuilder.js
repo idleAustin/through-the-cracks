@@ -180,8 +180,10 @@ export function mapProfileSpinRow(row = {}) {
     episodeSongCount: Number(rawSongCount ?? 0),
     position: Number(row.position ?? 0),
     artist: String(row.artist ?? ''),
+    featuredArtist: String(row.featuredArtist ?? row.featured_artist ?? ''),
     song: String(rawSong ?? ''),
     album: String(row.album ?? ''),
+    releaseKind: String(row.releaseKind ?? row.release_kind ?? 'album'),
   };
 }
 
@@ -291,6 +293,8 @@ export function buildArtistProfile({ rows = [], coOccurrences = [], rank = 1, to
       episodeNumber: row.episodeNumber == null ? null : Number(row.episodeNumber),
       position: Number(row.position ?? 0),
       episodeSongCount: Number(row.episodeSongCount ?? 0),
+      featuredArtist: String(row.featuredArtist ?? row.featured_artist ?? '').trim(),
+      releaseKind: String(row.releaseKind ?? row.release_kind ?? 'album').trim() || 'album',
       songKey, albumKey, rawSong, rawAlbum,
     });
   }
@@ -303,8 +307,10 @@ export function buildArtistProfile({ rows = [], coOccurrences = [], rank = 1, to
     .map((r) => ({
       airDate: r.airDate, episodeId: r.episodeId, episodeNumber: r.episodeNumber,
       position: r.position, episodeSongCount: r.episodeSongCount,
+      ...(r.featuredArtist ? { featuredArtist: r.featuredArtist } : {}),
       songTitle: songDisplay.get(r.songKey) || r.rawSong,
       album: r.albumKey ? (albumDisplay.get(r.albumKey) || r.rawAlbum) : '',
+      ...(r.releaseKind && r.releaseKind !== 'album' ? { releaseKind: r.releaseKind } : {}),
     }))
     .sort((a, b) => cmpAsc(b.airDate, a.airDate) || cmpAsc(b.episodeId, a.episodeId) || (a.position - b.position));
 

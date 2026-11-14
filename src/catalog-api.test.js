@@ -1,6 +1,7 @@
 // Unit and integration tests for Ticket 04 artists/songs sort, cap, search, and artist-songs catalog contracts.
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getArtistSongs, getArtists, getSongs } from './api.js';
+import { getStaticSearchAll, getStaticSongs } from './api-catalog.js';
 import { createApp } from '../server/index.js';
 
 const EXTRA_ARTISTS = Array.from({ length: 6 }, (_, i) => ({
@@ -34,7 +35,8 @@ const EXTRA_SONGS = Array.from({ length: 6 }, (_, i) => ({
 
 const SONGS_FIXTURE = [
   { artist: 'Todd Snider', songTitle: 'Alright Guy', album: 'Songs for the Daily Planet', albums: ['Songs for the Daily Planet', 'Near Truths and Hotel Rooms'], totalPlays: 15, firstAppearance: '2013-09-15', lastAppearance: '2026-07-29' },
-  { artist: 'Todd Snider', songTitle: 'Beer Run', album: 'New Connection', albums: ['New Connection'], totalPlays: 10, firstAppearance: '2014-02-01', lastAppearance: '2025-05-10' },
+  { artist: 'Todd Snider', songTitle: 'Beer Run', album: 'New Connection', albums: ['New Connection'], featuredArtists: ['Jason Isbell'], totalPlays: 10, firstAppearance: '2014-02-01', lastAppearance: '2025-05-10' },
+  { artist: 'William Lee Ellis', songTitle: 'Rider On Your Soul', album: 'Conqueroo', albums: ['Conqueroo', 'Live On TTC'], featuredArtists: ['Larry Nager'], totalPlays: 11, firstAppearance: '2013-10-02', lastAppearance: '2026-09-26' },
   { artist: 'Carrie Rodriguez', songTitle: '50s French Movie', album: 'Seven Angels On A Bicycle', albums: ['Seven Angels On A Bicycle', 'Live In Louisville'], totalPlays: 10, firstAppearance: '2013-08-28', lastAppearance: '2026-07-18' },
   ...EXTRA_SONGS,
   { artist: 'Artist C', songTitle: 'Later Track', album: 'Modern Wax', albums: ['Modern Wax'], totalPlays: 1, firstAppearance: '2020-01-10', lastAppearance: '2020-01-10' },
@@ -149,6 +151,12 @@ describe('Ticket 04 catalog sort, cap, album search, and artist-songs contracts'
       if (url.endsWith('/data/songs.json')) {
         return new Response(JSON.stringify(SONGS_FIXTURE), { status: 200, headers: { 'content-type': 'application/json' } });
       }
+      if (url.endsWith('/data/albums.json')) {
+        return new Response(JSON.stringify([{ artist: 'Todd Snider', album: 'New Connection', totalPlays: 10 }]), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
       return new Response('Not found', { status: 404 });
     });
   });
@@ -196,4 +204,23 @@ describe('Ticket 04 catalog sort, cap, album search, and artist-songs contracts'
       expect(inspector.data.songs[0].albums ?? [inspector.data.songs[0].album]).toContain('Songs for the Daily Planet');
     });
   }
+
+  it('getStaticSongs and getStaticSearchAll match featuredArtists in static mode', async () => {
+    const songRes = await getStaticSongs({ search: 'isbell', sort: 'top', cap: null, page: 1, limit: 10 });
+    expect(songRes.songs).toHaveLength(1);
+    expect(songRes.songs[0]).toMatchObject({ artist: 'Todd Snider', songTitle: 'Beer Run', album: 'New Connection' });
+
+    const searchRes = await getStaticSearchAll('isbell');
+    expect(searchRes.artists).toEqual([]);
+    expect(searchRes.albums).toEqual([]);
+    expect(searchRes.songs).toEqual([
+      { artist: 'Todd Snider', songTitle: 'Beer Run', album: 'New Connection', plays: 10 },
+    ]);
+
+    const larrySongs = await getStaticSongs({ search: 'larry nager', sort: 'top', cap: null, page: 1, limit: 10 });
+    expect(larrySongs.songs[0]).toMatchObject({ artist: 'William Lee Ellis', songTitle: 'Rider On Your Soul', totalPlays: 11 });
+    expect((await getStaticSearchAll('larry nager')).songs[0]).toMatchObject({
+      artist: 'William Lee Ellis', songTitle: 'Rider On Your Soul', plays: 11,
+    });
+  });
 });

@@ -1,9 +1,8 @@
 // Fetches, normalizes, parses, and merges Through the Cracks Blogger playlists.
+import { normalizeEpisodeMeta, normalizeSpinLine, splitGluedRawLine } from './archive-normalizer.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
 const DEFAULT_BLOG_URL = 'https://eddirmeyer.blogspot.com';
-const TITLE_DATE_RE =
-  /Playlist for WEVL's Through The Cracks,\s*(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+)?(\d{1,2}\/\d{1,2}\/\d{4})/i;
 
 export function decodeHtmlEntities(text) {
   return String(text || '')
@@ -22,86 +21,59 @@ export function decodeHtmlEntities(text) {
 export function htmlToLines(html) {
   const withBreaks = String(html || '')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/li>/gi, '\n');
-  const stripped = decodeHtmlEntities(withBreaks.replace(/<[^>]*>/g, ''));
+    .replace(/<\/?(?:p|div|li)\b[^>]*>/gi, '\n');
+  const stripped = decodeHtmlEntities(withBreaks.replace(/<[^<>]*>/g, ''));
   return stripped
     .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .flatMap((line) => splitGluedRawLine(line))
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 }
 
-export function parseEpisodeMetadata(post, lines = htmlToLines(post?.content || '')) {
-  const title = post?.title || '';
-  const content = post?.content || '';
-  const titleMatch = title.match(TITLE_DATE_RE);
-
-  let dayOfWeek = null;
-  let airDate = post?.published ? String(post.published).slice(0, 10) : null;
-  if (titleMatch) {
-    dayOfWeek = titleMatch[1] || null;
-    const [month, day, year] = titleMatch[2].split('/');
-    airDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-
+function extractEpisodeNumber(content, lines) {
   const epDivMatch = content.match(/<div>#(\d+)<\/div>/);
   const epInlineMatch = !epDivMatch
-    ? content.match(/(?:^|\n|<br\s*\/?>|<p[^>]*>)\s*#(\d+)\s*(?:<|$)/i)
+    ? content.match(/(?:^|\n[ \t]*|<br\s*\/?>[ \t]*|<p[^<>]*>[ \t]*)#(\d+)[ \t]*(?:<|$)/i)
     : null;
   const epTrailingMatch =
     !epDivMatch && !epInlineMatch ? lines.at(-1)?.match(/^#?(\d{1,4})$/) : null;
-  const epNumMatch = epDivMatch || epInlineMatch || epTrailingMatch;
+  const match = epDivMatch || epInlineMatch || epTrailingMatch;
+  return match ? parseInt(match[1], 10) : null;
+}
 
+export function parseEpisodeMetadata(postOrTitle, publishedAtOrLines) {
+  const isPostObj = typeof postOrTitle === 'object' && postOrTitle !== null;
+  const title = isPostObj ? postOrTitle.title || '' : String(postOrTitle || '');
+  const content = isPostObj ? postOrTitle.content || '' : '';
+  const publishedAt = isPostObj
+    ? (postOrTitle.published ?? postOrTitle.publishedAt ?? null)
+    : (publishedAtOrLines ?? null);
+  const lines = isPostObj
+    ? (Array.isArray(publishedAtOrLines) ? publishedAtOrLines : htmlToLines(content))
+    : [];
+
+  const fallbackDate = publishedAt ? String(publishedAt).slice(0, 10) : '';
+  const meta = normalizeEpisodeMeta({ title, publishedAt, airDate: fallbackDate });
+  const airDate = meta.airDate || null;
+  const dayOfWeek = airDate ? meta.dayOfWeek : null;
+  const episodeNumber = extractEpisodeNumber(content, lines);
+
+  if (!isPostObj) return { airDate, dayOfWeek, episodeNumber };
   return {
-    id: String(post?.id ?? ''),
+    id: String(postOrTitle.id ?? ''),
     title,
     airDate,
     dayOfWeek,
-    episodeNumber: epNumMatch ? parseInt(epNumMatch[1], 10) : null,
-    publishedAt: post?.published || null,
-    url: post?.url || null,
+    episodeNumber,
+    publishedAt,
+    url: postOrTitle.url || null,
   };
 }
 
-export function parseSongLine(rawLine, position) {
-  let cleaned = String(rawLine || '').replace(/^[-•*]\s*/, '').trim();
-  let isInstrumental = false;
-  if (/^(?:instrumental\s+|intrumental\s+)?interlude:\s*/i.test(cleaned)) {
-    isInstrumental = true;
-    cleaned = cleaned.replace(/^(?:instrumental\s+|intrumental\s+)?interlude:\s*/i, '').trim();
-  }
-
-  const normalized = cleaned.replace(/\s+-\s+|\s+-|-\s+/g, ' |~| ');
-  const parts = normalized.split(' |~| ').map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) return null;
-
-  const artist = parts[0];
-  let songTitle;
-  let album;
-  if (parts.length >= 3) {
-    album = parts[parts.length - 1];
-    songTitle = parts.slice(1, -1).join(' - ');
-  } else {
-    songTitle = parts[1];
-    album = isInstrumental ? 'Instrumental Interlude' : '[Single / Track]';
-  }
-
-  if (isInstrumental && parts.length >= 3 && !album.toLowerCase().includes('interlude')) {
-    album = `${album} (Instrumental Interlude)`;
-  }
-
-  const artistLower = artist.toLowerCase();
-  if (
-    artistLower.includes('playlist for') ||
-    artist.startsWith('#') ||
-    artistLower.includes('thanksgiving saturday') ||
-    artistLower.includes('anniversary special')
-  ) {
-    return null;
-  }
-
-  return { position, rawLine, artist, songTitle, album };
+export function parseSongLine(rawLine, position = 1) {
+  return normalizeSpinLine(rawLine, position);
 }
 
 export function parsePost(post) {
@@ -114,7 +86,7 @@ export function parsePost(post) {
   const songs = [];
   for (const line of songLines) {
     const parsed = parseSongLine(line, songs.length + 1);
-    if (parsed) songs.push(parsed);
+    if (parsed) songs.push({ ...parsed, position: songs.length + 1 });
   }
   return { episode, songs };
 }

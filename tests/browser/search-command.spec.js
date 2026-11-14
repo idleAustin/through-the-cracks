@@ -1,5 +1,6 @@
 // End-to-end Playwright specs for Ticket 06: /search catalog workspace, Command Palette (Ctrl/Cmd+K), and layered Escape priority.
 import { expect, test } from '@playwright/test';
+import { EXPECTED } from './snapshot-expected.js';
 
 test.describe('Search workspace and global Command Palette (⌘K / Ctrl+K)', () => {
   test('renders /search with ?q= sync, empty/zero recovery, grouped Artists & Songs/Albums, and inspector/episode routing', async ({ page }, testInfo) => {
@@ -67,10 +68,10 @@ test.describe('Search workspace and global Command Palette (⌘K / Ctrl+K)', () 
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.locator('.inline-inspector, .push-view')).toHaveCount(0);
 
-    const dashboard = main.getByLabel('Todd Snider dashboard');
+    const dashboard = main.getByLabel('Todd Snider dashboard', { exact: true });
     await expect(dashboard).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Todd Snider', level: 1 })).toBeVisible();
-    await expect(dashboard).toContainText(/#1\s*of 1,917 artists by spins/);
+    await expect(dashboard).toContainText(new RegExp(`#1\\s*of ${EXPECTED.uniqueArtistsFmt} artists by spins`));
     await expect(page.getByRole('button', { name: 'Back to results' })).toBeVisible();
     if (!isMobile) {
       const box = await dashboard.boundingBox();

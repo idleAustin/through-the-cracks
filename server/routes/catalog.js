@@ -8,12 +8,14 @@ import {
   unwrapBqValue,
 } from './queryUtils.js';
 
+const escapeLike = (s) => `%${String(s).slice(0, 120).replace(/[\\%_]/g, '\\$&')}%`;
+
 function parseCatalogParams(queryParams) {
   const search = typeof queryParams.search === 'string' ? queryParams.search.trim().toLowerCase() : '';
   const sort = parseSortParam(queryParams.sort);
   const cap = parseCapParam(queryParams.cap);
   const { page, limit } = parsePageParams(queryParams);
-  const params = search ? { searchLike: `%${search}%` } : {};
+  const params = search ? { searchLike: escapeLike(search) } : {};
   return { search, sort, cap, page, limit, params };
 }
 
@@ -52,7 +54,7 @@ export function createCatalogRouter({ query, project, dataset }) {
           artist AS name,
           COUNT(1) AS total_plays,
           COUNT(DISTINCT LOWER(song_title)) AS unique_songs,
-          COUNT(DISTINCT LOWER(album)) AS unique_albums,
+          COUNT(DISTINCT IF(LENGTH(TRIM(COALESCE(album, ''))) > 0, LOWER(TRIM(album)), NULL)) AS unique_albums,
           MIN(air_date) AS first_appearance,
           MAX(air_date) AS last_appearance
         FROM \`${project}.${dataset}.song_plays\`
@@ -103,7 +105,7 @@ export function createCatalogRouter({ query, project, dataset }) {
         return res.json({ artists: [], songs: [], albums: [] });
       }
 
-      const params = { searchLike: `%${q}%` };
+      const params = { searchLike: escapeLike(q) };
 
       const artistQuery = `
         SELECT
@@ -118,10 +120,15 @@ export function createCatalogRouter({ query, project, dataset }) {
       `;
 
       const songQuery = `
-        SELECT artist, song_title, album, COUNT(1) AS plays
-        FROM \`${project}.${dataset}.song_plays\`
-        WHERE LOWER(song_title) LIKE @searchLike
-        GROUP BY artist, song_title, album
+        SELECT sp.artist, sp.song_title, sp.album, COUNT(1) AS plays
+        FROM \`${project}.${dataset}.song_plays\` sp
+        JOIN (
+          SELECT artist, song_title
+          FROM \`${project}.${dataset}.song_plays\`
+          WHERE LOWER(song_title) LIKE @searchLike OR LOWER(COALESCE(featured_artist, '')) LIKE @searchLike
+          GROUP BY artist, song_title
+        ) matches ON sp.artist = matches.artist AND sp.song_title = matches.song_title
+        GROUP BY sp.artist, sp.song_title, sp.album
         ORDER BY plays DESC
         LIMIT 10
       `;
@@ -129,7 +136,7 @@ export function createCatalogRouter({ query, project, dataset }) {
       const albumQuery = `
         SELECT artist, album, COUNT(1) AS plays
         FROM \`${project}.${dataset}.song_plays\`
-        WHERE LOWER(album) LIKE @searchLike
+        WHERE LOWER(album) LIKE @searchLike AND LENGTH(TRIM(COALESCE(album, ''))) > 0
         GROUP BY artist, album
         ORDER BY plays DESC
         LIMIT 10
@@ -147,7 +154,7 @@ export function createCatalogRouter({ query, project, dataset }) {
           plays: Number(r.plays),
           uniqueSongs: Number(r.unique_songs ?? 0),
         })),
-        songs: songs.map(r => ({ artist: r.artist, songTitle: r.song_title, album: r.album, plays: Number(r.plays) })),
+        songs: songs.map(r => ({ artist: r.artist, songTitle: r.song_title, album: r.album || '', plays: Number(r.plays) })),
         albums: albums.map(r => ({ artist: r.artist, album: r.album, plays: Number(r.plays) })),
       });
     } catch (err) {
@@ -159,9 +166,15 @@ export function createCatalogRouter({ query, project, dataset }) {
   router.get('/songs', async (req, res) => {
     try {
       const { search, sort, cap, page, limit, params } = parseCatalogParams(req.query);
-      const whereClause = search
-        ? 'WHERE LOWER(artist) LIKE @searchLike OR LOWER(song_title) LIKE @searchLike OR LOWER(album) LIKE @searchLike'
+      const matchCondition =
+        "LOWER(artist) LIKE @searchLike OR LOWER(song_title) LIKE @searchLike OR LOWER(album) LIKE @searchLike OR LOWER(COALESCE(featured_artist, '')) LIKE @searchLike";
+      const countHavingClause = search
+        ? `HAVING MAX(CASE WHEN ${matchCondition} THEN 1 ELSE 0 END) = 1`
         : '';
+      const matchSelect = search
+        ? `,\n            MAX(CASE WHEN ${matchCondition} THEN 1 ELSE 0 END) AS is_match`
+        : '';
+      const listHavingClause = search ? 'HAVING MAX(is_match) = 1' : '';
       const orderBy = sort === 'obscure'
         ? 'ORDER BY total_plays ASC, first_played ASC, LOWER(song_title) ASC, LOWER(artist) ASC'
         : 'ORDER BY total_plays DESC, LOWER(song_title) ASC, LOWER(artist) ASC';
@@ -170,8 +183,8 @@ export function createCatalogRouter({ query, project, dataset }) {
         SELECT COUNT(1) AS total FROM (
           SELECT 1
           FROM \`${project}.${dataset}.song_plays\`
-          ${whereClause}
           GROUP BY artist, song_title
+          ${countHavingClause}
         )
       `;
 
@@ -190,12 +203,12 @@ export function createCatalogRouter({ query, project, dataset }) {
             COALESCE(TRIM(album), '') AS album,
             COUNT(1) AS cnt,
             MIN(air_date) AS first_played,
-            MAX(air_date) AS last_played
+            MAX(air_date) AS last_played${matchSelect}
           FROM \`${project}.${dataset}.song_plays\`
-          ${whereClause}
           GROUP BY artist, song_title, album
         )
         GROUP BY artist, song_title
+        ${listHavingClause}
         ${orderBy}
         LIMIT ${effectiveLimit} OFFSET ${offset}
       `;
@@ -275,7 +288,7 @@ export function createCatalogRouter({ query, project, dataset }) {
         SELECT
           COUNT(1) AS total_plays,
           COUNT(DISTINCT LOWER(song_title)) AS unique_songs,
-          COUNT(DISTINCT LOWER(album)) AS unique_albums,
+          COUNT(DISTINCT IF(LENGTH(TRIM(COALESCE(album, ''))) > 0, LOWER(TRIM(album)), NULL)) AS unique_albums,
           MIN(air_date) AS first_appearance,
           MAX(air_date) AS last_appearance
         FROM \`${project}.${dataset}.song_plays\`

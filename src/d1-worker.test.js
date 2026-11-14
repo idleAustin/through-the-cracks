@@ -146,12 +146,14 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
   it('matches public/data/overview.json across SQL aggregates and executes all D1 query functions', async () => {
     const ov = await getD1Overview(realDb);
     expect(ov.totalEpisodes).toBe(1344);
-    expect(ov.totalSongPlays).toBe(37678);
-    expect(ov.uniqueArtists).toBe(1917);
-    expect(ov.uniqueAlbums).toBe(6451);
-    expect(ov.uniqueSongs).toBe(17134);
-    expect(ov.oneSpinArtists).toBe(654);
-    expect(ov.oneSpinSongs).toBe(8000);
+    expect(ov.totalSongPlays).toBe(37659);
+    expect(ov.uniqueArtists).toBe(1292);
+    expect(ov.uniqueAlbums).toBe(5199);
+    expect(ov.uniqueSongs).toBe(16285);
+    expect(ov.oneSpinArtists).toBe(snapshotOverview.oneSpinArtists);
+    expect(ov.oneSpinSongs).toBe(snapshotOverview.oneSpinSongs);
+    expect(ov.oneSpinArtists).toBe(239);
+    expect(ov.oneSpinSongs).toBe(6996);
     expect(ov.latestEpisodeId).toBe('4423069433994810612');
     expect(ov.dateRange).toEqual(snapshotOverview.dateRange);
     expect(ov.topArtists).toEqual(snapshotOverview.topArtists);
@@ -180,15 +182,21 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
     expect((await getD1Artists(realDb, { search: 'todd snider' })).items[0].name).toBe('Todd Snider');
 
     const toddCatalog = await getD1ArtistSongs(realDb, 'Todd Snider');
-    expect(toddCatalog.summary.totalPlays).toBe(305);
+    expect(toddCatalog.summary.totalPlays).toBe(308);
     expect(toddCatalog.albums.length).toBeGreaterThan(5);
     expect((await getD1Songs(realDb, { search: 'French Movie' })).items[0]).toMatchObject({ artist: 'Carrie Rodriguez', songTitle: '50s French Movie' });
+    expect((await getD1Songs(realDb, { search: 'larry nager' })).items[0]).toMatchObject({
+      artist: 'William Lee Ellis', songTitle: 'Rider On Your Soul', totalPlays: 11,
+    });
 
     expect(await getD1Search(realDb, { q: 'a' })).toEqual({ artists: [], songs: [], albums: [] });
     const dylanSearch = await getD1Search(realDb, { q: 'dylan' });
     expect(dylanSearch.artists.some((a) => a.name === 'Bob Dylan')).toBe(true);
     expect(dylanSearch.songs.length).toBeGreaterThan(0);
     expect(dylanSearch.albums.length).toBeGreaterThan(0);
+    expect((await getD1Search(realDb, { q: 'larry nager' })).songs[0]).toMatchObject({
+      artist: 'William Lee Ellis', songTitle: 'Rider On Your Soul', plays: 11,
+    });
   });
 
   it('routes /through-the-cracks/api/* reads, CORS/security headers, and SPA asset fallbacks through worker.fetch', async () => {
@@ -212,7 +220,7 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
     expect((await call(`/through-the-cracks/api/episodes/${snapshotOverview.latestEpisodeId}`)).status).toBe(200);
     expect((await call('/through-the-cracks/api/episodes/missing-ep')).status).toBe(404);
     expect((await (await call('/through-the-cracks/api/artists?search=snider')).json()).items[0].name).toBe('Todd Snider');
-    expect((await (await call('/through-the-cracks/api/artists/Todd%20Snider/songs')).json()).summary.totalPlays).toBe(305);
+    expect((await (await call('/through-the-cracks/api/artists/Todd%20Snider/songs')).json()).summary.totalPlays).toBe(308);
     expect((await (await call('/through-the-cracks/api/songs?search=french')).json()).items[0].songTitle).toBe('50s French Movie');
     expect((await (await call('/through-the-cracks/api/search?q=dylan')).json()).artists[0].name).toBe('Bob Dylan');
 
@@ -317,5 +325,60 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
     }), env);
     expect(read429.status).toBe(429);
     expect(read429.headers.get('Retry-After')).toBe('60');
+  });
+
+  it('ensureD1Schema idempotently migrates legacy song_plays tables lacking featured_artist and release_kind', async () => {
+    const db = createSqliteD1();
+    try {
+      db.sqlite.exec(`
+        CREATE TABLE episodes (id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', air_date TEXT NOT NULL, day_of_week TEXT, episode_number INTEGER, published_at TEXT, url TEXT, song_count INTEGER NOT NULL DEFAULT 0, ingested_at TEXT NOT NULL);
+        CREATE TABLE song_plays (id TEXT PRIMARY KEY, episode_id TEXT NOT NULL, air_date TEXT NOT NULL, position INTEGER NOT NULL, artist TEXT NOT NULL DEFAULT '', song_title TEXT NOT NULL DEFAULT '', album TEXT NOT NULL DEFAULT '', raw_line TEXT NOT NULL DEFAULT '', ingested_at TEXT NOT NULL);
+        INSERT INTO episodes (id, title, air_date, song_count, ingested_at) VALUES ('ep-legacy', 'Legacy', '2026-11-01', 1, '2026-11-01T00:00:00Z');
+        INSERT INTO song_plays (id, episode_id, air_date, position, artist, song_title, album, raw_line, ingested_at) VALUES ('ep-legacy_1', 'ep-legacy', '2026-11-01', 1, 'Todd Snider', 'Alright Guy', 'Daily Planet', 'Todd Snider - Alright Guy - Daily Planet', '2026-11-01T00:00:00Z');
+      `);
+
+      await ensureD1Schema(db);
+      await ensureD1Schema(db);
+
+      const cols = (await db.prepare('PRAGMA table_info(song_plays)').all()).results.map((r) => r.name);
+      expect(cols).toEqual(expect.arrayContaining(['featured_artist', 'release_kind']));
+      const migratedRow = await db.prepare('SELECT featured_artist, release_kind FROM song_plays WHERE id = ?').bind('ep-legacy_1').first();
+      expect(migratedRow).toEqual({ featured_artist: '', release_kind: 'album' });
+    } finally {
+      db.sqlite.close();
+    }
+  });
+
+  it('matches featured_artist in getD1Songs/getD1Search and excludes empty albums from uniqueAlbums', async () => {
+    const db = createSqliteD1();
+    try {
+      await ensureD1Schema(db);
+      await upsertEpisodesIntoD1(db, [{
+        id: 'ep-norm',
+        airDate: '2026-11-11',
+        title: "Playlist for WEVL's Through The Cracks, Wednesday 11/11/2026",
+        songs: [
+          { position: 1, artist: 'Todd Snider', featuredArtist: 'Jason Isbell', songTitle: 'Play A Train Song', album: 'East Nashville Skyline', releaseKind: 'album' },
+          { position: 2, artist: 'Todd Snider', featuredArtist: '', songTitle: 'Lone Single', album: '', releaseKind: 'single' },
+        ],
+      }]);
+
+      expect((await getD1Overview(db)).uniqueAlbums).toBe(1);
+      expect((await getD1Artists(db, { search: 'todd snider' })).items[0].uniqueAlbums).toBe(1);
+      const artistCatalog = await getD1ArtistSongs(db, 'Todd Snider');
+      expect(artistCatalog.summary.uniqueAlbums).toBe(1);
+      expect(artistCatalog.albums).toEqual(['East Nashville Skyline']);
+
+      const songHits = await getD1Songs(db, { search: 'Jason Isbell' });
+      expect(songHits.items).toHaveLength(1);
+      expect(songHits.items[0]).toMatchObject({ artist: 'Todd Snider', songTitle: 'Play A Train Song' });
+
+      const searchHits = await getD1Search(db, { q: 'isbell' });
+      expect(searchHits.songs).toEqual([
+        { artist: 'Todd Snider', songTitle: 'Play A Train Song', album: 'East Nashville Skyline', plays: 1 },
+      ]);
+    } finally {
+      db.sqlite.close();
+    }
   });
 });

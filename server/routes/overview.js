@@ -14,7 +14,7 @@ export function createOverviewRouter({ query, project, dataset }) {
           (SELECT COUNT(1) FROM \`${project}.${dataset}.episodes\`) AS total_episodes,
           (SELECT COUNT(1) FROM \`${project}.${dataset}.song_plays\`) AS total_song_plays,
           (SELECT COUNT(DISTINCT LOWER(artist)) FROM \`${project}.${dataset}.song_plays\`) AS unique_artists,
-          (SELECT COUNT(DISTINCT CONCAT(LOWER(artist), '|||', LOWER(album))) FROM \`${project}.${dataset}.song_plays\`) AS unique_albums,
+          (SELECT COUNT(DISTINCT IF(LENGTH(TRIM(COALESCE(album, ''))) > 0, CONCAT(LOWER(TRIM(artist)), '|||', LOWER(TRIM(album))), NULL)) FROM \`${project}.${dataset}.song_plays\`) AS unique_albums,
           (SELECT COUNT(DISTINCT CONCAT(LOWER(artist), '|||', LOWER(song_title))) FROM \`${project}.${dataset}.song_plays\`) AS unique_songs,
           (SELECT MIN(air_date) FROM \`${project}.${dataset}.episodes\`) AS earliest_date,
           (SELECT MAX(air_date) FROM \`${project}.${dataset}.episodes\`) AS latest_date,

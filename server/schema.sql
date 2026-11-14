@@ -18,8 +18,10 @@ CREATE TABLE IF NOT EXISTS song_plays (
   air_date TEXT NOT NULL,
   position INTEGER NOT NULL,
   artist TEXT NOT NULL DEFAULT '',
+  featured_artist TEXT NOT NULL DEFAULT '',
   song_title TEXT NOT NULL DEFAULT '',
   album TEXT NOT NULL DEFAULT '',
+  release_kind TEXT NOT NULL DEFAULT 'album',
   raw_line TEXT NOT NULL DEFAULT '',
   ingested_at TEXT NOT NULL
 );
@@ -29,5 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_song_plays_episode_pos ON song_plays(episode_id, 
 CREATE INDEX IF NOT EXISTS idx_song_plays_air_date ON song_plays(air_date);
 CREATE INDEX IF NOT EXISTS idx_song_plays_artist ON song_plays(artist);
 CREATE INDEX IF NOT EXISTS idx_song_plays_artist_lower ON song_plays(LOWER(TRIM(artist)));
+CREATE INDEX IF NOT EXISTS idx_song_plays_featured_lower ON song_plays(LOWER(featured_artist));
 CREATE INDEX IF NOT EXISTS idx_song_plays_song_lower ON song_plays(LOWER(TRIM(song_title)));
 CREATE INDEX IF NOT EXISTS idx_song_plays_album_lower ON song_plays(LOWER(TRIM(album)));

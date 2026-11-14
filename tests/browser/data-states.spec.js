@@ -155,6 +155,15 @@ test.describe('archive data states and unknown route recovery', () => {
     await expectTouchTarget(page.locator('.playlist-mobile-main .cell-link-btn').first());
     await expectTouchTarget(page.locator('.source-post-link').first());
 
+    await page.goto('/episodes?episode=1663264870344157114');
+    await expectTouchTarget(page.getByRole('button', { name: 'Grin', exact: true }));
+    await expect(page.locator('.playlist-featured').first()).toBeVisible();
+    await expect(page.locator('.playlist-featured').first()).toContainText('w/');
+    const firstMobileMain = page.locator('.playlist-mobile-main').first();
+    const songBox = await firstMobileMain.locator('.playlist-song-btn').boundingBox();
+    const artistBox = await firstMobileMain.locator('.playlist-artist-wrap .cell-link-btn').boundingBox();
+    expect(artistBox.y - (songBox.y + songBox.height)).toBeGreaterThanOrEqual(7.5);
+
     await page.goto('/unknown-archive-path');
     await expectTouchTarget(page.locator('.btn').first());
 
@@ -166,6 +175,7 @@ test.describe('archive data states and unknown route recovery', () => {
       ['/songs', '#songs-table:visible, .m-card-stack:visible'],
       ['/episodes', '.m-card'],
       [`/episodes?episode=${EXPECTED.latestEpisodeId}`, '.playlist-pane'],
+      ['/episodes?episode=1663264870344157114', '.playlist-featured'],
       ['/search', '#global-search-input'],
     ]) {
       await page.goto(path);

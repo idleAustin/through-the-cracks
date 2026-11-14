@@ -116,6 +116,7 @@
 .playlist-head-meta h2 { font-size: 18px; line-height: 1.25; margin: 0; }
 .playlist-subtitle { margin: 4px 0 0; font-size: 12px; color: var(--as-text-secondary); }
 .source-post-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.source-post-link:active { color: var(--as-accent-fg); opacity: 0.85; }
 .playlist-state { padding: 16px; }
 
 .playlist-table th.col-num,
@@ -217,15 +218,35 @@
 .playlist-mobile-row.is-song-match { background: var(--as-accent-muted); }
 .playlist-mobile-row.is-song-match .playlist-song-btn { color: var(--as-accent-fg); }
 .playlist-pos { font-size: 12px; color: var(--as-text-secondary); padding-top: 2px; }
-.playlist-mobile-main { display: grid; gap: 6px; min-width: 0; }
-.playlist-mobile-main .cell-link-btn { padding: 2px 0; overflow-wrap: anywhere; }
+.playlist-mobile-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+.playlist-mobile-main .cell-link-btn { padding: 2px 0; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .playlist-mobile-meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
+  align-items: baseline;
+  gap: 2px 6px;
+  min-width: 0;
   font-size: 12px;
   color: var(--as-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.playlist-artist-wrap {
+  display: contents;
+}
+
+.playlist-featured,
+.playlist-release-kind {
+  font-size: 12px;
+  color: var(--as-text-secondary);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.playlist-album {
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 
@@ -242,6 +263,11 @@
     min-height: var(--as-tap-min);
     display: inline-flex;
     align-items: center;
+  }
+
+  .playlist-mobile-main .cell-link-btn {
+    min-width: var(--as-tap-min);
+    justify-content: flex-start;
   }
 
   .m-card-meta .cell-link-btn {

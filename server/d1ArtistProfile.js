@@ -20,8 +20,10 @@ const SPIN_ROWS_SQL = `SELECT
   END AS episode_song_count,
   sp.position AS position,
   sp.artist AS artist,
+  sp.featured_artist AS featured_artist,
   sp.song_title AS song_title,
-  sp.album AS album
+  sp.album AS album,
+  sp.release_kind AS release_kind
 FROM song_plays sp
 LEFT JOIN episodes e ON e.id = sp.episode_id
 WHERE LOWER(TRIM(sp.artist)) = ?
