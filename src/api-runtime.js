@@ -1,5 +1,41 @@
-// Shared API base URL resolution and live/static archive mode telemetry emitter.
-import { getStaticPath } from './api-static.js';
+// Shared static JSON fetch helpers, API base URL resolution, and live/static archive mode telemetry emitter.
+
+export function getStaticPath(relativePath, baseUrl = import.meta.env.BASE_URL) {
+  const base = baseUrl || '/';
+  const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+  return base.endsWith('/') ? `${base}${cleanPath}` : `${base}/${cleanPath}`;
+}
+
+export async function fetchStaticJson(relativePath) {
+  const fullStaticPath = getStaticPath(relativePath);
+  const response = await fetch(fullStaticPath);
+  if (!response.ok) {
+    throw new Error(`Failed to load data from ${fullStaticPath} (${response.status})`);
+  }
+  return response.json();
+}
+
+export async function fetchStaticJsonAllow404(relativePath) {
+  const fullStaticPath = getStaticPath(relativePath);
+  const response = await fetch(fullStaticPath);
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`Failed to load data from ${fullStaticPath} (${response.status})`);
+  }
+  const contentType = String(response.headers?.get?.('content-type') || '').toLowerCase();
+  if (contentType.includes('text/html') || contentType.includes('application/xhtml+xml')) {
+    return null;
+  }
+  if (typeof response.text !== 'function') return response.json();
+  const trimmed = (await response.text()).trim();
+  if (!trimmed || trimmed.startsWith('<')) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch (err) {
+    if (!contentType.includes('json')) return null;
+    throw err;
+  }
+}
 
 export function resolveApiBase({
   explicitApiUrl = import.meta.env.VITE_API_URL,

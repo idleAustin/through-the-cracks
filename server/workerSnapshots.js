@@ -1,6 +1,7 @@
 // Cloudflare Worker Edge Cache, optional R2 snapshot reader, and cache-epoch helpers.
 import { encodeArtistProfileKey, normalizeArtistKey } from './artistProfileBuilder.js';
-import { mapEpisodeRow, stripControlChars } from './d1Rollups.js';
+import { stripControlChars } from './d1Rollups.js';
+import { serveEpisodeDetailFromR2, serveEpisodesFromR2 } from './r2Episodes.js';
 import { computeCappedPagination, parseCapParam, parsePageParams, parseSortParam } from './routes/queryUtils.js';
 
 export { syncR2SnapshotsFromD1 } from './workerSnapshotSync.js';
@@ -147,10 +148,6 @@ function findCaseInsensitive(record, targetKey) {
   return null;
 }
 
-const normalizeR2Episode = (ep) => mapEpisodeRow({
-  id: ep.id, air_date: ep.air_date ?? ep.airDate ?? '', song_count: ep.song_count ?? ep.songCount ?? 0, url: ep.url || null,
-});
-
 function formatOverview(ov) {
   return {
     totalEpisodes: Number(ov.totalEpisodes ?? 0),
@@ -190,36 +187,6 @@ function serveYearSpinsFromR2(payload, query) {
     if (matched) series = summed;
   }
   return { years, spins: align(series), scope: 'song', artist: artist || null, song };
-}
-
-function serveEpisodesFromR2(indexJson, query) {
-  const { page, limit, offset } = parsePageParams(query);
-  const year = typeof query.year === 'string' && /^\d{4}$/.test(query.year.trim()) ? query.year.trim() : '';
-  const song = typeof query.song === 'string' ? query.song.trim().toLowerCase() : '';
-  const artist = typeof query.artist === 'string' ? query.artist.trim().toLowerCase() : '';
-
-  let filtered = indexJson.episodes || [];
-  if (song || artist) {
-    const matches = new Set();
-    const map = indexJson.songEpisodes || {};
-    if (song && artist) {
-      for (const id of map[`${song}\t${artist}`] || []) matches.add(String(id));
-    } else {
-      for (const [key, epIds] of Object.entries(map)) {
-        const tab = key.indexOf('\t');
-        const ks = tab === -1 ? key : key.slice(0, tab);
-        const ka = tab === -1 ? '' : key.slice(tab + 1);
-        if ((!song || ks === song) && (!artist || ka === artist)) {
-          for (const id of epIds) matches.add(String(id));
-        }
-      }
-    }
-    filtered = filtered.filter((ep) => matches.has(String(ep.id)));
-  }
-  if (year) filtered = filtered.filter((ep) => String(ep.air_date ?? ep.airDate ?? '').startsWith(year));
-  const total = filtered.length;
-  const items = filtered.slice(offset, offset + limit).map(normalizeR2Episode);
-  return { items, episodes: items, total, page, limit, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
 function paginateCatalog(list, query, { matches, compare, mapItem, resultKey }) {
@@ -313,26 +280,14 @@ export async function tryServeFromR2(apiPath, query = {}, env = {}, _ctx = null)
   }
   if (apiPath === '/api/episodes') {
     const idx = await loadR2Shared(bucket, state, 'v1/episodes-index.json');
-    return idx ? { status: 200, data: serveEpisodesFromR2(idx, query) } : null;
+    return idx ? { status: 200, data: await serveEpisodesFromR2(idx, query, (key) => loadR2Shared(bucket, state, key)) } : null;
   }
   if (epDec) {
-    const idx = await loadR2Shared(bucket, state, 'v1/episodes-index.json');
-    if (!idx) return null;
-    const summary = (idx.episodes || []).find((ep) => String(ep.id) === epDec.value);
-    if (!summary) return { status: 404, data: { error: 'Episode not found' } };
-    const year = String(summary.air_date ?? summary.airDate ?? '').slice(0, 4);
-    const shard = /^\d{4}$/.test(year) ? await loadR2Shared(bucket, state, `v1/playlists/${year}.json`) : null;
-    if (!shard) return null;
-    const playlist = (shard[epDec.value] || []).map((s, i) => {
-      const title = s.songTitle ?? s.song_title ?? s.song ?? '';
-      const feat = s.featuredArtist || s.featured_artist || '';
-      const kind = s.releaseKind || s.release_kind || '';
-      return {
-        position: Number(s.position ?? i + 1), song: s.song ?? title, songTitle: title, artist: s.artist || '',
-        ...(feat ? { featuredArtist: feat } : {}), album: s.album || '', ...(kind && kind !== 'album' ? { releaseKind: kind } : {}),
-      };
+    return serveEpisodeDetailFromR2(epDec.value, {
+      loadShared: (key) => loadR2Shared(bucket, state, key),
+      readSongLinks: () => readR2SongLinksSnapshot(env),
+      query,
     });
-    return { status: 200, data: { ...normalizeR2Episode(summary), playlist, songs: playlist } };
   }
   if (apiPath === '/api/artists') {
     const artists = await loadR2Shared(bucket, state, 'v1/artists.json');

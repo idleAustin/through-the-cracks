@@ -72,6 +72,10 @@ export default function App() {
     setOverviewRetryKey((key) => key + 1);
   }, []);
 
+  const pauseBackgroundPlaylist = useCallback(() => {
+    playerControlRef.current?.pause?.();
+  }, []);
+
   const footerSpins =
     overviewData?.totalSongPlays != null
       ? Number(overviewData.totalSongPlays).toLocaleString('en-US')
@@ -100,7 +104,10 @@ export default function App() {
         />
         <Route path="/artists" element={<ArtistsView />} />
         <Route path="/songs" element={<SongsView />} />
-        <Route path="/episodes" element={<EpisodesView />} />
+        <Route
+          path="/episodes"
+          element={<EpisodesView onPauseBackgroundPlaylist={pauseBackgroundPlaylist} />}
+        />
         <Route path="/search" element={<SearchView />} />
         <Route path="/playlist" element={null} />
         <Route path="*" element={<NotFoundState />} />

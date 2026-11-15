@@ -114,7 +114,7 @@ export function createApp({
   });
 
   app.use('/api', createOverviewRouter({ query, project, dataset }));
-  app.use('/api', createEpisodesRouter({ query, project, dataset }));
+  app.use('/api', createEpisodesRouter({ query, project, dataset, playlistSnapshotPath }));
   app.use('/api', createCatalogRouter({ query, project, dataset }));
   app.use('/api', createArtistProfileRouter({ query, project, dataset }));
   app.use(

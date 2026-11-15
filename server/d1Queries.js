@@ -2,12 +2,10 @@
 import {
   escapeLike,
   getRollupArtists,
-  getRollupEpisodes,
   getRollupOverview,
   getRollupSearch,
   getRollupSongs,
   getRollupYearSpins,
-  mapEpisodeRow,
   qAll,
   qFirst,
   stripControlChars,
@@ -15,6 +13,7 @@ import {
 } from './d1Rollups.js';
 import { computeCappedPagination, parseCapParam, parsePageParams, parseSortParam } from './routes/queryUtils.js';
 
+export { getD1EpisodeById, getD1Episodes } from './d1Episodes.js';
 export { clearD1Cache, qAll, qFirst, withCache } from './d1Rollups.js';
 
 export async function getD1Overview(db) {
@@ -90,56 +89,6 @@ export async function getD1YearSpins(db, queryParams = {}) {
     const years = Array.from({ length: maxYear - 2013 + 1 }, (_, i) => 2013 + i);
     const counts = new Map(rows.map((r) => [Number(r.year), Number(r.spins)]));
     return { years, spins: years.map((y) => counts.get(y) ?? 0), scope: song ? 'song' : artist ? 'artist' : 'archive', artist: artist || null, song: song || null };
-  });
-}
-
-export async function getD1Episodes(db, queryParams = {}) {
-  const { page, limit, offset } = parsePageParams(queryParams);
-  const year = typeof queryParams.year === 'string' && /^\d{4}$/.test(queryParams.year.trim()) ? queryParams.year.trim() : '';
-  const song = typeof queryParams.song === 'string' ? queryParams.song.trim().toLowerCase() : '';
-  const artist = typeof queryParams.artist === 'string' ? queryParams.artist.trim().toLowerCase() : '';
-
-  return withCache(db, `episodes:${year}:${song}:${artist}:${page}:${limit}`, async () => {
-    const rollup = await getRollupEpisodes(db, { year, song, artist, page, limit, offset });
-    if (rollup) return rollup;
-
-    const conds = [];
-    const spConds = [];
-    const params = [];
-    if (year) { conds.push('SUBSTR(e.air_date, 1, 4) = ?'); params.push(year); }
-    if (song) { spConds.push('LOWER(TRIM(sp.song_title)) = ?'); params.push(song); }
-    if (artist) { spConds.push('LOWER(TRIM(sp.artist)) = ?'); params.push(artist); }
-    if (spConds.length) conds.push(`e.id IN (SELECT DISTINCT sp.episode_id FROM song_plays sp WHERE ${spConds.join(' AND ')})`);
-    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
-
-    const [rows, countRow] = await Promise.all([
-      qAll(db, `SELECT e.id, e.air_date, e.url, e.song_count FROM episodes e ${where} ORDER BY e.air_date DESC, e.id DESC LIMIT ? OFFSET ?`, [...params, limit, offset]),
-      qFirst(db, `SELECT COUNT(1) AS total FROM episodes e ${where}`, params),
-    ]);
-    const items = rows.map(mapEpisodeRow);
-    const total = Number(countRow?.total ?? 0);
-    return { items, episodes: items, total, page, limit, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-  });
-}
-
-export async function getD1EpisodeById(db, id) {
-  const epId = String(id ?? '');
-  return withCache(db, `episode:${epId}`, async () => {
-    const [epRow, songRows] = await Promise.all([
-      qFirst(db, 'SELECT id, air_date, url, song_count FROM episodes WHERE id = ?', [epId]),
-      qAll(db, 'SELECT position, artist, featured_artist, song_title, album, release_kind FROM song_plays WHERE episode_id = ? ORDER BY position ASC', [epId]),
-    ]);
-    if (!epRow) return null;
-    const playlist = songRows.map((s) => ({
-      position: Number(s.position),
-      song: s.song_title,
-      songTitle: s.song_title,
-      artist: s.artist,
-      ...(s.featured_artist ? { featuredArtist: s.featured_artist } : {}),
-      album: s.album || '',
-      ...(s.release_kind && s.release_kind !== 'album' ? { releaseKind: s.release_kind } : {}),
-    }));
-    return { ...mapEpisodeRow(epRow), playlist, songs: playlist };
   });
 }
 

@@ -118,11 +118,15 @@ export async function getEpisodes(optionsOrPage = 1, maybeLimit = 20) {
   const year = String(opts.year || '').trim();
   const song = String(opts.song || '').trim();
   const artist = String(opts.artist || '').trim();
+  const q = String(opts.q || '').trim();
+  const day = String(opts.day || '').trim();
 
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (/^\d{4}$/.test(year)) params.set('year', year);
   if (song) params.set('song', song);
   if (artist) params.set('artist', artist);
+  if (q) params.set('q', q);
+  if (day) params.set('day', day);
 
   const liveData = await fetchApiJson(`/episodes?${params.toString()}`);
   if (liveData !== null) {
@@ -149,13 +153,15 @@ export async function getEpisodes(optionsOrPage = 1, maybeLimit = 20) {
     };
   }
 
-  const data = await getStaticEpisodes({ year, song, artist, page, limit });
+  const data = await getStaticEpisodes({ year, song, artist, q, day, page, limit });
   setArchiveMode('static');
   return { data, source: 'static-json', mode: 'static' };
 }
 
-export async function getEpisodeById(id) {
-  const liveData = await fetchApiJson(`/episodes/${encodeURIComponent(id)}`);
+export async function getEpisodeById(id, { provenance = false } = {}) {
+  const withProvenance = Boolean(provenance);
+  const query = withProvenance ? '?provenance=1' : '';
+  const liveData = await fetchApiJson(`/episodes/${encodeURIComponent(id)}${query}`);
   if (liveData !== null) {
     return {
       data: normalizeEpisodeDetail(liveData, liveData.playlist || liveData.songs || []),
@@ -164,7 +170,7 @@ export async function getEpisodeById(id) {
     };
   }
 
-  const data = await getStaticEpisodeById(id);
+  const data = await getStaticEpisodeById(id, { provenance: withProvenance });
   setArchiveMode('static');
   return { data, source: 'static-json', mode: 'static' };
 }
