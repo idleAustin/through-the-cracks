@@ -33,6 +33,7 @@ DEFAULT_RETRY_DELAYS = (30.0, 120.0, 600.0)
 SHORT_CIRCUIT_SCORE = 85
 
 __all__ = [
+    "AdaptivePacer",
     "DiscoveryRetryExhaustedError",
     "discover_song",
     "filter_songs_by_pass",
@@ -44,6 +45,53 @@ __all__ = [
     "score_candidate",
     "tier_for",
 ]
+
+
+class AdaptivePacer:
+    """Adaptive request jitter pacer that scales up on retries and decays after clean streaks."""
+
+    def __init__(
+        self,
+        min_jitter: float = 0.25,
+        max_jitter: float = 0.55,
+        penalty_factor: float = 1.75,
+        max_multiplier: float = 4.0,
+        recovery_streak: int = 8,
+        decay_factor: float = 0.85,
+    ) -> None:
+        self.min_jitter = max(0.0, float(min_jitter))
+        self.max_jitter = float(max_jitter)
+        if self.max_jitter > 0 and self.max_jitter < self.min_jitter:
+            self.max_jitter = self.min_jitter
+        self.penalty_factor = float(penalty_factor)
+        self.max_multiplier = float(max_multiplier)
+        self.recovery_streak = int(recovery_streak)
+        self.decay_factor = float(decay_factor)
+        self.multiplier = 1.0
+        self.clean_streak = 0
+
+    def record_retry(self) -> float:
+        """Reset clean streak and scale jitter multiplier upward up to max_multiplier."""
+        self.clean_streak = 0
+        self.multiplier = min(self.max_multiplier, self.multiplier * self.penalty_factor)
+        return self.multiplier
+
+    def record_success(self) -> float:
+        """Track consecutive clean calls and gently decay multiplier back toward 1.0x."""
+        if self.multiplier > 1.0:
+            self.clean_streak += 1
+            if self.clean_streak >= self.recovery_streak:
+                self.clean_streak = 0
+                self.multiplier = max(1.0, self.multiplier * self.decay_factor)
+                if self.multiplier < 1.02:
+                    self.multiplier = 1.0
+        return self.multiplier
+
+    def next_delay(self, rng_obj: Any = random) -> float:
+        """Sample next pre-request jitter delay scaled by the active multiplier."""
+        if self.max_jitter <= 0:
+            return 0.0
+        return rng_obj.uniform(self.min_jitter * self.multiplier, self.max_jitter * self.multiplier)
 
 
 class DiscoveryRetryExhaustedError(RuntimeError):
@@ -90,21 +138,28 @@ def _search_with_retry(
     retry_delays: Sequence[float],
     sleep_fn: Callable[[float], None],
     on_before_retry: Callable[[], None] | None,
+    pacer: AdaptivePacer | None = None,
 ) -> list[dict[str, Any]]:
     for attempt in range(len(retry_delays) + 1):
         try:
-            return ytm.search(query, filter=search_filter, limit=5) or []
+            hits = ytm.search(query, filter=search_filter, limit=5) or []
+            if pacer:
+                pacer.record_success()
+            return hits
         except Exception as exc:  # noqa: BLE001
             if on_before_retry:
                 on_before_retry()
+            if pacer:
+                pacer.record_retry()
             if attempt >= len(retry_delays):
                 raise DiscoveryRetryExhaustedError(
                     f"Exhausted retries ({len(retry_delays)}) during {search_filter} search for {query!r}: {exc}"
                 ) from exc
             delay = float(retry_delays[attempt])
+            pace_note = f" [pace={pacer.multiplier:.2f}x]" if pacer else ""
             print(
                 f"Rate-limit/network error on {search_filter} search for {query!r}: {exc}. "
-                f"Backing off {delay:g}s (retry {attempt + 1}/{len(retry_delays)})...",
+                f"Backing off {delay:g}s (retry {attempt + 1}/{len(retry_delays)})...{pace_note}",
                 file=sys.stderr,
             )
             if delay > 0:
@@ -123,9 +178,11 @@ def discover_song(
     sleep_fn: Callable[[float], None] = time.sleep,
     on_before_retry: Callable[[], None] | None = None,
     has_prior_request: bool = False,
+    pacer: AdaptivePacer | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Discover best YouTube Music match for one normalized song."""
     rng_obj = rng or random
+    active_pacer = pacer if pacer is not None else AdaptivePacer(min_jitter=min_jitter, max_jitter=max_jitter)
     title = song_title_of(song)
     artist = str(song.get("artist") or "").strip()
     query = f"{artist} {title}".strip()
@@ -135,10 +192,18 @@ def discover_song(
     for search_filter in ("songs", "videos"):
         if best_entry and best_entry["confidence_score"] >= SHORT_CIRCUIT_SCORE:
             break
-        if made_request and max_jitter > 0:
-            sleep_fn(rng_obj.uniform(min_jitter, max_jitter))
+        if made_request and active_pacer.max_jitter > 0:
+            sleep_fn(active_pacer.next_delay(rng_obj))
         made_request = True
-        hits = _search_with_retry(ytm, query, search_filter, retry_delays, sleep_fn, on_before_retry)
+        hits = _search_with_retry(
+            ytm,
+            query,
+            search_filter,
+            retry_delays,
+            sleep_fn,
+            on_before_retry,
+            pacer=active_pacer,
+        )
         for hit in hits:
             vid = hit.get("videoId")
             if not vid:
@@ -214,6 +279,7 @@ def run_discovery(
 
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     has_prior_request = False
+    pacer = AdaptivePacer(min_jitter=min_jitter, max_jitter=max_jitter)
     with checkpoint_path.open("a", encoding="utf-8") as fh:
         if needs_leading_newline:
             fh.write("\n")
@@ -226,6 +292,7 @@ def run_discovery(
             except OSError:
                 pass
 
+        print(f"[{pass_mode}] Starting discovery: pending={len(pending)}, skipped={skipped_count}, jitter={pacer.min_jitter:g}-{pacer.max_jitter:g}s")
         for idx, song in enumerate(pending, start=1):
             record, has_prior_request = discover_song(
                 song,
@@ -237,13 +304,14 @@ def run_discovery(
                 sleep_fn=sleep_fn,
                 on_before_retry=flush_checkpoint,
                 has_prior_request=has_prior_request,
+                pacer=pacer,
             )
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
             fh.flush()
             summary["processed"] += 1
             summary["tiers"][record["match_tier"]] += 1
             if idx % 50 == 0 or idx == len(pending):
-                print(f"[{pass_mode}] Processed {idx}/{len(pending)} | tiers={summary['tiers']}")
+                print(f"[{pass_mode}] Processed {idx}/{len(pending)} | tiers={summary['tiers']} | pace={pacer.multiplier:.2f}x")
         flush_checkpoint()
 
     return summary

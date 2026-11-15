@@ -51,10 +51,16 @@ describe('Stage 1: prepare-song-links-input', () => {
     expect(summarizeCatalogInput(prepared)).toEqual({ total: 4, multi: 2, single: 2 });
   });
 
-  it('produces exact 16,285 unique keys (9,289 multi + 6,996 single) from public/data/songs.json', () => {
+  it('matches public/data/overview.json uniqueSongs and oneSpinSongs from public/data/songs.json', () => {
     const songs = JSON.parse(readFileSync(path.join(ROOT, 'public', 'data', 'songs.json'), 'utf8'));
+    const overview = JSON.parse(readFileSync(path.join(ROOT, 'public', 'data', 'overview.json'), 'utf8'));
     const prepared = prepareCatalogInput(songs);
-    expect(summarizeCatalogInput(prepared)).toEqual({ total: 16285, multi: 9289, single: 6996 });
+    expect(overview.uniqueSongs).toBeGreaterThanOrEqual(16285);
+    expect(summarizeCatalogInput(prepared)).toEqual({
+      total: overview.uniqueSongs,
+      multi: overview.uniqueSongs - overview.oneSpinSongs,
+      single: overview.oneSpinSongs,
+    });
     expect(prepared.findIndex((r) => r.song_key !== buildSongKey(r.artist, r.song_title))).toBe(-1);
     expect(prepared.findIndex((r, i) => i > 0 && !(prepared[i - 1].totalPlays > r.totalPlays || (prepared[i - 1].totalPlays === r.totalPlays && prepared[i - 1].song_key < r.song_key)))).toBe(-1);
   });
@@ -200,6 +206,109 @@ print(json.dumps({"sleeps": sleeps, "backoff": backoff, "defaults": list(mod.DEF
       ['todd snider|||alright guy', 'vid-todd', 'high'],
       ['medium artist|||upgrade tune', 'vid-high-vid', 'high'],
     ]);
+  });
+
+  it('scales jitter up on 429 retries and decays cleanly back toward 1.0x via AdaptivePacer', () => {
+    const dir = makeTempDir('ttc-stage2-pacer-');
+    const inputPath = path.join(dir, 'catalog.json');
+    const ckptPath = path.join(dir, 'checkpoint.jsonl');
+    const logPath = path.join(dir, 'calls.jsonl');
+    const catalog = Array.from({ length: 36 }, (_, idx) => {
+      const n = String(idx + 1).padStart(2, '0');
+      return { song_key: `artist ${n}|||ballad ${n}`, artist: `Artist ${n}`, song_title: `Ballad ${n}`, album: `Album ${n}`, totalPlays: 2 };
+    });
+    writeFileSync(inputPath, JSON.stringify(catalog), 'utf8');
+    writeFileSync(
+      path.join(dir, 'ytmusicapi.py'),
+      `import json, os
+from pathlib import Path
+_CATALOG = {f"{s['artist']} {s['song_title']}": s for s in json.loads((Path(__file__).parent / "catalog.json").read_text(encoding="utf-8"))}
+class YTMusic:
+    def __init__(self):
+        self.failed_once = False
+    def search(self, query, filter="songs", limit=5):
+        with open(os.environ["FAKE_YTM_LOG"], "a", encoding="utf-8") as fh:
+            fh.write(json.dumps([query, filter]) + "\\n")
+        if filter == "songs" and query == "Artist 02 Ballad 02" and not self.failed_once:
+            self.failed_once = True
+            raise RuntimeError("HTTP 429")
+        song = _CATALOG.get(query)
+        if filter == "songs" and song:
+            return [{"videoId": f"vid-{song['artist'].split()[-1]}", "title": song["song_title"], "artists": [{"name": song["artist"]}], "album": {"name": song["album"]}, "resultType": "song", "duration_seconds": 200}]
+        return []
+`,
+      'utf8',
+    );
+    if (!HAS_RAPIDFUZZ) {
+      writeFileSync(
+        path.join(dir, 'rapidfuzz.py'),
+        `from difflib import SequenceMatcher
+def _r(a, b):
+    return SequenceMatcher(None, a or "", b or "").ratio() * 100.0
+class fuzz:
+    ratio = token_sort_ratio = token_set_ratio = staticmethod(_r)
+`,
+        'utf8',
+      );
+    }
+
+    const pyCheck = `
+import importlib.util, json, random
+from pathlib import Path
+from ytmusicapi import YTMusic
+spec = importlib.util.spec_from_file_location("discover", ${JSON.stringify(DISCOVER_SCRIPT)})
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+
+pacer = mod.AdaptivePacer()
+r1 = pacer.record_retry()
+pacer.record_success(); pacer.record_success()
+streak_mid = pacer.clean_streak
+r2 = pacer.record_retry()
+streak_reset = pacer.clean_streak
+r3 = pacer.record_retry()
+r4 = pacer.record_retry()
+decay_seq = [pacer.record_success() for _ in range(72)]
+
+sleeps = []
+summary = mod.run_discovery(
+    input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(ckptPath)}),
+    pass_mode="all", retry_delays=(5.0,), min_jitter=1.5, max_jitter=3.0,
+    ytm=YTMusic(), sleep_fn=sleeps.append, rng=random.Random(1),
+)
+print(json.dumps({
+    "retrySteps": [r1, r2, r3, r4], "streakMid": streak_mid, "streakReset": streak_reset,
+    "beforeEighth": decay_seq[6], "eighths": decay_seq[7::8],
+    "finalMultiplier": pacer.multiplier, "finalStreak": pacer.clean_streak,
+    "summary": summary, "sleeps": sleeps,
+}))
+`;
+    const res = runPy(PYTHON_BIN, dir, logPath, ['-c', pyCheck]);
+    expect(res.status, res.stderr).toBe(0);
+    const out = JSON.parse(res.stdout.trim().split('\n').pop());
+
+    expect(out.retrySteps).toEqual([1.75, 3.0625, 4.0, 4.0]);
+    expect(out.streakMid).toBe(2);
+    expect(out.streakReset).toBe(0);
+    expect(out.beforeEighth).toBe(4.0);
+    expect(out.eighths).toHaveLength(9);
+    out.eighths.slice(0, 8).forEach((val, idx) => expect(val).toBeCloseTo(4.0 * 0.85 ** (idx + 1), 6));
+    expect(out.eighths[8]).toBe(1.0);
+    expect(out.finalMultiplier).toBe(1.0);
+    expect(out.finalStreak).toBe(0);
+
+    expect(out.summary).toMatchObject({ totalInPass: 36, processed: 36, tiers: { high: 36, medium: 0, low: 0, unmatched: 0 } });
+    expect(out.sleeps).toHaveLength(36);
+    expect(out.sleeps[0]).toBeGreaterThanOrEqual(1.5);
+    expect(out.sleeps[0]).toBeLessThanOrEqual(3.0);
+    expect(out.sleeps[1]).toBe(5.0);
+
+    const inRange = (arr, lo, hi) => arr.every((d) => d >= lo && d <= hi);
+    expect(inRange(out.sleeps.slice(2, 9), 1.5 * 1.75, 3.0 * 1.75)).toBe(true);
+    expect(inRange(out.sleeps.slice(9, 17), 1.5 * 1.75 * 0.85, 3.0 * 1.75 * 0.85)).toBe(true);
+    expect(out.sleeps[9]).toBeLessThan(2.625);
+    expect(inRange(out.sleeps.slice(33), 1.5, 3.0)).toBe(true);
+    expect(readFileSync(logPath, 'utf8').trim().split('\n')).toHaveLength(37);
+    expect(readCkpt(ckptPath)).toHaveLength(36);
   });
 });
 
