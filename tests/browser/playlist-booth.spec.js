@@ -162,9 +162,11 @@ test.describe('Broadcast Booth Ticket 02 (/playlist)', () => {
     await expect(page).toHaveURL('/playlist?mode=deep_cuts&minScore=65');
     await expect(page.locator('.booth-pool-pill .num')).toHaveText('13');
 
+    const beforeToggleSongs = await rowSongs.allTextContents();
     await artistToggle.click();
     await expect(page).toHaveURL('/playlist?mode=deep_cuts&minScore=65&onePerArtist=false');
     await expect(artistToggle).toHaveAttribute('aria-pressed', 'false');
+    await expect.poll(() => rowSongs.allTextContents()).not.toEqual(beforeToggleSongs);
     await expect(page.locator('.booth-cockpit')).not.toHaveAttribute('aria-busy', 'true');
     const beforeReload = await rowSongs.allTextContents();
 
@@ -173,7 +175,7 @@ test.describe('Broadcast Booth Ticket 02 (/playlist)', () => {
     await expect(deepBtn).toHaveAttribute('aria-pressed', 'true');
     await expect(scoreSelect).toHaveValue('65');
     await expect(artistToggle).toHaveAttribute('aria-pressed', 'false');
-    await expect.poll(() => rowSongs.allTextContents()).not.toEqual(beforeReload);
+    await expect.poll(() => rowSongs.allTextContents()).toEqual(beforeReload);
     const afterReload = await rowSongs.allTextContents();
 
     await page.getByRole('button', { name: 'Roll 10' }).click();

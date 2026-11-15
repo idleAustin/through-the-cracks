@@ -1,31 +1,46 @@
-// Route container for /playlist managing URL-synced filters, random 10-Song Playlist draws, concurrent slot swaps, and exports.
+// Route container for /playlist managing 2-hour cached session state, background playback, swaps, and exports.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getRandomPlaylist } from '../api';
 import {
   DEFAULT_PLAYLIST_FILTERS,
-  applyPlaylistFiltersToSearchParams,
-  areDefaultPlaylistFilters,
-  buildSwapExcludeArtists,
-  buildSwapExcludeIds,
   buildYouTubeQueueUrl,
   copyTextToClipboard,
   formatPlaylistText,
   parsePlaylistFilters,
 } from '../utils/playlist-helpers';
+import { readStoredPlaylistSession, writeStoredPlaylistSession } from '../utils/playlist-storage';
+import { resolvePlaylistSlotSwap } from '../utils/playlist-swap';
 import PlaylistBooth from './PlaylistBooth';
+import usePlaylistFilterUrlSync from './usePlaylistFilterUrlSync';
 
-export default function PlaylistView() {
+function buildDrawKey(mode, minScore, onePerArtist, drawTick) {
+  return `${mode}:${minScore}:${onePerArtist}:${drawTick}`;
+}
+
+export default function PlaylistView({
+  isActiveRoute = true,
+  playerControlRef = null,
+  onSessionStateChange = null,
+}) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const filters = useMemo(() => parsePlaylistFilters(searchParams), [searchParams]);
+  const location = useLocation();
 
-  const [queue, setQueue] = useState([]);
-  const [poolSize, setPoolSize] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const initialBootstrapRef = useRef(null);
+  if (initialBootstrapRef.current === null) {
+    const initialFilters = parsePlaylistFilters(location.search);
+    const stored = readStoredPlaylistSession(initialFilters);
+    initialBootstrapRef.current = { filters: stored ? stored.filters : initialFilters, stored };
+  }
+
+  const { filters: bootstrapFilters, stored: storedBoot } = initialBootstrapRef.current;
+  const [queue, setQueue] = useState(() => (storedBoot ? storedBoot.queue : []));
+  const [poolSize, setPoolSize] = useState(() => (storedBoot ? storedBoot.poolSize : 0));
+  const [activeIndex, setActiveIndex] = useState(() => (storedBoot ? storedBoot.activeIndex : 0));
   const [autoplay, setAutoplay] = useState(false);
   const [playerStatus, setPlayerStatus] = useState('cued');
-  const [loading, setLoading] = useState(true);
+  const [playbackEngaged, setPlaybackEngaged] = useState(false);
+  const [loading, setLoading] = useState(() => !storedBoot);
   const [rolling, setRolling] = useState(false);
   const [swappingSlots, setSwappingSlots] = useState(() => new Set());
   const [error, setError] = useState('');
@@ -34,29 +49,52 @@ export default function PlaylistView() {
 
   const mountedRef = useRef(true);
   const drawSeqRef = useRef(0);
+  const hydratedDrawKeyRef = useRef(
+    storedBoot
+      ? buildDrawKey(storedBoot.filters.mode, storedBoot.filters.minScore, storedBoot.filters.onePerArtist, 0)
+      : null,
+  );
+  const queueFiltersRef = useRef(storedBoot ? storedBoot.filters : null);
+  const lastPersistedSnapshotRef = useRef(
+    storedBoot
+      ? { queue: storedBoot.queue, poolSize: storedBoot.poolSize, activeIndex: storedBoot.activeIndex }
+      : null,
+  );
   const queueRef = useRef(queue);
   const activeIndexRef = useRef(activeIndex);
-  const filtersRef = useRef(filters);
+  const playerStatusRef = useRef(playerStatus);
   const errorRef = useRef(error);
   const swappingSlotsRef = useRef(new Set());
   const inFlightReplacementIdsRef = useRef(new Set());
   const copyTimerRef = useRef(null);
-  const pendingParamsRef = useRef(null);
 
   queueRef.current = queue;
   activeIndexRef.current = activeIndex;
-  filtersRef.current = filters;
+  playerStatusRef.current = playerStatus;
   errorRef.current = error;
 
-  useEffect(() => {
-    pendingParamsRef.current = null;
-  }, [searchParams]);
+  const handleRoll = useCallback(() => {
+    setDrawTick((t) => t + 1);
+  }, []);
+
+  const {
+    filters,
+    filtersRef,
+    playlistHref,
+    handleModeChange,
+    handleMinScoreChange,
+    handleToggleOnePerArtist,
+    handleClearFilters,
+  } = usePlaylistFilterUrlSync({
+    isActiveRoute,
+    initialFilters: bootstrapFilters,
+    hasPlayableQueue: () => queueRef.current.length > 0,
+    onClearAlreadyDefault: handleRoll,
+  });
 
   useEffect(() => {
     for (const item of queue) {
-      if (item?.videoId) {
-        inFlightReplacementIdsRef.current.delete(item.videoId);
-      }
+      if (item?.videoId) inFlightReplacementIdsRef.current.delete(item.videoId);
     }
   }, [queue]);
 
@@ -69,9 +107,18 @@ export default function PlaylistView() {
   }, []);
 
   useEffect(() => {
+    const drawKey = buildDrawKey(filters.mode, filters.minScore, filters.onePerArtist, drawTick);
+    if (hydratedDrawKeyRef.current === drawKey) return undefined;
+    hydratedDrawKeyRef.current = null;
+
     const seq = drawSeqRef.current + 1;
     drawSeqRef.current = seq;
     const controller = new AbortController();
+    const drawnFilters = {
+      mode: filters.mode,
+      minScore: filters.minScore,
+      onePerArtist: filters.onePerArtist,
+    };
 
     swappingSlotsRef.current.clear();
     inFlightReplacementIdsRef.current.clear();
@@ -92,16 +139,34 @@ export default function PlaylistView() {
 
     getRandomPlaylist({
       count: DEFAULT_PLAYLIST_FILTERS.count,
-      mode: filters.mode,
-      minScore: filters.minScore,
-      onePerArtist: filters.onePerArtist,
+      mode: drawnFilters.mode,
+      minScore: drawnFilters.minScore,
+      onePerArtist: drawnFilters.onePerArtist,
       signal: controller.signal,
     })
       .then((res) => {
         if (!mountedRef.current || drawSeqRef.current !== seq || controller.signal.aborted) return;
         const data = res.data || {};
-        setQueue(Array.isArray(data.songs) ? data.songs : []);
-        setPoolSize(Number(data.poolSize ?? 0));
+        const songs = Array.isArray(data.songs) ? data.songs : [];
+        const nextPoolSize = Number(data.poolSize ?? 0);
+
+        if (songs.length > 0) {
+          queueFiltersRef.current = drawnFilters;
+          writeStoredPlaylistSession({
+            filters: drawnFilters,
+            queue: songs,
+            poolSize: nextPoolSize,
+            activeIndex: 0,
+          });
+          lastPersistedSnapshotRef.current = { queue: songs, poolSize: nextPoolSize, activeIndex: 0 };
+        } else {
+          queueFiltersRef.current = null;
+          lastPersistedSnapshotRef.current = null;
+          setPlaybackEngaged(false);
+        }
+
+        setQueue(songs);
+        setPoolSize(nextPoolSize);
         setActiveIndex(0);
         setAutoplay(false);
         setPlayerStatus('cued');
@@ -118,57 +183,36 @@ export default function PlaylistView() {
           return;
         }
         setError(err?.message || 'Could not load random Playlist.');
+        setPlaybackEngaged(false);
         setLoading(false);
         setRolling(false);
       });
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [filters.mode, filters.minScore, filters.onePerArtist, drawTick]);
 
-  const updateFilters = useCallback((deriveNext) => {
-    const base = pendingParamsRef.current || searchParams;
-    const current = parsePlaylistFilters(base);
-    const next = applyPlaylistFiltersToSearchParams(base, deriveNext(current));
-    pendingParamsRef.current = next;
-    setSearchParams(next);
-  }, [searchParams, setSearchParams]);
+  useEffect(() => {
+    if (loading || rolling || error || queue.length === 0 || !queueFiltersRef.current) return;
+    const last = lastPersistedSnapshotRef.current;
+    if (last && last.queue === queue && last.poolSize === poolSize && last.activeIndex === activeIndex) return;
+    writeStoredPlaylistSession({ filters: queueFiltersRef.current, queue, poolSize, activeIndex });
+    lastPersistedSnapshotRef.current = { queue, poolSize, activeIndex };
+  }, [activeIndex, error, loading, poolSize, queue, rolling]);
 
-  const handleModeChange = useCallback((nextMode) => {
-    updateFilters((current) => ({ ...current, mode: nextMode }));
-  }, [updateFilters]);
-
-  const handleMinScoreChange = useCallback((nextMinScore) => {
-    updateFilters((current) => ({ ...current, minScore: nextMinScore }));
-  }, [updateFilters]);
-
-  const handleToggleOnePerArtist = useCallback(() => {
-    updateFilters((current) => ({ ...current, onePerArtist: !current.onePerArtist }));
-  }, [updateFilters]);
-
-  const handleClearFilters = useCallback(() => {
-    const base = pendingParamsRef.current || searchParams;
-    const alreadyDefault = areDefaultPlaylistFilters(parsePlaylistFilters(base));
-    const next = new URLSearchParams(base);
-    next.delete('mode');
-    next.delete('minScore');
-    next.delete('onePerArtist');
-    pendingParamsRef.current = next;
-    setSearchParams(next);
-    if (alreadyDefault) {
-      setDrawTick((t) => t + 1);
+  useEffect(() => {
+    if (autoplay || playerStatus === 'playing' || playerStatus === 'buffering') {
+      setPlaybackEngaged(true);
     }
-  }, [searchParams, setSearchParams]);
+  }, [autoplay, playerStatus]);
+
+  useEffect(() => {
+    if (!loading && (error || queue.length === 0)) setPlaybackEngaged(false);
+  }, [error, loading, queue.length]);
 
   const handleRetry = useCallback(() => {
     setQueue([]);
     setError('');
     setLoading(true);
-    setDrawTick((t) => t + 1);
-  }, []);
-
-  const handleRoll = useCallback(() => {
     setDrawTick((t) => t + 1);
   }, []);
 
@@ -184,93 +228,52 @@ export default function PlaylistView() {
     setAutoplay(true);
   }, []);
 
-  const handleSwapIndex = useCallback(async (index) => {
-    const currentQueue = queueRef.current;
-    if (!currentQueue[index] || swappingSlotsRef.current.has(index)) return;
+  const handleTogglePlayPause = useCallback(() => {
+    const status = playerStatusRef.current;
+    if (status === 'playing' || status === 'buffering') {
+      playerControlRef?.current?.pause?.();
+      setAutoplay(false);
+      setPlayerStatus((prev) => (prev === 'playing' || prev === 'buffering' ? 'paused' : prev));
+      return;
+    }
+    setAutoplay(true);
+    setPlaybackEngaged(true);
+    playerControlRef?.current?.play?.();
+  }, [playerControlRef]);
 
+  const handleStopPlayback = useCallback(() => {
+    playerControlRef?.current?.pause?.();
+    setAutoplay(false);
+    setPlaybackEngaged(false);
+    setPlayerStatus((prev) => (prev === 'playing' || prev === 'buffering' ? 'paused' : prev));
+  }, [playerControlRef]);
+
+  const handleSwapIndex = useCallback(async (index) => {
+    if (!queueRef.current[index] || swappingSlotsRef.current.has(index)) return;
     const seq = drawSeqRef.current;
     swappingSlotsRef.current.add(index);
     setSwappingSlots(new Set(swappingSlotsRef.current));
 
-    const fetchSwapCandidate = async (exclude, excludeArtist) => {
-      const currentFilters = filtersRef.current;
-      return getRandomPlaylist({
-        mode: currentFilters.mode,
-        minScore: currentFilters.minScore,
-        onePerArtist: currentFilters.onePerArtist,
-        count: 1,
-        exclude,
-        excludeArtist,
-      });
-    };
-
     try {
-      const exclude = buildSwapExcludeIds(
-        currentQueue,
+      const outcome = await resolvePlaylistSlotSwap({
         index,
-        Array.from(inFlightReplacementIdsRef.current),
-      );
-      const excludeArtist = buildSwapExcludeArtists(
-        currentQueue,
-        index,
-        filtersRef.current.onePerArtist,
-      );
+        getQueue: () => queueRef.current,
+        getFilters: () => filtersRef.current,
+        inFlightReplacementIds: inFlightReplacementIdsRef.current,
+        isStale: () => !mountedRef.current || drawSeqRef.current !== seq,
+      });
+      if (!outcome) return;
 
-      let res = await fetchSwapCandidate(exclude, excludeArtist);
-      let replacement = res.data?.songs?.[0] || null;
-      if (!replacement && excludeArtist.length > 0) {
-        res = await fetchSwapCandidate(exclude, []);
-        replacement = res.data?.songs?.[0] || null;
-      }
-
-      if (!mountedRef.current || drawSeqRef.current !== seq || !replacement) return;
-
-      const isSlotCollision = (candidateId) => (
-        queueRef.current.some((item, idx) => idx !== index && item.videoId === candidateId)
-        || inFlightReplacementIdsRef.current.has(candidateId)
-      );
-
-      let attempts = 0;
-      const seenExcluded = new Set(inFlightReplacementIdsRef.current);
-      while (replacement && isSlotCollision(replacement.videoId) && attempts < 2) {
-        attempts += 1;
-        seenExcluded.add(replacement.videoId);
-        inFlightReplacementIdsRef.current.forEach((id) => seenExcluded.add(id));
-        const retryExclude = buildSwapExcludeIds(
-          queueRef.current,
-          index,
-          Array.from(seenExcluded),
-        );
-        const retryArtists = buildSwapExcludeArtists(
-          queueRef.current,
-          index,
-          filtersRef.current.onePerArtist,
-        );
-        res = await fetchSwapCandidate(retryExclude, retryArtists);
-        replacement = res.data?.songs?.[0] || null;
-        if (!replacement && retryArtists.length > 0) {
-          res = await fetchSwapCandidate(retryExclude, []);
-          replacement = res.data?.songs?.[0] || null;
-        }
-        if (!mountedRef.current || drawSeqRef.current !== seq || !replacement) return;
-      }
-
-      if (isSlotCollision(replacement.videoId)) return;
-
+      const { replacement, poolSize: nextPoolSize } = outcome;
       inFlightReplacementIdsRef.current.add(replacement.videoId);
       setQueue((prev) => {
-        if (!prev[index]) return prev;
-        if (prev.some((item, idx) => idx !== index && item.videoId === replacement.videoId)) {
+        if (!prev[index] || prev.some((item, idx) => idx !== index && item.videoId === replacement.videoId)) {
           return prev;
         }
         return prev.map((item, idx) => (idx === index ? replacement : item));
       });
-      if (res.data?.poolSize !== undefined) {
-        setPoolSize(Number(res.data.poolSize));
-      }
-      if (index === activeIndexRef.current) {
-        setAutoplay(true);
-      }
+      if (nextPoolSize !== undefined) setPoolSize(nextPoolSize);
+      if (index === activeIndexRef.current) setAutoplay(true);
     } catch {
       // Keep current queue intact if an individual swap request fails.
     } finally {
@@ -279,7 +282,7 @@ export default function PlaylistView() {
         setSwappingSlots(new Set(swappingSlotsRef.current));
       }
     }
-  }, []);
+  }, [filtersRef]);
 
   const handlePlayerEnded = useCallback(() => {
     const len = queueRef.current.length;
@@ -317,15 +320,43 @@ export default function PlaylistView() {
   }, [navigate]);
 
   const youtubeQueueUrl = useMemo(() => buildYouTubeQueueUrl(queue), [queue]);
+  const activeSong = queue[activeIndex] || null;
+
+  useEffect(() => {
+    if (typeof onSessionStateChange !== 'function') return;
+    onSessionStateChange({
+      activeSong,
+      activeIndex,
+      totalSlots: queue.length,
+      playerStatus,
+      playbackEngaged,
+      playlistHref,
+      onTogglePlayPause: handleTogglePlayPause,
+      onStep: handleStep,
+      onStopPlayback: handleStopPlayback,
+    });
+  }, [
+    activeIndex,
+    activeSong,
+    handleStep,
+    handleStopPlayback,
+    handleTogglePlayPause,
+    onSessionStateChange,
+    playbackEngaged,
+    playerStatus,
+    playlistHref,
+    queue.length,
+  ]);
 
   return (
     <PlaylistBooth
       filters={filters}
       queue={queue}
       activeIndex={activeIndex}
-      activeSong={queue[activeIndex] || null}
+      activeSong={activeSong}
       autoplay={autoplay}
       playerStatus={playerStatus}
+      playerControlRef={playerControlRef}
       poolSize={poolSize}
       loading={loading}
       rolling={rolling}

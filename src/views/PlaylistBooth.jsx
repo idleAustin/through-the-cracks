@@ -14,6 +14,7 @@ export default function PlaylistBooth({
   activeSong,
   autoplay,
   playerStatus,
+  playerControlRef = null,
   poolSize,
   loading,
   rolling,
@@ -80,6 +81,7 @@ export default function PlaylistBooth({
             activeSong={activeSong}
             autoplay={autoplay}
             playerStatus={playerStatus}
+            playerControlRef={playerControlRef}
             canSwap={canSwap}
             isActiveSwapping={swappingSlots.has(activeIndex)}
             youtubeQueueUrl={youtubeQueueUrl}

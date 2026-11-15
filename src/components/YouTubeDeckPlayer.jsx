@@ -47,6 +47,7 @@ function loadYouTubeIframeApi() {
 export default function YouTubeDeckPlayer({
   videoId,
   autoplay = false,
+  controlRef = null,
   onEnded,
   onStatusChange,
   className = '',
@@ -74,6 +75,32 @@ export default function YouTubeDeckPlayer({
   titleRef.current = title;
 
   const [embedBlocked, setEmbedBlocked] = useState(false);
+
+  useEffect(() => {
+    if (!controlRef) return undefined;
+    controlRef.current = {
+      play: () => {
+        if (readyRef.current && typeof playerRef.current?.playVideo === 'function') {
+          prevAutoplayRef.current = true;
+          onStatusChangeRef.current?.('buffering');
+          playerRef.current.playVideo();
+        } else if (readyRef.current && playerRef.current) {
+          onStatusChangeRef.current?.('buffering');
+        }
+      },
+      pause: () => {
+        if (readyRef.current && typeof playerRef.current?.pauseVideo === 'function') {
+          playerRef.current.pauseVideo();
+          onStatusChangeRef.current?.('paused');
+        } else if (readyRef.current && playerRef.current) {
+          onStatusChangeRef.current?.('paused');
+        }
+      },
+    };
+    return () => {
+      controlRef.current = null;
+    };
+  }, [controlRef]);
 
   useEffect(() => {
     let cancelled = false;

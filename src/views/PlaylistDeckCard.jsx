@@ -28,6 +28,7 @@ export default function PlaylistDeckCard({
   activeSong,
   autoplay,
   playerStatus,
+  playerControlRef = null,
   canSwap,
   isActiveSwapping,
   youtubeQueueUrl,
@@ -74,6 +75,7 @@ export default function PlaylistDeckCard({
       <YouTubeDeckPlayer
         videoId={activeSong.videoId}
         autoplay={autoplay}
+        controlRef={playerControlRef}
         onEnded={onPlayerEnded}
         onStatusChange={onPlayerStatusChange}
         title={`${activeSong.artist} — ${activeSong.songTitle}`}

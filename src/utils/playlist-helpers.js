@@ -68,6 +68,18 @@ export function areDefaultPlaylistFilters(filters) {
   );
 }
 
+export function hasExplicitPlaylistFilterParams(searchParams) {
+  const params = searchParams instanceof URLSearchParams
+    ? searchParams
+    : new URLSearchParams(searchParams || '');
+  return params.has('mode') || params.has('minScore') || params.has('onePerArtist');
+}
+
+export function buildPlaylistHref(filters = DEFAULT_PLAYLIST_FILTERS) {
+  const qs = applyPlaylistFiltersToSearchParams(new URLSearchParams(), filters).toString();
+  return qs ? `/playlist?${qs}` : '/playlist';
+}
+
 export function buildSwapExcludeIds(queue, targetIndex, extraIds = []) {
   const seen = new Set();
   const ids = [];
