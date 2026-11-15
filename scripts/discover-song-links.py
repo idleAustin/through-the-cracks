@@ -38,6 +38,12 @@ class DiscoveryRetryExhaustedError(RuntimeError):
     """Raised when rate-limit/network retries exhaust without poisoning checkpoints."""
 
 
+def _validate_search_mode(search_mode: str) -> str:
+    if search_mode not in ("unified", "split"):
+        raise ValueError(f"Unsupported --search-mode value: {search_mode}")
+    return search_mode
+
+
 def filter_songs_by_pass(songs: list[dict[str, Any]], pass_mode: str) -> list[dict[str, Any]]:
     """Select multi-spin, single-spin, or all songs for discovery."""
     if pass_mode == "multi":
@@ -72,15 +78,19 @@ def load_checkpoint_state(checkpoint_path: Path) -> tuple[set[str], bool]:
 
 
 def _search_with_retry(
-    ytm: Any, query: str, search_filter: str, retry_delays: Sequence[float],
+    ytm: Any, query: str, search_filter: str | None, retry_delays: Sequence[float],
     sleep_fn: Callable[[float], None], on_before_retry: Callable[[], None] | None,
+    *, limit: int = 5, ytm_factory: Callable[[], Any] | None = None,
+    on_ytm_rotated: Callable[[Any], None] | None = None,
     pacer: AdaptivePacer | None = None,
     on_retry_event: Callable[[dict[str, Any]], None] | None = None,
     log_fn: Callable[[str], None] | None = None,
 ) -> list[dict[str, Any]]:
+    current_ytm = ytm
+    filter_label = search_filter if search_filter is not None else "unified"
     for attempt in range(len(retry_delays) + 1):
         try:
-            hits = ytm.search(query, filter=search_filter, limit=5) or []
+            hits = current_ytm.search(query, filter=search_filter, limit=limit) or []
             if pacer:
                 pacer.record_success()
             return hits
@@ -92,22 +102,26 @@ def _search_with_retry(
             backoff = float(retry_delays[attempt]) if attempt < len(retry_delays) else 0.0
             if on_retry_event:
                 on_retry_event({
-                    "query": query, "search_filter": search_filter, "attempt": attempt + 1,
+                    "query": query, "search_filter": filter_label, "attempt": attempt + 1,
                     "max_retries": len(retry_delays), "backoff_seconds": backoff,
                     "pace_multiplier": pacer.multiplier if pacer else 1.0, "error": str(exc),
                 })
             if attempt >= len(retry_delays):
                 raise DiscoveryRetryExhaustedError(
-                    f"Exhausted retries ({len(retry_delays)}) during {search_filter} search for {query!r}: {exc}"
+                    f"Exhausted retries ({len(retry_delays)}) during {filter_label} search for {query!r}: {exc}"
                 ) from exc
             pace_note = f" [pace={pacer.multiplier:.2f}x]" if pacer else ""
             msg = (
-                f"Rate-limit/network error on {search_filter} search for {query!r}: {exc}. "
+                f"Rate-limit/network error on {filter_label} search for {query!r}: {exc}. "
                 f"Backing off {backoff:g}s (retry {attempt + 1}/{len(retry_delays)})...{pace_note}"
             )
             log_fn(msg) if log_fn else print(msg, file=sys.stderr)
             if backoff > 0:
                 sleep_fn(backoff)
+            if ytm_factory is not None:
+                current_ytm = ytm_factory()
+                if on_ytm_rotated is not None:
+                    on_ytm_rotated(current_ytm)
     return []
 
 
@@ -117,9 +131,12 @@ def discover_song(
     sleep_fn: Callable[[float], None] = time.sleep, on_before_retry: Callable[[], None] | None = None,
     has_prior_request: bool = False, pacer: AdaptivePacer | None = None,
     on_retry_event: Callable[[dict[str, Any]], None] | None = None,
-    log_fn: Callable[[str], None] | None = None,
+    log_fn: Callable[[str], None] | None = None, search_mode: str = "unified",
+    ytm_factory: Callable[[], Any] | None = None,
+    on_ytm_rotated: Callable[[Any], None] | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Discover best YouTube Music match for one normalized song."""
+    _validate_search_mode(search_mode)
     rng_obj = rng or random
     active_pacer = pacer if pacer is not None else AdaptivePacer(min_jitter=min_jitter, max_jitter=max_jitter)
     title = song_title_of(song)
@@ -127,18 +144,31 @@ def discover_song(
     query = f"{artist} {title}".strip()
     best_entry: dict[str, Any] | None = None
     made_request = has_prior_request
+    active_client = [ytm]
 
-    for search_filter in ("songs", "videos"):
+    def _handle_rotation(new_client: Any) -> None:
+        active_client[0] = new_client
+        if on_ytm_rotated is not None:
+            on_ytm_rotated(new_client)
+
+    search_passes: tuple[tuple[str | None, int], ...] = ((None, 10),) if search_mode == "unified" else (("songs", 5), ("videos", 5))
+    for search_filter, search_limit in search_passes:
         if best_entry and best_entry["confidence_score"] >= SHORT_CIRCUIT_SCORE:
             break
         if made_request and active_pacer.max_jitter > 0:
             sleep_fn(active_pacer.next_delay(rng_obj))
         made_request = True
         hits = _search_with_retry(
-            ytm, query, search_filter, retry_delays, sleep_fn, on_before_retry,
+            active_client[0], query, search_filter, retry_delays, sleep_fn, on_before_retry,
+            limit=search_limit, ytm_factory=ytm_factory, on_ytm_rotated=_handle_rotation,
             pacer=active_pacer, on_retry_event=on_retry_event, log_fn=log_fn,
         )
         for hit in hits:
+            if hit.get("isAvailable") is False:
+                continue
+            rt = hit.get("resultType")
+            if (rt not in ("song", "video")) if search_filter is None else (rt is not None and rt not in ("song", "video")):
+                continue
             vid = hit.get("videoId")
             if not vid:
                 continue
@@ -151,7 +181,7 @@ def discover_song(
                 best_entry = {
                     "video_id": vid, "yt_title": hit.get("title", ""), "yt_artist": ", ".join(yt_artists),
                     "yt_album": yt_album, "duration_seconds": scored.get("duration_seconds"),
-                    "result_type": hit.get("resultType") or ("song" if search_filter == "songs" else "video"),
+                    "result_type": rt or ("song" if search_filter == "songs" else "video"),
                     "confidence_score": int(scored["score"]),
                 }
 
@@ -172,14 +202,15 @@ def discover_song(
 
 def run_discovery(
     *, input_path: Path = DEFAULT_INPUT_PATH, checkpoint_path: Path = DEFAULT_CHECKPOINT_PATH,
-    pass_mode: str = "all", limit: int | None = None,
+    pass_mode: str = "all", search_mode: str = "unified", limit: int | None = None,
     retry_delays: Sequence[float] = DEFAULT_RETRY_DELAYS,
     min_jitter: float = 0.25, max_jitter: float = 0.55,
     batch_size: int = 0, cooldown_min: float = 0.0, cooldown_max: float = 0.0,
-    initial_cooldown: float = 0.0, ytm: Any = None,
+    initial_cooldown: float = 0.0, ytm: Any = None, ytm_factory: Callable[[], Any] | None = None,
     sleep_fn: Callable[[float], None] = time.sleep, rng: random.Random | None = None,
 ) -> dict[str, Any]:
     """Run resumable single-threaded Stage 2 discovery against catalog-input.json."""
+    _validate_search_mode(search_mode)
     batch_size = max(0, int(batch_size))
     cooldown_min, cooldown_max = max(0.0, float(cooldown_min)), max(0.0, float(cooldown_max))
     if cooldown_min > 0 and cooldown_max < cooldown_min:
@@ -198,19 +229,21 @@ def run_discovery(
     summary = {"totalInPass": len(selected), "skippedCompleted": skipped_count, "processed": 0, "tiers": {"high": 0, "medium": 0, "low": 0, "unmatched": 0}}
     if not pending:
         return summary
-    if ytm is None:
+
+    factory = ytm_factory
+    if ytm is None and factory is None:
         from ytmusicapi import YTMusic
-        ytm = YTMusic()
+        factory = YTMusic
 
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     has_prior_request = False
     pacer = AdaptivePacer(min_jitter=min_jitter, max_jitter=max_jitter)
     status = DiscoveryStatusWriter(
         checkpoint_path.parent / "discovery-status.json", checkpoint_path.parent / "discovery.log",
-        pass_mode=pass_mode, total_in_pass=len(selected), skipped_completed=skipped_count,
-        pending_total=len(pending), batch_size=batch_size, min_jitter=pacer.min_jitter,
-        max_jitter=pacer.max_jitter, cooldown_min=cooldown_min, cooldown_max=cooldown_max,
-        initial_cooldown=initial_cooldown,
+        pass_mode=pass_mode, search_mode=search_mode, total_in_pass=len(selected),
+        skipped_completed=skipped_count, pending_total=len(pending), batch_size=batch_size,
+        min_jitter=pacer.min_jitter, max_jitter=pacer.max_jitter,
+        cooldown_min=cooldown_min, cooldown_max=cooldown_max, initial_cooldown=initial_cooldown,
     )
     with checkpoint_path.open("a", encoding="utf-8") as fh:
         if needs_leading_newline:
@@ -225,12 +258,17 @@ def run_discovery(
                 pass
 
         batch_note = f", batch={batch_size}, cooldown={cooldown_min:g}-{cooldown_max:g}s" if batch_size > 0 else ""
-        status.append_log(f"[{pass_mode}] Starting discovery: pending={len(pending)}, skipped={skipped_count}, jitter={pacer.min_jitter:g}-{pacer.max_jitter:g}s{batch_note}")
+        status.append_log(f"[{pass_mode}] Starting discovery: pending={len(pending)}, skipped={skipped_count}, search={search_mode}, jitter={pacer.min_jitter:g}-{pacer.max_jitter:g}s{batch_note}")
         if initial_cooldown > 0:
             status.start_cooldown("initial_cooldown", initial_cooldown, batch_index=1, batch_processed=0, pace_multiplier=pacer.multiplier, clean_streak=pacer.clean_streak)
             status.append_log(f"[{pass_mode}] Initial cooldown {initial_cooldown:.1f}s before batch 1/{status.state['totalBatches']}...")
             sleep_fn(initial_cooldown)
             has_prior_request = False
+
+        ytm_box = [ytm if ytm is not None else factory()]
+
+        def _rotate_client(new_client: Any) -> None:
+            ytm_box[0] = new_client
 
         for idx, song in enumerate(pending, start=1):
             batch_index = ((idx - 1) // batch_size) + 1 if batch_size > 0 else 1
@@ -238,11 +276,12 @@ def run_discovery(
             status.start_song(artist=str(song.get("artist") or "").strip(), song_title=song_title_of(song), song_key=str(song.get("song_key") or ""), batch_index=batch_index, batch_processed=batch_processed, pacer=pacer)
             try:
                 record, has_prior_request = discover_song(
-                    song, ytm, retry_delays=retry_delays, min_jitter=min_jitter, max_jitter=max_jitter,
+                    song, ytm_box[0], retry_delays=retry_delays, min_jitter=min_jitter, max_jitter=max_jitter,
                     rng=rng_obj, sleep_fn=sleep_fn, on_before_retry=flush_checkpoint,
                     has_prior_request=has_prior_request, pacer=pacer,
                     on_retry_event=lambda evt: status.record_retry_event(**evt),
                     log_fn=lambda msg: status.append_log(msg, is_error=True),
+                    search_mode=search_mode, ytm_factory=factory, on_ytm_rotated=_rotate_client,
                 )
             except DiscoveryRetryExhaustedError as exc:
                 flush_checkpoint()
@@ -258,12 +297,16 @@ def run_discovery(
             status.record_song_done(record, processed_in_run=idx, batch_processed=done_in_batch, pacer=pacer)
             if idx % 50 == 0 or (batch_size > 0 and idx % batch_size == 0) or idx == len(pending):
                 status.append_log(f"[{pass_mode}] Processed {idx}/{len(pending)} | tiers={summary['tiers']} | pace={pacer.multiplier:.2f}x")
-            if batch_size > 0 and idx % batch_size == 0 and idx < len(pending) and cooldown_max > 0:
-                cd = rng_obj.uniform(cooldown_min, cooldown_max)
+            if batch_size > 0 and idx % batch_size == 0 and idx < len(pending):
                 flush_checkpoint()
-                status.start_cooldown("batch_cooldown", cd, batch_index=batch_index, batch_processed=done_in_batch, pace_multiplier=pacer.multiplier, clean_streak=pacer.clean_streak)
-                status.append_log(f"[{pass_mode}] Batch {batch_index}/{status.state['totalBatches']} complete ({idx}/{len(pending)}); cooling down {cd:.1f}s...")
-                sleep_fn(cd)
+                if cooldown_max > 0:
+                    cd = rng_obj.uniform(cooldown_min, cooldown_max)
+                    status.start_cooldown("batch_cooldown", cd, batch_index=batch_index, batch_processed=done_in_batch, pace_multiplier=pacer.multiplier, clean_streak=pacer.clean_streak)
+                    status.append_log(f"[{pass_mode}] Batch {batch_index}/{status.state['totalBatches']} complete ({idx}/{len(pending)}); cooling down {cd:.1f}s...")
+                    sleep_fn(cd)
+                pacer.reset()
+                if factory is not None:
+                    ytm_box[0] = factory()
                 has_prior_request = False
 
         flush_checkpoint()
@@ -281,6 +324,7 @@ def parse_retry_delays(raw: str) -> tuple[float, ...]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Stage 2 resumable ytmusicapi song link discovery.")
     parser.add_argument("--pass", dest="pass_mode", choices=("multi", "single", "all"), default="all")
+    parser.add_argument("--search-mode", choices=("unified", "split"), default="unified", help="ytmusicapi search mode (unified single pass or split songs+videos).")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH)
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT_PATH)
     parser.add_argument("--limit", type=int, default=None)
@@ -296,7 +340,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         summary = run_discovery(
             input_path=args.input, checkpoint_path=args.checkpoint, pass_mode=args.pass_mode,
-            limit=args.limit, retry_delays=parse_retry_delays(args.retry_delays),
+            search_mode=args.search_mode, limit=args.limit,
+            retry_delays=parse_retry_delays(args.retry_delays),
             min_jitter=args.min_jitter, max_jitter=args.max_jitter,
             batch_size=args.batch_size, cooldown_min=args.cooldown_min,
             cooldown_max=args.cooldown_max, initial_cooldown=args.initial_cooldown,

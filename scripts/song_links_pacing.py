@@ -29,8 +29,8 @@ class AdaptivePacer:
     """Adaptive request jitter pacer that scales up on retries and decays after clean streaks."""
 
     def __init__(
-        self, min_jitter: float = 0.25, max_jitter: float = 0.55, penalty_factor: float = 1.75,
-        max_multiplier: float = 4.0, recovery_streak: int = 8, decay_factor: float = 0.85,
+        self, min_jitter: float = 0.25, max_jitter: float = 0.55, penalty_factor: float = 1.5,
+        max_multiplier: float = 2.5, recovery_streak: int = 5, decay_factor: float = 0.75,
     ) -> None:
         self.min_jitter = max(0.0, float(min_jitter))
         self.max_jitter = float(max_jitter)
@@ -60,6 +60,12 @@ class AdaptivePacer:
                     self.multiplier = 1.0
         return self.multiplier
 
+    def reset(self) -> float:
+        """Reset jitter multiplier and clean streak back to baseline 1.0x."""
+        self.multiplier = 1.0
+        self.clean_streak = 0
+        return self.multiplier
+
     def next_delay(self, rng_obj: Any = random) -> float:
         """Sample next pre-request jitter delay scaled by the active multiplier."""
         if self.max_jitter <= 0:
@@ -72,16 +78,16 @@ class DiscoveryStatusWriter:
 
     def __init__(
         self, status_path: Path, log_path: Path, *, enabled: bool = True, pass_mode: str,
-        total_in_pass: int, skipped_completed: int, pending_total: int, batch_size: int,
-        min_jitter: float, max_jitter: float, cooldown_min: float, cooldown_max: float,
-        initial_cooldown: float,
+        search_mode: str = "unified", total_in_pass: int, skipped_completed: int,
+        pending_total: int, batch_size: int, min_jitter: float, max_jitter: float,
+        cooldown_min: float, cooldown_max: float, initial_cooldown: float,
     ) -> None:
         self.status_path, self.log_path, self.enabled = Path(status_path), Path(log_path), bool(enabled)
         started_at = utc_now_iso()
         total_batches = math.ceil(pending_total / batch_size) if batch_size > 0 else (1 if pending_total > 0 else 0)
         initial_phase = "initial_cooldown" if initial_cooldown > 0 else ("active_batch" if pending_total > 0 else "completed")
         self.state: dict[str, Any] = {
-            "pid": os.getpid(), "passMode": pass_mode,
+            "pid": os.getpid(), "passMode": pass_mode, "searchMode": search_mode,
             "startedAt": started_at, "updatedAt": started_at, "phase": initial_phase,
             "totalInPass": int(total_in_pass), "skippedCompleted": int(skipped_completed),
             "pendingTotal": int(pending_total), "processedInRun": 0,

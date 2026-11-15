@@ -28,6 +28,9 @@ sa-key.json
 # Doppler Local State
 .doppler/
 
+# Wrangler Local State
+.wrangler/
+
 # ── Build & Output Directories ─────────────
 dist/
 dist-ssr/

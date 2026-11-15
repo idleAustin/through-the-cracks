@@ -192,7 +192,7 @@ export function buildVisualizerPayload({
   const activeRaw = songsLast15m > 0 ? songsLast15m / 15 : songsLast60m / 60;
   const observedRaw = Math.max(songsLast60m / 60, activeRaw);
   const avgJitter = ((minJitter || 1.5) + (maxJitter || 3.0)) / 2 * (paceMultiplier || 1);
-  const activeSecPerSong = 1.35 * (0.45 + avgJitter);
+  const activeSecPerSong = 1.0 * (0.42 + avgJitter);
   const avgCooldownSec = runtime.batchSize > 0
     ? ((runtime.cooldownMin || 0) + (runtime.cooldownMax || runtime.cooldownMin || 0)) / 2 / runtime.batchSize : 0;
   const configuredRaw = 60 / (activeSecPerSong + avgCooldownSec);

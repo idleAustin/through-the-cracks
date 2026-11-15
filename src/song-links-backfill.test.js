@@ -137,7 +137,7 @@ class fuzz:
     writeFileSync(inputPath, JSON.stringify(catalog), 'utf8');
     writeFileSync(ckptPath, `${JSON.stringify({ song_key: 'already done|||skip me', match_tier: 'high' })}\n{"corrupt": `, 'utf8');
 
-    const cliFlags = ['--input', inputPath, '--checkpoint', ckptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'];
+    const cliFlags = ['--search-mode=split', '--input', inputPath, '--checkpoint', ckptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'];
     const multiRes = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=multi', ...cliFlags]);
     expect(multiRes.status, multiRes.stderr).toBe(0);
     const singleRes = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=single', ...cliFlags]);
@@ -155,7 +155,7 @@ class fuzz:
     ]);
 
     writeFileSync(retryInputPath, JSON.stringify(catalog.slice(1, 3)), 'utf8');
-    const failCli = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=all', '--input', retryInputPath, '--checkpoint', retryCkptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'], { FAKE_YTM_MODE: '429' });
+    const failCli = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=all', '--search-mode=split', '--input', retryInputPath, '--checkpoint', retryCkptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'], { FAKE_YTM_MODE: '429' });
     expect(failCli.status).toBe(1);
     expect(readCkpt(retryCkptPath).map((r) => [r.song_key, r.match_tier])).toEqual([['todd snider|||alright guy', 'high']]);
 
@@ -169,11 +169,11 @@ from ytmusicapi import YTMusic
 spec = importlib.util.spec_from_file_location("discover", ${JSON.stringify(DISCOVER_SCRIPT)})
 mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
 sleeps = []
-mod.run_discovery(input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(jitterCkpt)}), pass_mode="multi", ytm=YTMusic(), sleep_fn=sleeps.append)
+mod.run_discovery(input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(jitterCkpt)}), pass_mode="multi", search_mode="split", ytm=YTMusic(), sleep_fn=sleeps.append)
 os.environ["FAKE_YTM_MODE"] = "429"
 backoff, raised = [], False
 try:
-    mod.run_discovery(input_path=Path(${JSON.stringify(retryInputPath)}), checkpoint_path=Path(${JSON.stringify(backoffCkpt)}), pass_mode="all", min_jitter=0.0, max_jitter=0.0, ytm=YTMusic(), sleep_fn=backoff.append)
+    mod.run_discovery(input_path=Path(${JSON.stringify(retryInputPath)}), checkpoint_path=Path(${JSON.stringify(backoffCkpt)}), pass_mode="all", search_mode="split", min_jitter=0.0, max_jitter=0.0, ytm=YTMusic(), sleep_fn=backoff.append)
 except mod.DiscoveryRetryExhaustedError:
     raised = True
 print(json.dumps({"sleeps": sleeps, "backoff": backoff, "defaults": list(mod.DEFAULT_RETRY_DELAYS), "raised": raised}))
@@ -198,7 +198,7 @@ print(json.dumps({"sleeps": sleeps, "backoff": backoff, "defaults": list(mod.DEF
       { song_key: 'medium artist|||upgrade tune', artist: 'Medium Artist', song_title: 'Upgrade Tune', album: 'Rare LP', totalPlays: 3 },
       { song_key: 'one spin|||deep cut', artist: 'One Spin', song_title: 'Deep Cut', album: 'Solo', totalPlays: 1 },
     ]), 'utf8');
-    const res = spawnSync('python3', [DISCOVER_SCRIPT, '--pass=multi', '--input', inputPath, '--checkpoint', ckptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'], {
+    const res = spawnSync('python3', [DISCOVER_SCRIPT, '--pass=multi', '--search-mode=split', '--input', inputPath, '--checkpoint', ckptPath, '--retry-delays=0,0,0', '--min-jitter=0', '--max-jitter=0'], {
       cwd: ROOT, encoding: 'utf8', env: { ...process.env, PYTHONPATH: dir, FAKE_YTM_LOG: logPath },
     });
     expect(res.status, res.stderr).toBe(0);
@@ -267,17 +267,17 @@ r2 = pacer.record_retry()
 streak_reset = pacer.clean_streak
 r3 = pacer.record_retry()
 r4 = pacer.record_retry()
-decay_seq = [pacer.record_success() for _ in range(72)]
+decay_seq = [pacer.record_success() for _ in range(25)]
 
 sleeps = []
 summary = mod.run_discovery(
     input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(ckptPath)}),
-    pass_mode="all", retry_delays=(5.0,), min_jitter=1.5, max_jitter=3.0,
+    pass_mode="all", search_mode="split", retry_delays=(5.0,), min_jitter=1.5, max_jitter=3.0,
     ytm=YTMusic(), sleep_fn=sleeps.append, rng=random.Random(1),
 )
 print(json.dumps({
     "retrySteps": [r1, r2, r3, r4], "streakMid": streak_mid, "streakReset": streak_reset,
-    "beforeEighth": decay_seq[6], "eighths": decay_seq[7::8],
+    "beforeFifth": decay_seq[3], "fifths": decay_seq[4::5],
     "finalMultiplier": pacer.multiplier, "finalStreak": pacer.clean_streak,
     "summary": summary, "sleeps": sleeps,
 }))
@@ -286,13 +286,13 @@ print(json.dumps({
     expect(res.status, res.stderr).toBe(0);
     const out = JSON.parse(res.stdout.trim().split('\n').pop());
 
-    expect(out.retrySteps).toEqual([1.75, 3.0625, 4.0, 4.0]);
+    expect(out.retrySteps).toEqual([1.5, 2.25, 2.5, 2.5]);
     expect(out.streakMid).toBe(2);
     expect(out.streakReset).toBe(0);
-    expect(out.beforeEighth).toBe(4.0);
-    expect(out.eighths).toHaveLength(9);
-    out.eighths.slice(0, 8).forEach((val, idx) => expect(val).toBeCloseTo(4.0 * 0.85 ** (idx + 1), 6));
-    expect(out.eighths[8]).toBe(1.0);
+    expect(out.beforeFifth).toBe(2.5);
+    expect(out.fifths).toHaveLength(5);
+    out.fifths.slice(0, 3).forEach((val, idx) => expect(val).toBeCloseTo(2.5 * 0.75 ** (idx + 1), 6));
+    expect(out.fifths.slice(3)).toEqual([1.0, 1.0]);
     expect(out.finalMultiplier).toBe(1.0);
     expect(out.finalStreak).toBe(0);
 
@@ -303,10 +303,9 @@ print(json.dumps({
     expect(out.sleeps[1]).toBe(5.0);
 
     const inRange = (arr, lo, hi) => arr.every((d) => d >= lo && d <= hi);
-    expect(inRange(out.sleeps.slice(2, 9), 1.5 * 1.75, 3.0 * 1.75)).toBe(true);
-    expect(inRange(out.sleeps.slice(9, 17), 1.5 * 1.75 * 0.85, 3.0 * 1.75 * 0.85)).toBe(true);
-    expect(out.sleeps[9]).toBeLessThan(2.625);
-    expect(inRange(out.sleeps.slice(33), 1.5, 3.0)).toBe(true);
+    expect(inRange(out.sleeps.slice(2, 6), 2.25, 4.5)).toBe(true);
+    expect(inRange(out.sleeps.slice(6, 11), 1.6875, 3.375)).toBe(true);
+    expect(inRange(out.sleeps.slice(11), 1.5, 3.0)).toBe(true);
     expect(readFileSync(logPath, 'utf8').trim().split('\n')).toHaveLength(37);
     expect(readCkpt(ckptPath)).toHaveLength(36);
   });
@@ -323,7 +322,7 @@ from pathlib import Path; from ytmusicapi import YTMusic
 spec = importlib.util.spec_from_file_location("discover", ${JSON.stringify(DISCOVER_SCRIPT)})
 mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
 sleeps = []
-mod.run_discovery(input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(ckptPath)}), pass_mode="multi", batch_size=2, cooldown_min=480.0, cooldown_max=600.0, initial_cooldown=600.0, min_jitter=0.0, max_jitter=0.0, ytm=YTMusic(), sleep_fn=sleeps.append, rng=random.Random(7))
+mod.run_discovery(input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(ckptPath)}), pass_mode="multi", search_mode="split", batch_size=2, cooldown_min=480.0, cooldown_max=600.0, initial_cooldown=600.0, min_jitter=0.0, max_jitter=0.0, ytm=YTMusic(), sleep_fn=sleeps.append, rng=random.Random(7))
 print(json.dumps(sleeps))`;
     const res = runPy(PYTHON_BIN, dir, logPath, ['-c', pyCheck]);
     expect(res.status, res.stderr).toBe(0);
@@ -340,7 +339,7 @@ print(json.dumps(sleeps))`;
     });
     const dLog = readFileSync(path.join(dir, 'discovery.log'), 'utf8');
     for (const s of ['[multi] Initial cooldown 600.0s before batch 1/3...', '[multi] Batch 1/3 complete', '[multi] Batch 2/3 complete', 'Done (multi):']) expect(dLog).toContain(s);
-    const cliRes = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=multi', '--input', inputPath, '--checkpoint', path.join(dir, 'cli', 'checkpoint.jsonl'), '--retry-delays=0', '--min-jitter=0', '--max-jitter=0', '--initial-cooldown=0', '--batch-size=2', '--cooldown-min=0', '--cooldown-max=0']);
+    const cliRes = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=multi', '--search-mode=split', '--input', inputPath, '--checkpoint', path.join(dir, 'cli', 'checkpoint.jsonl'), '--retry-delays=0', '--min-jitter=0', '--max-jitter=0', '--initial-cooldown=0', '--batch-size=2', '--cooldown-min=0', '--cooldown-max=0']);
     expect(cliRes.status, cliRes.stderr).toBe(0);
     expect(JSON.parse(readFileSync(path.join(dir, 'cli', 'discovery-status.json'), 'utf8'))).toMatchObject({
       phase: 'completed', batchSize: 2, totalBatches: 3, processedInRun: 5, cooldownMin: 0, cooldownMax: 0, initialCooldown: 0,
