@@ -230,7 +230,7 @@ async function handleReadRoutes(apiPath, url, env) {
   if (apiPath === '/api/years') return { status: 200, data: await getD1YearSpins(env.DB, query) };
   if (apiPath === '/api/episodes') return { status: 200, data: await getD1Episodes(env.DB, query) };
   if (epDec) {
-    const ep = await getD1EpisodeById(env.DB, epDec.value);
+    const ep = await getD1EpisodeById(env.DB, epDec.value, query);
     return ep ? { status: 200, data: ep } : { status: 404, data: { error: 'Episode not found' } };
   }
   if (apiPath === '/api/artists') return { status: 200, data: await getD1Artists(env.DB, query) };

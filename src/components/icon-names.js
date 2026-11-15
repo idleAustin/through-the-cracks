@@ -18,6 +18,8 @@ import {
   Mic,
   Moon,
   Music,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pause,
   Play,
   Radio,
@@ -60,4 +62,6 @@ export const ICON_MAP = {
   alert: AlertCircle,
   filter: SlidersHorizontal,
   compass: Compass,
+  'panel-collapse': PanelLeftClose,
+  'panel-expand': PanelLeftOpen,
 };
