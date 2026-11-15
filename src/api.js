@@ -13,48 +13,24 @@ import {
   parseCatalogOptions,
 } from './api-catalog.js';
 import {
+  getArchiveMode,
+  resolveApiBase,
+  setArchiveMode,
+  subscribeArchiveMode,
+} from './api-runtime.js';
+import {
   fetchStaticJson,
   getStaticEpisodeById,
   getStaticEpisodes,
-  getStaticPath,
   getStaticYearSpins,
   normalizeEpisodeDetail,
   normalizeEpisodeSummary,
 } from './api-static.js';
 
-export function resolveApiBase({
-  explicitApiUrl = import.meta.env.VITE_API_URL,
-  isDev = import.meta.env.DEV,
-  baseUrl = import.meta.env.BASE_URL,
-} = {}) {
-  if (explicitApiUrl) return String(explicitApiUrl).replace(/\/+$/, '');
-  if (isDev) return 'http://localhost:3001/api';
-  return getStaticPath('api', baseUrl);
-}
+export { getArchiveMode, resolveApiBase, subscribeArchiveMode };
+export { getRandomPlaylist } from './api-playlist.js';
 
 const API_BASE = resolveApiBase();
-
-let currentMode = null;
-const archiveModeListeners = new Set();
-
-function setArchiveMode(nextMode) {
-  if (nextMode === currentMode) return;
-  currentMode = nextMode;
-  for (const listener of archiveModeListeners) {
-    listener(nextMode);
-  }
-}
-
-export function getArchiveMode() {
-  return currentMode ?? 'static';
-}
-
-export function subscribeArchiveMode(listener) {
-  archiveModeListeners.add(listener);
-  return () => {
-    archiveModeListeners.delete(listener);
-  };
-}
 
 const inFlightApiRequests = new Map();
 

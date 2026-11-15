@@ -1,15 +1,21 @@
 // Cloudflare Worker HTTP API, Edge Cache, R2 snapshot tier, D1 fallback, SPA asset fallback, and Cron entrypoint.
 import { ingestBloggerToD1 } from './d1Schema.js';
 import { getD1ArtistProfile } from './d1ArtistProfile.js';
+import { getD1RandomPlaylist } from './d1Playlist.js';
 import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
+import { runIncrementalSongLinksCron } from './d1SongLinksCron.js';
+import { drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
 import {
-  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
+  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, readR2SongLinksSnapshot,
+  safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
+import { syncR2SongLinksFromD1 } from './workerSnapshotSync.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const RATE_WINDOW_MS = 60_000;
 const READ_RATE_LIMIT = 180;
 const INGEST_RATE_LIMIT = 5;
@@ -104,23 +110,64 @@ async function constantTimeEquals(expected, provided) {
   return diff === 0;
 }
 
-async function runIngestAndSync(env, incremental, ctx = null, deferSync = false) {
+// Strip query-string credentials from upstream fetch URLs before writing caught errors to Worker logs.
+function redactSecrets(message) {
+  return String(message ?? '').replace(/([?&](?:key|token|secret)=)[^&\s"']+/gi, '$1[REDACTED]');
+}
+
+function logWorkerError(label, err) {
+  console.error(label, redactSecrets(err?.stack || err?.message || err));
+}
+
+async function runIngestAndSync(env, incremental, ctx = null, deferSync = false, options = {}) {
   const result = await ingestBloggerToD1({
     db: env?.DB,
     blogId: env?.BLOGGER_BLOG_ID || DEFAULT_BLOG_ID,
     apiKey: env?.BLOGGER_API_KEY || '',
     incremental,
   });
-  clearD1Cache(env?.DB);
-  bumpWorkerCacheEpoch();
-  if (env?.SNAPSHOT_BUCKET && result?.episodesUpserted > 0) {
-    const syncTask = syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
-      .then(() => bumpWorkerCacheEpoch())
-      .catch((err) => console.error('Worker R2 snapshot sync error:', err));
-    if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
-    else await syncTask;
+  if (result?.episodesUpserted > 0) {
+    clearD1Cache(env?.DB);
+    bumpWorkerCacheEpoch();
   }
-  return result;
+
+  let linkResolution = null;
+  if (options?.resolveLinks === true) {
+    try {
+      linkResolution = await runIncrementalSongLinksCron({
+        db: env?.DB,
+        apiKey: env?.YOUTUBE_API_KEY,
+      });
+    } catch (err) {
+      logWorkerError('Worker song_links cron error:', err);
+      linkResolution = { error: 'Song link refresh failed', changesMade: false };
+    }
+    if (linkResolution?.changesMade) {
+      clearD1Cache(env?.DB);
+      bumpWorkerCacheEpoch();
+    }
+  }
+
+  if (env?.SNAPSHOT_BUCKET) {
+    const syncFn =
+      result?.episodesUpserted > 0
+        ? () => syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
+        : linkResolution?.changesMade
+          ? () => syncR2SongLinksFromD1(env.DB, env.SNAPSHOT_BUCKET)
+          : null;
+    if (syncFn) {
+      const syncTask = syncFn()
+        .then(() => bumpWorkerCacheEpoch())
+        .catch((err) => logWorkerError('Worker R2 snapshot sync error:', err));
+      if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
+      else await syncTask;
+    }
+  }
+
+  return {
+    ...result,
+    ...(linkResolution ? { linkResolution } : {}),
+  };
 }
 
 async function handleIngest(request, env, corsHeaders, ctx) {
@@ -149,9 +196,15 @@ async function handleIngest(request, env, corsHeaders, ctx) {
     } catch {
       return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
     }
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+      return jsonResponse({ error: 'Invalid JSON body' }, 400, corsHeaders);
+    }
   }
   if (!env?.DB) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
-  return jsonResponse(await runIngestAndSync(env, body?.incremental !== false, ctx, true), 200, corsHeaders);
+  const payload = await runIngestAndSync(env, body?.incremental !== false, ctx, true, {
+    resolveLinks: body?.resolveLinks === true,
+  });
+  return jsonResponse(payload, 200, corsHeaders);
 }
 
 const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
@@ -190,14 +243,51 @@ async function handleReadRoutes(apiPath, url, env) {
   return { status: 200, data: await getD1Search(env.DB, query) };
 }
 
+async function handlePlaylistRandom(request, env, url, corsHeaders) {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Not found' }, 404, corsHeaders, NO_STORE_HEADERS);
+  }
+  const parsed = parsePlaylistQuery(url.searchParams);
+  if (parsed.error) {
+    return jsonResponse({ error: parsed.error }, parsed.status || 400, corsHeaders, NO_STORE_HEADERS);
+  }
+  if (env?.SNAPSHOT_BUCKET) {
+    const r2Pool = await readR2SongLinksSnapshot(env);
+    if (r2Pool !== null) {
+      return jsonResponse(
+        drawRandomPlaylist(r2Pool, url.searchParams, { assumedPlayable: true }),
+        200,
+        corsHeaders,
+        NO_STORE_HEADERS,
+      );
+    }
+  }
+  if (env?.DB) {
+    const result = await getD1RandomPlaylist(env.DB, url.searchParams);
+    if (result?.error) {
+      return jsonResponse({ error: result.error }, result.status || 400, corsHeaders, NO_STORE_HEADERS);
+    }
+    return jsonResponse(result, 200, corsHeaders, NO_STORE_HEADERS);
+  }
+  return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders, NO_STORE_HEADERS);
+}
+
 async function handleApi(request, env, apiPath, url, ctx) {
   const corsHeaders = buildCorsHeaders(request);
   if (request.method === 'OPTIONS') return withHeaders(new Response(null, { status: 204 }), corsHeaders);
 
+  const isNoStoreRoute = apiPath === '/api/playlist/random';
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   const isIngestPost = apiPath === '/api/ingest' && request.method === 'POST';
   const allowed = checkRateLimit(isIngestPost ? `ingest:${ip}` : `read:${ip}`, isIngestPost ? INGEST_RATE_LIMIT : READ_RATE_LIMIT);
-  if (!allowed) return jsonResponse({ error: 'Too many requests' }, 429, corsHeaders, { 'Retry-After': '60' });
+  if (!allowed) {
+    return jsonResponse(
+      { error: 'Too many requests' },
+      429,
+      corsHeaders,
+      isNoStoreRoute ? { 'Retry-After': '60', ...NO_STORE_HEADERS } : { 'Retry-After': '60' },
+    );
+  }
 
   try {
     if (apiPath === '/api/health' && request.method === 'GET') {
@@ -210,6 +300,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
       }, 200, corsHeaders);
     }
     if (apiPath === '/api/ingest') return await handleIngest(request, env, corsHeaders, ctx);
+    if (apiPath === '/api/playlist/random') return await handlePlaylistRandom(request, env, url, corsHeaders);
     if (!env?.DB && !env?.SNAPSHOT_BUCKET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
     if (request.method !== 'GET') return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
 
@@ -231,15 +322,15 @@ async function handleApi(request, env, apiPath, url, ctx) {
             if (r2Hit) return r2Hit;
           } catch (err) {
             if (!env?.DB) throw err;
-            console.error('Worker R2 snapshot read failed, falling back to D1:', err);
+            logWorkerError('Worker R2 snapshot read failed, falling back to D1:', err);
           }
         }
         return await handleReadRoutes(apiPath, url, env);
       },
     );
   } catch (err) {
-    console.error('Worker API error:', err);
-    return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders);
+    logWorkerError('Worker API error:', err);
+    return jsonResponse({ error: 'Internal server error' }, 500, corsHeaders, isNoStoreRoute ? NO_STORE_HEADERS : {});
   }
 }
 
@@ -274,7 +365,7 @@ export default {
   },
 
   async scheduled(_controller, env, ctx) {
-    const task = runIngestAndSync(env, true);
+    const task = runIngestAndSync(env, true, ctx, false, { resolveLinks: true });
     ctx?.waitUntil?.(task);
     return await task;
   },

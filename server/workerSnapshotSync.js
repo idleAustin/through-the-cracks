@@ -1,12 +1,96 @@
 // Pure Web-API D1-to-R2 snapshot builder and uploader for Worker ingest and Cron refreshes.
 import { buildArchiveYearAxis } from './artistProfileBuilder.js';
-import { qAll } from './d1Rollups.js';
+import { loadD1PlaylistPool } from './d1Playlist.js';
+import { clearD1Cache, qAll, qFirst } from './d1Rollups.js';
+import { toPlaylistSongItem } from './playlistBuilder.js';
 
 const JSON_CT = 'application/json; charset=utf-8';
 const R2_MANIFEST_KEY = 'v1/manifest.json';
+const R2_SONG_LINKS_KEY = 'v1/song-links.json';
 
 const cmpAsc = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const cmpText = (a, b) => cmpAsc(String(a || '').toLowerCase(), String(b || '').toLowerCase());
+const isMissingTableError = (err) => /no such table/i.test(String(err?.message ?? err));
+const putR2Json = (bucket, key, payload) =>
+  bucket.put(key, JSON.stringify(payload), { httpMetadata: { contentType: JSON_CT } });
+
+async function loadCompactSongLinks(db) {
+  clearD1Cache(db);
+  try {
+    const pool = await loadD1PlaylistPool(db);
+    return pool.map(toPlaylistSongItem).filter((item) => Boolean(item.videoId));
+  } catch (err) {
+    if (isMissingTableError(err)) return [];
+    throw err;
+  }
+}
+
+async function readExistingManifest(bucket) {
+  if (typeof bucket.get !== 'function') return null;
+  try {
+    const obj = await bucket.get(R2_MANIFEST_KEY);
+    if (!obj) return null;
+    const data = typeof obj.json === 'function' ? await obj.json() : JSON.parse(await obj.text());
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+async function computeManifestCountsFromD1(db) {
+  try {
+    const [epRow, latestRow, playRow] = await Promise.all([
+      qFirst(db, 'SELECT COUNT(1) AS total_episodes FROM episodes'),
+      qFirst(db, 'SELECT id FROM episodes ORDER BY air_date DESC, id DESC LIMIT 1'),
+      qFirst(db, 'SELECT COUNT(1) AS total_song_plays FROM song_plays'),
+    ]);
+    return {
+      totalEpisodes: Number(epRow?.total_episodes ?? 0),
+      totalSongPlays: Number(playRow?.total_song_plays ?? 0),
+      latestEpisodeId: latestRow?.id ? String(latestRow.id) : null,
+    };
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      return { totalEpisodes: 0, totalSongPlays: 0, latestEpisodeId: null };
+    }
+    throw err;
+  }
+}
+
+/**
+ * Syncs only v1/song-links.json and v1/manifest.json from D1 into R2 using native bindings.
+ */
+export async function syncR2SongLinksFromD1(db, bucket, { updatedAt = new Date().toISOString() } = {}) {
+  if (!db || !bucket) return null;
+  const rows = await loadCompactSongLinks(db);
+  const existing = await readExistingManifest(bucket);
+  const hasCounts =
+    existing &&
+    existing.totalEpisodes !== undefined &&
+    existing.totalSongPlays !== undefined;
+  const counts = hasCounts
+    ? {
+        totalEpisodes: Number(existing.totalEpisodes ?? 0),
+        totalSongPlays: Number(existing.totalSongPlays ?? 0),
+        latestEpisodeId: existing.latestEpisodeId ? String(existing.latestEpisodeId) : null,
+      }
+    : await computeManifestCountsFromD1(db);
+
+  const manifest = {
+    version: Number.isFinite(Number(existing?.version)) ? Number(existing.version) : 1,
+    updatedAt,
+    totalEpisodes: counts.totalEpisodes,
+    totalSongPlays: counts.totalSongPlays,
+    latestEpisodeId: counts.latestEpisodeId,
+  };
+
+  await putR2Json(bucket, R2_SONG_LINKS_KEY, rows);
+  await putR2Json(bucket, R2_MANIFEST_KEY, manifest);
+  return {
+    updatedObjects: [R2_SONG_LINKS_KEY, R2_MANIFEST_KEY],
+    songLinksCount: rows.length,
+  };
+}
 
 function getOrInit(map, key, create) {
   let val = map.get(key);
@@ -25,12 +109,13 @@ function updateBounds(entry, airDate) {
 
 export async function syncR2SnapshotsFromD1(db, bucket, { updatedAt = new Date().toISOString() } = {}) {
   if (!db || !bucket) return null;
-  const [episodeRows, playRows] = await Promise.all([
+  const [episodeRows, playRows, songLinks] = await Promise.all([
     qAll(db, 'SELECT id, air_date, url, song_count FROM episodes ORDER BY air_date DESC, id DESC'),
     qAll(
       db,
       'SELECT episode_id, air_date, position, artist, featured_artist, song_title, album, release_kind FROM song_plays ORDER BY air_date DESC, episode_id DESC, position ASC',
     ),
+    loadCompactSongLinks(db),
   ]);
 
   const playsByEp = new Map();
@@ -220,8 +305,7 @@ export async function syncR2SnapshotsFromD1(db, bucket, { updatedAt = new Date()
     latestEpisodeId: overview.latestEpisodeId,
   };
 
-  const putJson = (key, payload) =>
-    bucket.put(key, JSON.stringify(payload), { httpMetadata: { contentType: JSON_CT } });
+  const putJson = (key, payload) => putR2Json(bucket, key, payload);
 
   await Promise.all([
     putJson('v1/overview.json', overview),
@@ -236,6 +320,7 @@ export async function syncR2SnapshotsFromD1(db, bucket, { updatedAt = new Date()
     putJson('v1/artists.json', artists),
     putJson('v1/songs.json', songs),
     putJson('v1/albums.json', albums),
+    putJson(R2_SONG_LINKS_KEY, songLinks),
     ...Array.from(playlistsByYear.entries()).map(([yr, map]) => putJson(`v1/playlists/${yr}.json`, map)),
   ]);
   await putJson(R2_MANIFEST_KEY, manifest);

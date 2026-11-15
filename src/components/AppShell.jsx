@@ -1,13 +1,27 @@
-// Application shell coordinating live/static archive mode telemetry, Command Palette shortcuts, and main canvas.
+// Application shell coordinating live/static archive mode telemetry, Command Palette shortcuts, Now Playing mini-bar, and main canvas.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getArchiveMode, subscribeArchiveMode } from '../api';
 import CommandPalette from './CommandPalette';
 import { CockpitSidebar, MobileBottomTabs, MobileTopBar } from './Header';
+import PlaylistMiniBar from './PlaylistMiniBar';
 
-export default function AppShell({ totalSpins, latestEpisodeId = null, children }) {
+export default function AppShell({
+  totalSpins,
+  latestEpisodeId = null,
+  isPlaylistRoute = false,
+  playlistSession = null,
+  children,
+}) {
   const [archiveMode, setArchiveMode] = useState(() => getArchiveMode());
   const [paletteOpen, setPaletteOpen] = useState(false);
   const previousFocusRef = useRef(null);
+
+  const playlistHref = playlistSession?.playlistHref || '/playlist';
+  const showMiniBar = Boolean(
+    !isPlaylistRoute
+    && playlistSession?.playbackEngaged
+    && playlistSession?.activeSong,
+  );
 
   useEffect(() => subscribeArchiveMode(setArchiveMode), []);
 
@@ -55,13 +69,30 @@ export default function AppShell({ totalSpins, latestEpisodeId = null, children 
           archiveMode={archiveMode}
           totalSpins={totalSpins}
           onQuickJump={openPalette}
+          playlistHref={playlistHref}
         />
 
         <div className="app-content-column">
-          <MobileTopBar archiveMode={archiveMode} />
-          <main id="main-content" className="app-work-area" tabIndex={-1}>
+          <MobileTopBar archiveMode={archiveMode} playlistHref={playlistHref} />
+          <main
+            id="main-content"
+            className={showMiniBar ? 'app-work-area has-minibar' : 'app-work-area'}
+            tabIndex={-1}
+          >
             <div className="work-canvas">{children}</div>
           </main>
+          {showMiniBar ? (
+            <PlaylistMiniBar
+              activeSong={playlistSession.activeSong}
+              activeIndex={playlistSession.activeIndex}
+              totalSlots={playlistSession.totalSlots}
+              playerStatus={playlistSession.playerStatus}
+              playlistHref={playlistHref}
+              onTogglePlayPause={playlistSession.onTogglePlayPause}
+              onStep={playlistSession.onStep}
+              onStopPlayback={playlistSession.onStopPlayback}
+            />
+          ) : null}
           <MobileBottomTabs />
         </div>
       </div>
@@ -70,6 +101,7 @@ export default function AppShell({ totalSpins, latestEpisodeId = null, children 
         isOpen={paletteOpen}
         onClose={closePalette}
         latestEpisodeId={latestEpisodeId}
+        playlistHref={playlistHref}
       />
     </div>
   );

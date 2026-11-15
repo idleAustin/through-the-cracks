@@ -10,7 +10,12 @@ const EMPTY_RESULTS = { artists: [], songs: [], albums: [] };
 const FOCUSABLE_SELECTOR =
   'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
-export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null }) {
+export default function CommandPalette({
+  isOpen,
+  onClose,
+  latestEpisodeId = null,
+  playlistHref = '/playlist',
+}) {
   const navigate = useNavigate();
   const { preference, setThemePreference } = useTheme();
   const [query, setQuery] = useState('');
@@ -103,17 +108,19 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
       const latestUrl = latestEpisodeId
         ? `/episodes?episode=${encodeURIComponent(latestEpisodeId)}`
         : '/episodes';
+      const navItems = [
+        { key: 'nav-overview', label: 'Overview', meta: 'Route', icon: 'overview', to: '/' },
+        { key: 'nav-artists', label: 'Artists', meta: 'Route', icon: 'artists', to: '/artists' },
+        { key: 'nav-songs', label: 'Songs', meta: 'Route', icon: 'songs', to: '/songs' },
+        { key: 'nav-episodes', label: 'Episodes', meta: 'Route', icon: 'episodes', to: '/episodes' },
+        { key: 'nav-search', label: 'Search', meta: 'Route', icon: 'search', to: '/search' },
+        { key: 'go-playlist', label: 'Playlist', meta: 'Broadcast Booth · Route', icon: 'playlist', to: playlistHref },
+        { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Episode', icon: 'playlist', to: latestUrl },
+      ];
       return [
         {
           heading: 'Navigation',
-          items: [
-            { key: 'nav-overview', label: 'Overview', meta: 'Route', icon: 'overview', to: '/' },
-            { key: 'nav-artists', label: 'Artists', meta: 'Route', icon: 'artists', to: '/artists' },
-            { key: 'nav-songs', label: 'Songs', meta: 'Route', icon: 'songs', to: '/songs' },
-            { key: 'nav-episodes', label: 'Episodes', meta: 'Route', icon: 'episodes', to: '/episodes' },
-            { key: 'nav-search', label: 'Search', meta: 'Route', icon: 'search', to: '/search' },
-            { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Episode', icon: 'playlist', to: latestUrl },
-          ],
+          items: navItems,
         },
         {
           heading: 'Appearance',
@@ -183,7 +190,7 @@ export default function CommandPalette({ isOpen, onClose, latestEpisodeId = null
       });
     }
     return nextSections;
-  }, [isSearching, latestEpisodeId, preference, results, setThemePreference]);
+  }, [isSearching, latestEpisodeId, playlistHref, preference, results, setThemePreference]);
 
   const flatItems = useMemo(() => sections.flatMap((section) => section.items), [sections]);
 

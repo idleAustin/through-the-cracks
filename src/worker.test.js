@@ -276,4 +276,54 @@ describe('Cloudflare Worker entrypoint (server/worker.js)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(cronResult).toMatchObject({ mode: 'incremental', episodesUpserted: 0 });
   });
+
+  it('rejects non-object JSON bodies on POST /api/ingest with 400', async () => {
+    const env = { INGEST_SECRET: 'super-secret-token', DB: createFakeD1([]) };
+    const nonObjectBodies = ['null', '[]', '[1, 2]', '"text"', '123', 'true'];
+    for (const [idx, rawBody] of nonObjectBodies.entries()) {
+      const res = await worker.fetch(
+        new Request('https://idleamericana.com/api/ingest', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer super-secret-token',
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': `192.0.2.${10 + idx}`,
+          },
+          body: rawBody,
+        }),
+        env,
+      );
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: 'Invalid JSON body' });
+    }
+  });
+
+  it('redacts query-string secrets from caught API error logs', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const brokenDb = {
+      prepare() {
+        return {
+          bind() { return this; },
+          async all() {
+            throw new Error('Upstream failed at https://example.com/feed?key=YT_SECRET&token=TOK_123&secret=SEC_999');
+          },
+          async first() {
+            throw new Error('Upstream failed at https://example.com/feed?key=YT_SECRET&token=TOK_123&secret=SEC_999');
+          },
+        };
+      },
+    };
+
+    const res = await worker.fetch(new Request('https://idleamericana.com/api/overview'), { DB: brokenDb });
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Internal server error' });
+    expect(errorSpy).toHaveBeenCalled();
+    const logged = errorSpy.mock.calls.flat().join(' ');
+    expect(logged).toContain('key=[REDACTED]');
+    expect(logged).toContain('token=[REDACTED]');
+    expect(logged).toContain('secret=[REDACTED]');
+    expect(logged).not.toContain('YT_SECRET');
+    expect(logged).not.toContain('TOK_123');
+    expect(logged).not.toContain('SEC_999');
+  });
 });
