@@ -310,6 +310,42 @@ print(json.dumps({
     expect(readFileSync(logPath, 'utf8').trim().split('\n')).toHaveLength(37);
     expect(readCkpt(ckptPath)).toHaveLength(36);
   });
+
+  it('enforces initial/between-batch cooldowns without trailing sleep and writes live status telemetry', () => {
+    const dir = makeTempDir('ttc-stage2-batch-');
+    const [inputPath, ckptPath, logPath] = ['catalog.json', 'checkpoint.jsonl', 'calls.jsonl'].map((f) => path.join(dir, f));
+    writeStubYtm(dir);
+    writeFileSync(inputPath, JSON.stringify(Array.from({ length: 5 }, (_, i) => ({
+      song_key: `todd snider|||alright guy ${i + 1}`, artist: 'Todd Snider', song_title: `Alright Guy (${i + 1})`, album: 'Viva Satellite', totalPlays: 6 - i,
+    }))), 'utf8');
+    const pyCheck = `import importlib.util, json, random
+from pathlib import Path; from ytmusicapi import YTMusic
+spec = importlib.util.spec_from_file_location("discover", ${JSON.stringify(DISCOVER_SCRIPT)})
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+sleeps = []
+mod.run_discovery(input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(ckptPath)}), pass_mode="multi", batch_size=2, cooldown_min=480.0, cooldown_max=600.0, initial_cooldown=600.0, min_jitter=0.0, max_jitter=0.0, ytm=YTMusic(), sleep_fn=sleeps.append, rng=random.Random(7))
+print(json.dumps(sleeps))`;
+    const res = runPy(PYTHON_BIN, dir, logPath, ['-c', pyCheck]);
+    expect(res.status, res.stderr).toBe(0);
+    const sleeps = JSON.parse(res.stdout.trim().split('\n').pop());
+    expect(sleeps).toHaveLength(3);
+    expect(sleeps[0]).toBe(600.0);
+    for (const cd of [sleeps[1], sleeps[2]]) {
+      expect(cd).toBeGreaterThanOrEqual(480.0);
+      expect(cd).toBeLessThanOrEqual(600.0);
+    }
+    expect(JSON.parse(readFileSync(path.join(dir, 'discovery-status.json'), 'utf8'))).toMatchObject({
+      phase: 'completed', passMode: 'multi', totalInPass: 5, pendingTotal: 5, processedInRun: 5,
+      batchSize: 2, totalBatches: 3, batchIndex: 3, batchProcessed: 1, tiers: { high: 5 }, retryCount: 0, cooldownUntil: null,
+    });
+    const dLog = readFileSync(path.join(dir, 'discovery.log'), 'utf8');
+    for (const s of ['[multi] Initial cooldown 600.0s before batch 1/3...', '[multi] Batch 1/3 complete', '[multi] Batch 2/3 complete', 'Done (multi):']) expect(dLog).toContain(s);
+    const cliRes = runPy(PYTHON_BIN, dir, logPath, [DISCOVER_SCRIPT, '--pass=multi', '--input', inputPath, '--checkpoint', path.join(dir, 'cli', 'checkpoint.jsonl'), '--retry-delays=0', '--min-jitter=0', '--max-jitter=0', '--initial-cooldown=0', '--batch-size=2', '--cooldown-min=0', '--cooldown-max=0']);
+    expect(cliRes.status, cliRes.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(path.join(dir, 'cli', 'discovery-status.json'), 'utf8'))).toMatchObject({
+      phase: 'completed', batchSize: 2, totalBatches: 3, processedInRun: 5, cooldownMin: 0, cooldownMax: 0, initialCooldown: 0,
+    });
+  });
 });
 
 describe('D1 archive seed non-drop guard & R2 snapshot plan inclusion', () => {

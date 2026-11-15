@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Through the Cracks // Discovery Telemetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Geist:wght@400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #0a0a0c; --bg-surface: #121216; --bg-elevated: #18181f;
+      --border-subtle: #22222a; --border-strong: #33333f;
+      --accent: #84cc16; --text-primary: #f4f4f5; --text-secondary: #a1a1aa; --text-muted: #71717a;
+      --success: #10b981; --warning: #f59e0b; --error: #f43f5e; --info: #38bdf8;
+      --font-head: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body);
+      font-size: 13px; line-height: 1.45; font-variant-numeric: tabular-nums; min-height: 100vh;
+    }
+    .shell { max-width: 1440px; margin: 0 auto; padding: 16px; display: grid; gap: 12px; }
+    .card {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      border-radius: 6px; padding: 14px; min-width: 0;
+    }
+    .header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: 6px; padding: 12px 16px;
+    }
+    .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .brand h1 { font-family: var(--font-head); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .brand span { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .header-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 9999px;
+      font-weight: 600; font-size: 11px; letter-spacing: 0.04em; border: 1px solid var(--border-strong);
+      background: var(--bg-elevated); color: var(--text-secondary);
+    }
+    .pill.alive { color: var(--accent); border-color: rgba(132, 204, 22, 0.45); background: rgba(132, 204, 22, 0.1); }
+    .pill.cooling { color: var(--warning); border-color: rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.1); }
+    .pill.stopped { color: var(--error); border-color: rgba(244, 63, 94, 0.45); background: rgba(244, 63, 94, 0.1); }
+    .pill.idle { color: var(--text-secondary); }
+    .chip {
+      padding: 3px 8px; border-radius: 4px; background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle); color: var(--text-secondary); white-space: nowrap;
+    }
+    .chip strong { color: var(--text-primary); font-weight: 500; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-secondary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .metric-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .metric-big { font-family: var(--font-head); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+    .metric-sub { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+    .bar-track { height: 7px; border-radius: 9999px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
+    .bar-fill.info { background: var(--info); }
+    .bar-fill.success { background: var(--success); }
+    .kv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+    .kv { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 8px 10px; min-width: 0; }
+    .kv-k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kv-v { font-family: var(--font-mono); font-size: 13px; color: var(--text-primary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tier-bar { display: flex; height: 10px; border-radius: 9999px; overflow: hidden; background: var(--bg-elevated); border: 1px solid var(--border-subtle); margin-bottom: 10px; }
+    .t-high { background: var(--success); } .t-medium { background: var(--accent); }
+    .t-low { background: var(--warning); } .t-unmatched { background: var(--error); }
+    .tier-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .tier-badge {
+      display: inline-block; padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono);
+      font-size: 11px; text-transform: uppercase; border: 1px solid transparent;
+    }
+    .badge-high { color: var(--success); background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); }
+    .badge-medium { color: var(--accent); background: rgba(132, 204, 22, 0.12); border-color: rgba(132, 204, 22, 0.3); }
+    .badge-low { color: var(--warning); background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.3); }
+    .badge-unmatched { color: var(--error); background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.3); }
+    .table-wrap { overflow-x: auto; max-width: 100%; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    td.mono { font-family: var(--font-mono); font-size: 11.5px; }
+    a.yt-link { color: var(--info); text-decoration: none; font-family: var(--font-mono); }
+    a.yt-link:hover { text-decoration: underline; }
+    .log-tail {
+      background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 4px;
+      padding: 10px; font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
+      color: var(--text-secondary); max-height: 230px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+    }
+    .retry-list { display: grid; gap: 6px; margin-bottom: 10px; max-height: 140px; overflow-y: auto; }
+    .retry-item {
+      background: var(--bg-elevated); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 4px;
+      padding: 6px 8px; font-family: var(--font-mono); font-size: 11px;
+    }
+    .empty { color: var(--text-muted); font-family: var(--font-mono); font-size: 11.5px; padding: 6px 0; }
+    @media (max-width: 1024px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tier-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 720px) { .grid-4, .grid-2, .kv-grid, .tier-stats { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="brand">
+        <h1>THROUGH THE CRACKS // YT MUSIC DISCOVERY</h1>
+        <span id="subStatus">Initializing local telemetry...</span>
+      </div>
+      <div class="header-meta">
+        <span id="statusPill" class="pill idle">IDLE</span>
+        <span class="chip">phase=<strong id="metaPhase">idle</strong></span>
+        <span class="chip">pid=<strong id="metaPid">--</strong></span>
+        <span class="chip">pace=<strong id="metaPace">1.00x</strong></span>
+        <span class="chip" id="pollIndicator">POLL 2S // --:--:--</span>
+      </div>
+    </header>
+
+    <section class="grid-4">
+      <article class="card">
+        <div class="label"><span>Overall Catalog</span><span id="overallPct">0%</span></div>
+        <div class="metric-row"><span class="metric-big" id="overallDone">0</span><span class="metric-sub" id="overallTotal">/ 0</span></div>
+        <div class="bar-track"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
+      </article>
+      <article class="card">
+        <div class="label"><span>Pass 1 (Multi-Spin)</span><span id="pass1Pct">0%</span></div>
+        <div class="metric-row"><span class="metric-big" id="pass1Done">0</span><span class="metric-sub" id="pass1Total">/ 0</span></div>
+        <div class="bar-track"><div class="bar-fill info" id="pass1Bar" style="width:0%"></div></div>
+      </article>
+      <article class="card">
+        <div class="label"><span>Pass 2 (Single-Spin)</span><span id="pass2Pct">0%</span></div>
+        <div class="metric-row"><span class="metric-big" id="pass2Done">0</span><span class="metric-sub" id="pass2Total">/ 0</span></div>
+        <div class="bar-track"><div class="bar-fill success" id="pass2Bar" style="width:0%"></div></div>
+      </article>
+      <article class="card">
+        <div class="label"><span>Production Live Pool</span><span>SNAPSHOT</span></div>
+        <div class="metric-row"><span class="metric-big" id="livePoolCount">0</span><span class="metric-sub">verified links</span></div>
+        <div class="metric-sub">public/data/song-links.json</div>
+      </article>
+    </section>
+
+    <section class="grid-2">
+      <article class="card">
+        <div class="label"><span>Batch &amp; Cooldown</span><span id="passModeTag">pass=--</span></div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-k">Current Batch</div><div class="kv-v" id="batchProgress">0 / 0 (0 / 0)</div></div>
+          <div class="kv"><div class="kv-k">Cooldown Timer</div><div class="kv-v" id="cooldownTimer">00:00</div></div>
+          <div class="kv"><div class="kv-k">Effective Jitter</div><div class="kv-v" id="effectiveJitter">0.00s - 0.00s</div></div>
+          <div class="kv"><div class="kv-k">Clean Streak</div><div class="kv-v" id="cleanStreakVal">0</div></div>
+          <div class="kv" style="grid-column: 1 / -1;"><div class="kv-k">Active Song / Query</div><div class="kv-v" id="currentSongVal">--</div></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="label"><span>Throughput &amp; ETA</span><span id="windowCounts">15m: 0 | 60m: 0</span></div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-k">Observed Rate</div><div class="kv-v" id="observedRate">0.00 songs/min</div></div>
+          <div class="kv"><div class="kv-k">Configured Steady</div><div class="kv-v" id="configuredRate">0.00 songs/min</div></div>
+          <div class="kv"><div class="kv-k">Pass 1 ETA</div><div class="kv-v" id="pass1Eta">--</div></div>
+          <div class="kv"><div class="kv-k">Full Catalog ETA</div><div class="kv-v" id="fullEta">--</div></div>
+          <div class="kv" style="grid-column: 1 / -1;"><div class="kv-k">Remaining Queue</div><div class="kv-v" id="remainingQueue">Pass 1: 0 | Full: 0</div></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="label"><span>Match Tier Breakdown</span><span id="matchRateLabel">0% matched (0 / 0)</span></div>
+      <div class="tier-bar">
+        <div class="t-high" id="segHigh" style="width:0%"></div>
+        <div class="t-medium" id="segMedium" style="width:0%"></div>
+        <div class="t-low" id="segLow" style="width:0%"></div>
+        <div class="t-unmatched" id="segUnmatched" style="width:0%"></div>
+      </div>
+      <div class="tier-stats">
+        <div class="kv"><div class="kv-k">High</div><div class="kv-v" id="tierHigh">0</div></div>
+        <div class="kv"><div class="kv-k">Medium</div><div class="kv-v" id="tierMedium">0</div></div>
+        <div class="kv"><div class="kv-k">Low</div><div class="kv-v" id="tierLow">0</div></div>
+        <div class="kv"><div class="kv-k">Unmatched</div><div class="kv-v" id="tierUnmatched">0</div></div>
+        <div class="kv"><div class="kv-k">Matched Total</div><div class="kv-v" id="tierMatched">0</div></div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <article class="card">
+        <div class="label"><span>Recent Retries</span><span id="retryCountLabel">0 retries</span></div>
+        <div id="retriesBox" class="retry-list"><div class="empty">No retries logged.</div></div>
+      </article>
+      <article class="card">
+        <div class="label"><span>Discovery Log Tail</span><span id="logCountLabel">0 lines</span></div>
+        <pre id="logTail" class="log-tail">No log lines available.</pre>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="label"><span>Recent Matches Feed</span><span>LATEST 25</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Artist</th><th>Song Title</th><th>Score</th><th>Tier</th><th>Video ID</th><th>Checked At</th></tr></thead>
+          <tbody id="recentBody"><tr><td colspan="6" class="empty">Waiting for checkpoint entries.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmtInt = (n) => Number(n || 0).toLocaleString('en-US');
+    const fmtMmSs = (sec) => {
+      const s = Math.max(0, Math.round(Number(sec || 0)));
+      return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    };
+    const fmtDur = (sec) => {
+      if (sec === null || sec === undefined) return '--';
+      if (sec <= 0) return 'Done';
+      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+      return h > 0 ? `${h}h ${m}m` : `${m}m ${sec % 60}s`;
+    };
+    const fmtEta = (sec, iso) => {
+      if (sec === 0) return 'Done';
+      if (sec === null || sec === undefined) return '--';
+      const ts = iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      return ts ? `${fmtDur(sec)} (${ts})` : fmtDur(sec);
+    };
+    const fmtClock = (iso) => {
+      if (!iso) return '--';
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleTimeString([], { hour12: false });
+    };
+
+    let lastData = null;
+    let polling = false;
+
+    function resolvePill(rt) {
+      if (rt.alive) {
+        if (rt.phase === 'initial_cooldown' || rt.phase === 'batch_cooldown' || rt.phase === 'retry_backoff') {
+          return { cls: 'cooling', text: 'COOLING DOWN' };
+        }
+        return { cls: 'alive', text: 'ALIVE' };
+      }
+      if (rt.pid && rt.phase && rt.phase !== 'completed' && rt.phase !== 'idle') return { cls: 'stopped', text: 'STOPPED' };
+      return { cls: 'idle', text: 'IDLE' };
+    }
+
+    function updateCooldownTick() {
+      if (!lastData) return;
+      const rt = lastData.runtime || {};
+      const rem = rt.cooldownUntil ? Math.max(0, Math.round((Date.parse(rt.cooldownUntil) - Date.now()) / 1000)) : 0;
+      $('cooldownTimer').textContent = rem > 0 ? fmtMmSs(rem) : '00:00';
+    }
+
+    function render(data) {
+      lastData = data;
+      const { catalog: cat, tiers, runtime: rt, throughput: tp } = data;
+      const pill = resolvePill(rt);
+      $('statusPill').className = `pill ${pill.cls}`;
+      $('statusPill').textContent = pill.text;
+      $('metaPhase').textContent = rt.phase || 'idle';
+      $('metaPid').textContent = rt.pid ?? '--';
+      $('metaPace').textContent = `${Number(rt.paceMultiplier ?? 1).toFixed(2)}x`;
+      $('subStatus').textContent = rt.alive
+        ? `Run active | started ${fmtClock(rt.startedAt)} | processed ${fmtInt(rt.processedInRun)} / ${fmtInt(rt.pendingTotal)}`
+        : 'No active discovery process';
+      $('pollIndicator').textContent = `POLL 2S // ${new Date().toLocaleTimeString([], { hour12: false })}`;
+
+      $('overallDone').textContent = fmtInt(cat.overallCompleted);
+      $('overallTotal').textContent = `/ ${fmtInt(cat.totalSongs)}`;
+      $('overallPct').textContent = `${cat.overallPct.toFixed(2)}%`;
+      $('overallBar').style.width = `${Math.min(100, cat.overallPct)}%`;
+
+      $('pass1Done').textContent = fmtInt(cat.pass1Completed);
+      $('pass1Total').textContent = `/ ${fmtInt(cat.pass1MultiTotal)}`;
+      $('pass1Pct').textContent = `${cat.pass1Pct.toFixed(2)}%`;
+      $('pass1Bar').style.width = `${Math.min(100, cat.pass1Pct)}%`;
+
+      $('pass2Done').textContent = fmtInt(cat.pass2Completed);
+      $('pass2Total').textContent = `/ ${fmtInt(cat.pass2SingleTotal)}`;
+      $('pass2Pct').textContent = `${cat.pass2Pct.toFixed(2)}%`;
+      $('pass2Bar').style.width = `${Math.min(100, cat.pass2Pct)}%`;
+
+      $('livePoolCount').textContent = fmtInt(cat.productionLivePool);
+
+      $('passModeTag').textContent = `pass=${rt.passMode || '--'}`;
+      $('batchProgress').textContent = `${rt.batchIndex} / ${rt.totalBatches} (${rt.batchProcessed} / ${rt.batchSize})`;
+      updateCooldownTick();
+      $('effectiveJitter').textContent = `${Number(rt.effectiveMinJitter || 0).toFixed(2)}s - ${Number(rt.effectiveMaxJitter || 0).toFixed(2)}s`;
+      $('cleanStreakVal').textContent = fmtInt(rt.cleanStreak);
+      $('currentSongVal').textContent = rt.currentSong
+        ? `${rt.currentSong.artist} - ${rt.currentSong.songTitle}`
+        : (rt.cooldownRemainingSec > 0 ? `Cooldown (${rt.phase})` : '--');
+
+      $('windowCounts').textContent = `15m: ${fmtInt(tp.songsLast15m)} | 60m: ${fmtInt(tp.songsLast60m)}`;
+      $('observedRate').textContent = `${Number(tp.observedSongsPerMin).toFixed(2)} songs/min`;
+      $('configuredRate').textContent = `${Number(tp.configuredSongsPerMin).toFixed(2)} songs/min (eff ${Number(tp.effectiveSongsPerMin).toFixed(2)})`;
+      $('pass1Eta').textContent = fmtEta(tp.pass1EtaSeconds, tp.pass1EtaIso);
+      $('fullEta').textContent = fmtEta(tp.fullCatalogEtaSeconds, tp.fullCatalogEtaIso);
+      $('remainingQueue').textContent = `Pass 1: ${fmtInt(tp.pass1Remaining)} | Full: ${fmtInt(tp.fullCatalogRemaining)}`;
+
+      const tot = tiers.totalChecked || 0;
+      $('matchRateLabel').textContent = `${tiers.matchRatePct.toFixed(2)}% matched (${fmtInt(tiers.matchedTotal)} / ${fmtInt(tot)})`;
+      $('segHigh').style.width = `${tot > 0 ? (tiers.high / tot) * 100 : 0}%`;
+      $('segMedium').style.width = `${tot > 0 ? (tiers.medium / tot) * 100 : 0}%`;
+      $('segLow').style.width = `${tot > 0 ? (tiers.low / tot) * 100 : 0}%`;
+      $('segUnmatched').style.width = `${tot > 0 ? (tiers.unmatched / tot) * 100 : 0}%`;
+      $('tierHigh').textContent = fmtInt(tiers.high);
+      $('tierMedium').textContent = fmtInt(tiers.medium);
+      $('tierLow').textContent = fmtInt(tiers.low);
+      $('tierUnmatched').textContent = fmtInt(tiers.unmatched);
+      $('tierMatched').textContent = fmtInt(tiers.matchedTotal);
+
+      $('retryCountLabel').textContent = `${fmtInt(rt.retryCount)} retries`;
+      $('retriesBox').innerHTML = rt.recentRetries?.length
+        ? rt.recentRetries.map((r) => `<div class="retry-item">[${esc(fmtClock(r.at))}] ${esc(r.searchFilter)} "${esc(r.query)}" backoff=${esc(r.backoffSeconds)}s pace=${esc(r.paceMultiplier)}x :: ${esc(r.error)}</div>`).join('')
+        : '<div class="empty">No retries logged.</div>';
+
+      const logEl = $('logTail');
+      const stickBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 24;
+      $('logCountLabel').textContent = `${data.logTail?.length || 0} lines`;
+      logEl.textContent = data.logTail?.length ? data.logTail.join('\n') : 'No log lines available.';
+      if (stickBottom) logEl.scrollTop = logEl.scrollHeight;
+
+      $('recentBody').innerHTML = data.recentMatches?.length
+        ? data.recentMatches.map((m) => {
+            const vidCell = m.videoId
+              ? `<a class="yt-link" href="https://www.youtube.com/watch?v=${encodeURIComponent(m.videoId)}" target="_blank" rel="noopener noreferrer">${esc(m.videoId)}</a>`
+              : '--';
+            return `<tr><td>${esc(m.artist)}</td><td>${esc(m.songTitle)}</td><td class="mono">${esc(m.confidenceScore)}</td><td><span class="tier-badge badge-${esc(m.matchTier)}">${esc(m.matchTier)}</span></td><td>${vidCell}</td><td class="mono">${esc(fmtClock(m.checkedAt))}</td></tr>`;
+          }).join('')
+        : '<tr><td colspan="6" class="empty">Waiting for checkpoint entries.</td></tr>';
+    }
+
+    async function poll() {
+      if (polling) return;
+      polling = true;
+      try {
+        const res = await fetch('/api/status', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        render(await res.json());
+      } catch (err) {
+        $('pollIndicator').textContent = `POLL ERR // ${err.message}`;
+      } finally {
+        polling = false;
+      }
+    }
+
+    poll();
+    setInterval(poll, 2000);
+    setInterval(updateCooldownTick, 1000);
+  </script>
+</body>
+</html>

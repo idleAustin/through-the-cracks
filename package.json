@@ -23,6 +23,7 @@
     "song-links:discover:multi": "npm run song-links:discover -- --pass=multi",
     "song-links:discover:single": "npm run song-links:discover -- --pass=single",
     "song-links:verify": "doppler --no-check-version run -- node scripts/verify-and-export-song-links.js",
+    "song-links:viz": "node scripts/song-links-visualizer.js",
     "deploy:worker": "npm run build && doppler --no-check-version run -- wrangler deploy",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run src",
