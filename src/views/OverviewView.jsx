@@ -325,7 +325,7 @@ export default function OverviewView({ data, loading, error, onRetry }) {
         <div className="overview-header-copy">
           <h1>Archive Telemetry</h1>
           <p className="overview-subtitle">
-            WEVL 89.9 FM Memphis · Hosted by Ed Dirmeyer · On air since Dec 7, 1991
+            Through The Cracks · WEVL 89.9 FM Memphis · Hosted by Ed Dirmeyer
           </p>
         </div>
 
