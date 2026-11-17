@@ -19,7 +19,7 @@ const TOP_LEVEL_FILES = [
   'albums.json',
   'years.json',
 ];
-const OPTIONAL_TOP_LEVEL_FILES = ['song-links.json'];
+const OPTIONAL_TOP_LEVEL_FILES = ['song-links.json', 'metadata-atlas.json'];
 
 function collectSubdirJson(dataDir, dirName) {
   const fullDir = path.join(dataDir, dirName);

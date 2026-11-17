@@ -11,6 +11,7 @@ import { createOverviewRouter } from './routes/overview.js';
 import { createEpisodesRouter } from './routes/episodes.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createArtistProfileRouter } from './routes/artistProfile.js';
+import { createAtlasRouter, atlasRouter } from './routes/atlas.js';
 import { createPlaylistRouter, playlistRouter } from './routes/playlist.js';
 
 const execAsync = promisify(exec);
@@ -80,6 +81,7 @@ export function createApp({
   project = GCP_PROJECT,
   dataset = BQ_DATASET,
   playlistSnapshotPath,
+  atlasSnapshotPath,
 } = {}) {
   const app = express();
 
@@ -117,6 +119,7 @@ export function createApp({
   app.use('/api', createEpisodesRouter({ query, project, dataset, playlistSnapshotPath }));
   app.use('/api', createCatalogRouter({ query, project, dataset }));
   app.use('/api', createArtistProfileRouter({ query, project, dataset }));
+  app.use('/api', atlasSnapshotPath ? createAtlasRouter({ snapshotPath: atlasSnapshotPath }) : atlasRouter);
   app.use(
     '/api/playlist',
     playlistSnapshotPath ? createPlaylistRouter({ snapshotPath: playlistSnapshotPath }) : playlistRouter,

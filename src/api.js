@@ -28,6 +28,7 @@ import {
 } from './api-static.js';
 
 export { getArchiveMode, resolveApiBase, subscribeArchiveMode };
+export { computeFilteredAtlas, getMetadataAtlas, resetMetadataAtlasCache } from './api-atlas.js';
 export { getRandomPlaylist } from './api-playlist.js';
 
 const API_BASE = resolveApiBase();

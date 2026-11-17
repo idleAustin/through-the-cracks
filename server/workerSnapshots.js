@@ -26,6 +26,8 @@ export function bumpWorkerCacheEpoch() {
 const cmpAsc = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const cmpText = (a, b) => cmpAsc(String(a || '').toLowerCase(), String(b || '').toLowerCase());
 const songAlbumsList = (s) => (Array.isArray(s.albums) ? s.albums : s.album ? [s.album] : []);
+const isPlainObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+export const isValidAtlasPayload = (d) => isPlainObj(d) && isPlainObj(d.summary) && Array.isArray(d.decades) && isPlainObj(d.states);
 
 export function safeDecodeUri(value) {
   try {
@@ -277,6 +279,10 @@ export async function tryServeFromR2(apiPath, query = {}, env = {}, _ctx = null)
   if (apiPath === '/api/years') {
     const ys = await loadR2Shared(bucket, state, 'v1/year-spins.json');
     return ys ? { status: 200, data: serveYearSpinsFromR2(ys, query) } : null;
+  }
+  if (apiPath === '/api/atlas') {
+    const atlas = await loadR2Shared(bucket, state, 'v1/metadata-atlas.json');
+    return atlas ? (isValidAtlasPayload(atlas) ? { status: 200, data: atlas } : null) : null;
   }
   if (apiPath === '/api/episodes') {
     const idx = await loadR2Shared(bucket, state, 'v1/episodes-index.json');

@@ -6,10 +6,11 @@ import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
+import { readCacheBlob } from './d1Rollups.js';
 import { runIncrementalSongLinksCron } from './d1SongLinksCron.js';
 import { drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
 import {
-  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, readR2SongLinksSnapshot,
+  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, isValidAtlasPayload, readR2SongLinksSnapshot,
   safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
 import { syncR2SongLinksFromD1 } from './workerSnapshotSync.js';
@@ -64,9 +65,10 @@ function withHeaders(response, extraHeaders = {}) {
 }
 
 function jsonResponse(data, status = 200, corsHeaders = {}, extraHeaders = {}) {
+  const defaultCache = status >= 400 ? NO_STORE_HEADERS : {};
   return new Response(JSON.stringify(data), {
     status,
-    headers: buildJsonHeaders(corsHeaders, extraHeaders),
+    headers: buildJsonHeaders(corsHeaders, { ...defaultCache, ...extraHeaders }),
   });
 }
 
@@ -207,7 +209,25 @@ async function handleIngest(request, env, corsHeaders, ctx) {
   return jsonResponse(payload, 200, corsHeaders);
 }
 
-const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
+const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/atlas', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
+
+async function handleAtlasFallback(url, env) {
+  if (env?.DB) {
+    try {
+      const cached = await readCacheBlob(env.DB, 'metadata_atlas');
+      if (isValidAtlasPayload(cached)) return { status: 200, data: cached };
+    } catch { /* fall through to ASSETS */ }
+  }
+  if (env?.ASSETS && typeof env.ASSETS.fetch === 'function') {
+    try {
+      const res = await env.ASSETS.fetch(new Request(new URL('/data/metadata-atlas.json', url.origin), { method: 'GET' }));
+      const ct = String(res?.headers?.get?.('content-type') || '').toLowerCase();
+      const data = res?.ok && !ct.includes('text/html') ? await res.json() : null;
+      if (isValidAtlasPayload(data)) return { status: 200, data };
+    } catch { /* fall through to 503 */ }
+  }
+  return { status: 503, data: { error: 'Metadata atlas snapshot unavailable' }, extraHeaders: NO_STORE_HEADERS };
+}
 
 async function handleReadRoutes(apiPath, url, env) {
   const query = Object.fromEntries(url.searchParams.entries());
@@ -224,6 +244,7 @@ async function handleReadRoutes(apiPath, url, env) {
   if (profDec && !profDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
   if (profDec && !profDec.value.trim()) return { status: 400, data: { error: 'Artist name is required' } };
   if (artDec && !artDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
+  if (apiPath === '/api/atlas') return await handleAtlasFallback(url, env);
   if (!env?.DB) return { status: 503, data: { error: 'Service unavailable' } };
 
   if (apiPath === '/api/overview') return { status: 200, data: await getD1Overview(env.DB) };
@@ -301,7 +322,8 @@ async function handleApi(request, env, apiPath, url, ctx) {
     }
     if (apiPath === '/api/ingest') return await handleIngest(request, env, corsHeaders, ctx);
     if (apiPath === '/api/playlist/random') return await handlePlaylistRandom(request, env, url, corsHeaders);
-    if (!env?.DB && !env?.SNAPSHOT_BUCKET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
+    const hasAtlasAssets = apiPath === '/api/atlas' && Boolean(env?.ASSETS);
+    if (!env?.DB && !env?.SNAPSHOT_BUCKET && !hasAtlasAssets) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
     if (request.method !== 'GET') return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
 
     return await withEdgeCache(
@@ -311,7 +333,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
       ctx,
       (status, extraHeaders = {}) =>
         buildJsonHeaders(corsHeaders, {
-          ...(status === 200 ? { 'Cache-Control': PUBLIC_API_CACHE_CONTROL } : {}),
+          ...(status === 200 ? { 'Cache-Control': PUBLIC_API_CACHE_CONTROL } : status >= 400 ? NO_STORE_HEADERS : {}),
           ...extraHeaders,
         }),
       async () => {
@@ -321,7 +343,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
             const r2Hit = await tryServeFromR2(apiPath, query, env, ctx);
             if (r2Hit) return r2Hit;
           } catch (err) {
-            if (!env?.DB) throw err;
+            if (!env?.DB && !hasAtlasAssets) throw err;
             logWorkerError('Worker R2 snapshot read failed, falling back to D1:', err);
           }
         }
