@@ -1,15 +1,17 @@
 // Root application routes, persistent Broadcast Booth host, and shared archive overview telemetry state.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { getOverview } from './api';
 import AppShell from './components/AppShell';
-import { NotFoundState } from './components/DataState';
+import { NotFoundState, SkeletonRows } from './components/DataState';
 import ArtistsView from './views/ArtistsView';
 import EpisodesView from './views/EpisodesView';
 import OverviewView from './views/OverviewView';
 import PlaylistView from './views/PlaylistView';
 import SearchView from './views/SearchView';
 import SongsView from './views/SongsView';
+
+const AtlasView = React.lazy(() => import('./views/AtlasView'));
 
 export default function App() {
   const location = useLocation();
@@ -110,6 +112,23 @@ export default function App() {
         />
         <Route path="/search" element={<SearchView />} />
         <Route path="/playlist" element={null} />
+        <Route
+          path="/atlas"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="catalog-page">
+                  <div className="surface-region" style={{ padding: 16 }}>
+                    <SkeletonRows count={8} label="Loading metadata atlas" />
+                  </div>
+                </div>
+              }
+            >
+              <AtlasView />
+            </React.Suspense>
+          }
+        />
+        <Route path="/prototype/*" element={<Navigate to="/atlas" replace />} />
         <Route path="*" element={<NotFoundState />} />
       </Routes>
 

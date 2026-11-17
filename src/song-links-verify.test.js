@@ -25,13 +25,17 @@ afterAll(() => {
 describe('Stage 3 & 4: compatibility gating, batching, manual-safe SQL, and snapshot export', () => {
   it('requires YOUTUBE_API_KEY, parses ISO-8601 durations, batches 50 IDs, and enforces public+processed+embeddable+US', async () => {
     await expect(verifyCheckpointRecords([{ song_key: 'a|||b', video_id: 'v1' }], { apiKey: '' })).rejects.toThrow(/YOUTUBE_API_KEY/);
-    const cliFail = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-and-export-song-links.js'), '--input', path.join(ROOT, 'package.json')], {
+    const keyFailDir = makeTempDir('ttc-keyfail-');
+    const keyFailInput = path.join(keyFailDir, 'input.jsonl');
+    writeFileSync(keyFailInput, '{"song_key":"a|||b","video_id":"v1"}\n', 'utf8');
+    const cliFail = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'verify-and-export-song-links.js'), '--input', keyFailInput], {
       cwd: ROOT,
       encoding: 'utf8',
       env: { ...process.env, YOUTUBE_API_KEY: '' },
     });
     expect(cliFail.status).toBe(1);
     expect(cliFail.stderr).toMatch(/YOUTUBE_API_KEY/);
+    expect(cliFail.stderr).not.toMatch(/malformed JSONL/i);
 
     expect(parseIsoDuration('PT4M17S')).toBe(257);
     expect(parseIsoDuration('PT1H2M3S')).toBe(3723);

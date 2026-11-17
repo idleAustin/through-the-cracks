@@ -14,8 +14,13 @@ const NAV_ITEMS = [
 ];
 
 const SIDEBAR_NAV_ITEMS = [
-  ...NAV_ITEMS,
+  { to: '/', label: 'Overview', icon: 'overview', end: true },
+  { to: '/artists', label: 'Artists', icon: 'artists', end: false },
+  { to: '/songs', label: 'Songs', icon: 'songs', end: false },
+  { to: '/episodes', label: 'Episodes', icon: 'episodes', end: false },
+  { to: '/atlas', label: 'Atlas', icon: 'compass', end: false },
   { to: '/playlist', label: 'Playlist', icon: 'playlist', end: false },
+  { to: '/search', label: 'Search', icon: 'search', end: false },
 ];
 
 function getQuickJumpShortcut() {
@@ -123,6 +128,17 @@ export function MobileTopBar({ archiveMode, playlistHref = '/playlist' }) {
       </div>
 
       <div className="mobile-topbar-actions">
+        <NavLink
+          to="/atlas"
+          className={({ isActive }) =>
+            isActive ? 'mobile-playlist-btn is-active' : 'mobile-playlist-btn'
+          }
+          aria-label="Atlas"
+        >
+          <Icon name="compass" size="sm" />
+          <span className="mobile-topbar-btn-label">Atlas</span>
+        </NavLink>
+
         <NavLink
           to={playlistHref}
           className={({ isActive }) =>

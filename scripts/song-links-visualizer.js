@@ -3,6 +3,7 @@ import http from 'node:http';
 import { closeSync, existsSync, openSync, readFileSync, readSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildMetadataVisualizerPayload } from './song-metadata-visualizer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,10 @@ export const DEFAULT_STATUS_PATH = path.join(ROOT, '.cache', 'song-links', 'disc
 export const DEFAULT_VERIFIED_SNAPSHOT_PATH = path.join(ROOT, 'public', 'data', 'song-links.json');
 export const DEFAULT_LOG_PATH = path.join(ROOT, '.cache', 'song-links', 'discovery.log');
 const HTML_PATH = path.join(__dirname, 'song-links-visualizer.html');
+const METADATA_PANEL_PATH = path.join(__dirname, 'song-metadata-visualizer.html');
+const TOKENS_CSS_PATH = path.join(ROOT, 'src', 'styles', 'tokens.css');
+const VISUALIZER_CSS_PATH = path.join(__dirname, 'visualizer.css');
+const VISUALIZER_CLIENT_JS_PATH = path.join(__dirname, 'visualizer-client.js');
 const MAX_LOG_BYTES = 32 * 1024;
 const MAX_RECENT = 25;
 const TIERS = ['high', 'medium', 'low', 'unmatched'];
@@ -230,15 +235,37 @@ export function buildVisualizerPayload({
 
 export function createVisualizerServer(options = {}) {
   const htmlPath = options.htmlPath || HTML_PATH;
+  const panelPath = options.panelPath || METADATA_PANEL_PATH;
+  const tokensPath = options.tokensCssPath || TOKENS_CSS_PATH;
+  const cssPath = options.visualizerCssPath || VISUALIZER_CSS_PATH;
+  const clientJsPath = options.visualizerClientJsPath || VISUALIZER_CLIENT_JS_PATH;
+
   return http.createServer((req, res) => {
     const send = (code, type, body) => { res.writeHead(code, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(body); };
     const pathname = new URL(req.url || '/', `http://${DEFAULT_HOST}`).pathname;
-    if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-      try { return send(200, 'text/html; charset=utf-8', readFileSync(htmlPath, 'utf8')); }
-      catch (err) { return send(500, 'text/plain; charset=utf-8', `Failed to load visualizer HTML: ${err.message}`); }
+    if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html' || pathname === '/metadata')) {
+      try {
+        let html = readFileSync(htmlPath, 'utf8');
+        if (existsSync(panelPath)) html = html.replace('<!--METADATA_PANEL-->', readFileSync(panelPath, 'utf8'));
+        if (pathname === '/metadata' || options.defaultTab === 'metadata') {
+          html = html.replace('data-default-tab="links"', 'data-default-tab="metadata"');
+        }
+        return send(200, 'text/html; charset=utf-8', html);
+      } catch (err) {
+        return send(500, 'text/plain; charset=utf-8', `Failed to load visualizer HTML: ${err.message}`);
+      }
     }
+    if (req.method === 'GET' && pathname === '/tokens.css') return send(200, 'text/css; charset=utf-8', readFileSync(tokensPath, 'utf8'));
+    if (req.method === 'GET' && pathname === '/visualizer.css') return send(200, 'text/css; charset=utf-8', readFileSync(cssPath, 'utf8'));
+    if (req.method === 'GET' && pathname === '/visualizer-client.js') return send(200, 'application/javascript; charset=utf-8', readFileSync(clientJsPath, 'utf8'));
     if (req.method === 'GET' && pathname === '/api/status') {
       return send(200, 'application/json; charset=utf-8', JSON.stringify(buildVisualizerPayload(options)));
+    }
+    if (req.method === 'GET' && pathname === '/api/metadata-status') {
+      return send(200, 'application/json; charset=utf-8', JSON.stringify(buildMetadataVisualizerPayload(options.metadataOptions || {})));
+    }
+    if (req.method === 'GET' && pathname === '/healthz') {
+      return send(200, 'application/json; charset=utf-8', JSON.stringify({ ok: true }));
     }
     return send(404, 'text/plain; charset=utf-8', '404 Not Found');
   });

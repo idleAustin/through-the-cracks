@@ -1,0 +1,178 @@
+<!-- Song Metadata & Pre-Run Data Load Panel -->
+<div class="grid-4">
+  <article class="card">
+    <div class="label"><span>Overall Catalog Load</span><span id="mOverallPct">0%</span></div>
+    <div class="metric-row"><span class="metric-big" id="mOverallDone">0</span><span class="metric-sub"
+        id="mOverallTotal">/ 0</span></div>
+    <div class="bar-track">
+      <div class="bar-fill" id="mOverallBar" style="width:0%"></div>
+    </div>
+    <div class="card-foot" id="mArtistsCountMeta">0 catalog Artists</div>
+  </article>
+  <article class="card">
+    <div class="label"><span>Album-First Compression</span><span id="mAlbumsPct">0%</span></div>
+    <div class="metric-row"><span class="metric-big" id="mAlbumsDone">0</span><span class="metric-sub"
+        id="mAlbumsTotal">/ 0 Albums</span></div>
+    <div class="bar-track">
+      <div class="bar-fill info" id="mAlbumsBar" style="width:0%"></div>
+    </div>
+    <div class="card-foot" id="mAlbumCompressionMeta">Waiting for catalog-input.json</div>
+  </article>
+  <article class="card">
+    <div class="label"><span>Pass 1 (Multi-Spin &gt;= 2)</span><span id="mPass1Pct">0%</span></div>
+    <div class="metric-row"><span class="metric-big" id="mPass1Done">0</span><span class="metric-sub" id="mPass1Total">/
+        0</span></div>
+    <div class="bar-track">
+      <div class="bar-fill success" id="mPass1Bar" style="width:0%"></div>
+    </div>
+    <div class="card-foot" id="mPass2Meta">Pass 2 Single-Spin: 0 / 0</div>
+  </article>
+  <article class="card">
+    <div class="label"><span>Staging SQLite Cache</span><span id="mSuffixBadge" class="pill">Suffixes: --</span></div>
+    <div class="metric-row"><span class="metric-big" id="mSqlCount">0</span><span class="metric-sub">reconciled
+        Songs</span></div>
+    <div class="card-foot" id="mSqliteMeta">http-cache.sqlite: 0 KB | song-metadata.sqlite: 0 KB</div>
+  </article>
+</div>
+
+<div class="grid-2">
+  <article class="card">
+    <div class="label"><span>Pre-Run Request Load &amp; Source Pacing</span><span id="mSourcesTag">sources=--</span>
+    </div>
+    <div class="kv-grid">
+      <div class="kv">
+        <div class="kv-k">Discogs Auth / Pace</div>
+        <div class="kv-v" id="mAuthDiscogs">--</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">MB / Wiki / SHS Pace</div>
+        <div class="kv-v" id="mAuthMbShs">MB 1.60s | Wiki 0.25s</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Pass 1 Remaining Est.</div>
+        <div class="kv-v" id="mPass1ReqEst">--</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Full Remaining Est.</div>
+        <div class="kv-v" id="mFullReqEst">--</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">HTTP Cache / Errors</div>
+        <div class="kv-v" id="mCacheStats">--</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Last Active Item</div>
+        <div class="kv-v" id="mCurrentItem">--</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="label"><span>Throughput &amp; ETA</span><span id="mWindowCounts">15m: 0 | 60m: 0</span></div>
+    <div class="kv-grid">
+      <div class="kv">
+        <div class="kv-k">Observed Rate</div>
+        <div class="kv-v" id="mObservedRate">0.00 songs/min</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Album-First Steady</div>
+        <div class="kv-v" id="mConfiguredRate">32.00 songs/min</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Pass 1 Multi-Spin ETA</div>
+        <div class="kv-v" id="mPass1Eta">--</div>
+      </div>
+      <div class="kv">
+        <div class="kv-k">Full Catalog ETA</div>
+        <div class="kv-v" id="mFullEta">--</div>
+      </div>
+      <div class="kv full">
+        <div class="kv-k">Remaining Workload Queue</div>
+        <div class="kv-v" id="mRemainingQueue">Albums: 0 | Singles: 0</div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<div class="grid-2">
+  <article class="card">
+    <div class="label"><span>Catalog Load by Spin Tier</span><span id="mTierTotalLabel">0 Songs</span></div>
+    <div id="mSpinTiersList" class="tier-list">
+      <div class="empty">Run npm run song-metadata:prepare to populate tier distribution.</div>
+    </div>
+    <div class="label" style="margin-top: 12px;"><span>Top Artists in Catalog Load</span><span>TOP 8</span></div>
+    <div id="mTopArtistsChips" class="chip-wrap"></div>
+  </article>
+
+  <article class="card">
+    <div class="label"><span>Source Hits &amp; SQLite Liner Coverage</span><span id="mSourceHitSummary">0 checked</span>
+    </div>
+    <div id="mSourcePills" class="chip-wrap" style="margin-top: 0; margin-bottom: 10px;"></div>
+    <div id="mCoverageBars" class="cov-list">
+      <div class="empty">Run npm run song-metadata:reconcile to inspect SQLite field coverage.</div>
+    </div>
+    <div id="mTopCreditsChips" class="chip-wrap"></div>
+  </article>
+</div>
+
+<div class="grid-2">
+  <article class="card">
+    <div class="label"><span>Next Queued Albums (Priority by Spins)</span><span id="mQueueTag">TOP 20 UNPROCESSED</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>Album</th>
+            <th>Spins</th>
+            <th>Songs</th>
+            <th>Multi-Spin</th>
+            <th>Done</th>
+          </tr>
+        </thead>
+        <tbody id="mUpcomingBody">
+          <tr>
+            <td colspan="6" class="empty">No queued albums found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="label"><span>Reconciled Liner Notes Preview</span><span id="mSampleTag">0 SAMPLES</span></div>
+    <div id="mSamplesList" class="fact-list">
+      <div class="empty">Run npm run song-metadata:reconcile to inspect reconciled Songs.</div>
+    </div>
+  </article>
+</div>
+
+<div class="grid-2">
+  <article class="card">
+    <div class="label"><span>Recent Metadata Checkpoints</span><span>LATEST 25</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Artist &amp; Song</th>
+            <th>Album</th>
+            <th>Year</th>
+            <th>Sources</th>
+            <th>Checked At</th>
+          </tr>
+        </thead>
+        <tbody id="mRecentBody">
+          <tr>
+            <td colspan="5" class="empty">Waiting for metadata checkpoints.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="label"><span>Metadata Discovery Log Tail</span><span id="mLogCountLabel">0 lines</span></div>
+    <pre id="mLogTail" class="log-tail">No metadata log lines available.</pre>
+  </article>
+</div>

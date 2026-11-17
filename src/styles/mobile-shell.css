@@ -33,6 +33,7 @@
     flex-direction: column;
     gap: 2px;
     min-width: 0;
+    overflow: hidden;
   }
 
   .mobile-wordmark {
@@ -56,6 +57,17 @@
     font-weight: 500;
     line-height: 1.2;
     color: var(--as-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .mobile-station > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
   }
 
   .mobile-topbar-actions {
@@ -193,10 +205,15 @@
     padding: var(--as-safe-top) max(12px, var(--as-safe-right)) 0 max(12px, var(--as-safe-left));
   }
 
+  .mobile-topbar-actions {
+    gap: 6px;
+  }
+
   .mobile-playlist-btn,
   .mobile-theme-btn {
-    padding: 0 8px;
+    padding: 0 7px;
     gap: 4px;
+    font-size: 11px;
   }
 }
 

@@ -113,8 +113,9 @@ export default function CommandPalette({
         { key: 'nav-artists', label: 'Artists', meta: 'Route', icon: 'artists', to: '/artists' },
         { key: 'nav-songs', label: 'Songs', meta: 'Route', icon: 'songs', to: '/songs' },
         { key: 'nav-episodes', label: 'Episodes', meta: 'Route', icon: 'episodes', to: '/episodes' },
-        { key: 'nav-search', label: 'Search', meta: 'Route', icon: 'search', to: '/search' },
+        { key: 'nav-atlas', label: 'Atlas', meta: 'Metadata & Map · Route', icon: 'compass', to: '/atlas' },
         { key: 'go-playlist', label: 'Playlist', meta: 'Broadcast Booth · Route', icon: 'playlist', to: playlistHref },
+        { key: 'nav-search', label: 'Search', meta: 'Route', icon: 'search', to: '/search' },
         { key: 'nav-latest', label: 'Latest Broadcast', meta: 'Episode', icon: 'playlist', to: latestUrl },
       ];
       return [
