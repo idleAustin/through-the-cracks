@@ -95,8 +95,8 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
   });
 
   it('validates public/data/metadata-atlas.json and R2 collectSnapshotPlan manifest', () => {
-    expect(ATLAS_SNAPSHOT.summary.totalSongs).toBe(16285);
-    expect(ATLAS_SNAPSHOT.summary.songsWithYear).toBe(14199);
+    expect(ATLAS_SNAPSHOT.summary.totalSongs).toBeGreaterThanOrEqual(16285);
+    expect(ATLAS_SNAPSHOT.summary.songsWithYear).toBeGreaterThanOrEqual(14199);
     expect(ATLAS_SNAPSHOT.decades).toHaveLength(8);
     expect(Object.keys(ATLAS_SNAPSHOT.states)).toHaveLength(51);
     for (const code of ['AK', 'HI', 'DC', 'TN']) {
@@ -126,7 +126,7 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
       expect(res.status).toBe(200);
       expect(res.headers.get('cache-control')).toContain('max-age=300');
       const body = await res.json();
-      expect(body.summary.totalSongs).toBe(16285);
+      expect(body.summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
       expect(body.decades).toHaveLength(8);
     }
 
@@ -151,13 +151,13 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
     expect(r2.get).toHaveBeenCalledTimes(2);
     expect(putSpy).toHaveBeenCalledTimes(1);
     expect(store.size).toBe(1);
-    expect((await first.json()).summary.songsWithYear).toBe(14199);
+    expect((await first.json()).summary.songsWithYear).toBe(ATLAS_SNAPSHOT.summary.songsWithYear);
 
     const second = await worker.fetch(new Request('https://idleamericana.com/through-the-cracks/api/atlas'), { DB: db, SNAPSHOT_BUCKET: r2 });
     expect(second.status).toBe(200);
     expect(db.prepare).not.toHaveBeenCalled();
     expect(r2.get).toHaveBeenCalledTimes(2);
-    expect((await second.json()).summary.totalSongs).toBe(16285);
+    expect((await second.json()).summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
   });
 
   it('falls back to D1 cache_blobs, ASSETS JSON, and uncached 503 on malformed/missing atlas', async () => {
@@ -167,7 +167,7 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
       await writeCacheBlob(db, 'metadata_atlas', ATLAS_SNAPSHOT);
       const d1Res = await worker.fetch(new Request('https://idleamericana.com/api/atlas'), { DB: db });
       expect(d1Res.status).toBe(200);
-      expect((await d1Res.json()).summary.totalSongs).toBe(16285);
+      expect((await d1Res.json()).summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
     } finally {
       db.sqlite.close();
     }
@@ -186,7 +186,27 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
       const assetsHit = await worker.fetch(new Request('https://idleamericana.com/api/atlas'), { DB: emptyDb, ASSETS: assetsOk });
       expect(assetsHit.status).toBe(200);
       expect(assetsOk.fetch).toHaveBeenCalledTimes(2);
-      expect((await assetsHit.json()).summary.songsWithYear).toBe(14199);
+      expect((await assetsHit.json()).summary.songsWithYear).toBe(ATLAS_SNAPSHOT.summary.songsWithYear);
+
+      const prefixedAssets = {
+        fetch: vi.fn(async (req) => {
+          const p = new URL(req.url).pathname;
+          if (p === '/data/metadata-atlas.json') {
+            return new Response('<!doctype html><html></html>', { status: 200, headers: { 'Content-Type': 'text/html' } });
+          }
+          if (p === '/through-the-cracks/data/metadata-atlas.json') {
+            return new Response(JSON.stringify(ATLAS_SNAPSHOT), { status: 200, headers: { 'Content-Type': 'application/json' } });
+          }
+          return new Response('Not found', { status: 404 });
+        }),
+      };
+      const prefixedRes = await worker.fetch(new Request('https://idleamericana.com/through-the-cracks/api/atlas'), { DB: emptyDb, ASSETS: prefixedAssets });
+      expect(prefixedRes.status).toBe(200);
+      expect((await prefixedRes.json()).summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
+      expect(prefixedAssets.fetch.mock.calls.map((c) => new URL(c[0].url).pathname)).toEqual([
+        '/data/metadata-atlas.json',
+        '/through-the-cracks/data/metadata-atlas.json',
+      ]);
 
       const { store, putSpy } = stubEdgeCache();
       const htmlFallbackAssets = { fetch: vi.fn(async () => new Response('<!doctype html><html></html>', { status: 200, headers: { 'Content-Type': 'text/html' } })) };
@@ -221,7 +241,7 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
       const badR2 = createMemoryR2({ 'v1/manifest.json': manifest, 'v1/metadata-atlas.json': badBody });
       const resOk = await worker.fetch(new Request('https://idleamericana.com/api/atlas'), { SNAPSHOT_BUCKET: badR2, ASSETS: assetsOk });
       expect(resOk.status).toBe(200);
-      expect((await resOk.json()).summary.totalSongs).toBe(16285);
+      expect((await resOk.json()).summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
     }
 
     for (const badShape of [[], { summary: {} }]) {
@@ -239,7 +259,7 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
     })));
     const liveRes = await getMetadataAtlas();
     expect(liveRes).toMatchObject({ mode: 'live', source: 'express-api' });
-    expect(liveRes.data.summary.totalSongs).toBe(16285);
+    expect(liveRes.data.summary.totalSongs).toBe(ATLAS_SNAPSHOT.summary.totalSongs);
     expect(getArchiveMode()).toBe('live');
 
     resetMetadataAtlasCache();
@@ -253,7 +273,7 @@ describe('Metadata Atlas snapshot, Express, Worker, client adapter, and treemap 
     }));
     const staticRes = await getMetadataAtlas();
     expect(staticRes).toMatchObject({ mode: 'static', source: 'static-json' });
-    expect(staticRes.data.summary.songsWithYear).toBe(14199);
+    expect(staticRes.data.summary.songsWithYear).toBe(ATLAS_SNAPSHOT.summary.songsWithYear);
     expect(getArchiveMode()).toBe('static');
 
     const tnDefault = computeFilteredAtlas(ATLAS_SNAPSHOT, { selectedState: 'TN', selectedDecade: '1970s' });

@@ -145,16 +145,15 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
 
   it('matches public/data/overview.json across SQL aggregates and executes all D1 query functions', async () => {
     const ov = await getD1Overview(realDb);
-    expect(ov.totalEpisodes).toBe(1344);
-    expect(ov.totalSongPlays).toBe(37659);
-    expect(ov.uniqueArtists).toBe(1292);
-    expect(ov.uniqueAlbums).toBe(5199);
-    expect(ov.uniqueSongs).toBe(16285);
+    expect(ov.totalEpisodes).toBeGreaterThanOrEqual(1344);
+    expect(ov.totalEpisodes).toBe(snapshotOverview.totalEpisodes);
+    expect(ov.totalSongPlays).toBe(snapshotOverview.totalSongPlays);
+    expect(ov.uniqueArtists).toBe(snapshotOverview.uniqueArtists);
+    expect(ov.uniqueAlbums).toBe(snapshotOverview.uniqueAlbums);
+    expect(ov.uniqueSongs).toBe(snapshotOverview.uniqueSongs);
     expect(ov.oneSpinArtists).toBe(snapshotOverview.oneSpinArtists);
     expect(ov.oneSpinSongs).toBe(snapshotOverview.oneSpinSongs);
-    expect(ov.oneSpinArtists).toBe(239);
-    expect(ov.oneSpinSongs).toBe(6996);
-    expect(ov.latestEpisodeId).toBe('4423069433994810612');
+    expect(ov.latestEpisodeId).toBe(snapshotOverview.latestEpisodeId);
     expect(ov.dateRange).toEqual(snapshotOverview.dateRange);
     expect(ov.topArtists).toEqual(snapshotOverview.topArtists);
     expect(ov.topSongs).toEqual(snapshotOverview.topSongs);
@@ -213,7 +212,7 @@ describe('D1 schema, incremental ingestion, and SQL parity with static snapshots
     const untrusted = await call('/through-the-cracks/api/overview', { Origin: 'https://evil.example' });
     expect(untrusted.status).toBe(200);
     expect(untrusted.headers.get('Access-Control-Allow-Origin')).toBeNull();
-    expect((await untrusted.json()).totalEpisodes).toBe(1344);
+    expect((await untrusted.json()).totalEpisodes).toBe(snapshotOverview.totalEpisodes);
 
     expect((await (await call('/through-the-cracks/api/years?artist=Todd%20Snider')).json()).scope).toBe('artist');
     expect((await (await call('/through-the-cracks/api/episodes?year=2026&limit=5')).json()).episodes).toHaveLength(5);

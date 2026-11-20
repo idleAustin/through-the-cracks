@@ -1,7 +1,7 @@
 // Pure Web-API D1-to-R2 snapshot builder and uploader for Worker ingest and Cron refreshes.
 import { buildArchiveYearAxis } from './artistProfileBuilder.js';
 import { loadD1PlaylistPool } from './d1Playlist.js';
-import { clearD1Cache, qAll, qFirst } from './d1Rollups.js';
+import { clearD1Cache, qAll, qFirst, readCacheBlob } from './d1Rollups.js';
 import { toPlaylistSongItem } from './playlistBuilder.js';
 
 const JSON_CT = 'application/json; charset=utf-8';
@@ -55,6 +55,60 @@ async function computeManifestCountsFromD1(db) {
     }
     throw err;
   }
+}
+
+async function getD1ManifestCounts(db) {
+  try {
+    const overview = await readCacheBlob(db, 'overview');
+    if (overview && typeof overview === 'object') {
+      return {
+        totalEpisodes: Number(overview.totalEpisodes ?? 0),
+        totalSongPlays: Number(overview.totalSongPlays ?? 0),
+        latestEpisodeId: overview.latestEpisodeId ? String(overview.latestEpisodeId) : null,
+      };
+    }
+  } catch { /* fall back to direct table counts */ }
+  return computeManifestCountsFromD1(db);
+}
+
+/**
+ * Returns true when an existing R2 v1/manifest.json has drifted from D1 episode/spin totals.
+ */
+export async function isR2ArchiveOutOfSync(db, bucket) {
+  if (!db || !bucket) return false;
+  const existing = await readExistingManifest(bucket);
+  if (!existing) return false;
+  const d1 = await getD1ManifestCounts(db);
+  return (
+    Number(existing.totalEpisodes ?? 0) !== d1.totalEpisodes ||
+    Number(existing.totalSongPlays ?? 0) !== d1.totalSongPlays ||
+    String(existing.latestEpisodeId || '') !== String(d1.latestEpisodeId || '')
+  );
+}
+
+/**
+ * Chooses full R2 snapshot sync (on episode changes, forceSync, or R2/D1 drift) or song-links-only sync.
+ */
+export async function syncR2AfterIngest({
+  db,
+  bucket,
+  episodesUpserted = 0,
+  linkChangesMade = false,
+  forceSync = false,
+} = {}) {
+  if (!bucket) return { mode: 'skipped', archiveDrift: false };
+  const archiveDrift = !forceSync && !(episodesUpserted > 0)
+    ? await isR2ArchiveOutOfSync(db, bucket)
+    : false;
+  if (forceSync || episodesUpserted > 0 || archiveDrift) {
+    await syncR2SnapshotsFromD1(db, bucket);
+    return { mode: 'full', archiveDrift };
+  }
+  if (linkChangesMade) {
+    await syncR2SongLinksFromD1(db, bucket);
+    return { mode: 'song-links', archiveDrift: false };
+  }
+  return { mode: 'skipped', archiveDrift: false };
 }
 
 /**

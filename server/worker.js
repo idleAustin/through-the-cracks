@@ -6,14 +6,13 @@ import {
   clearD1Cache, getD1ArtistSongs, getD1Artists, getD1EpisodeById, getD1Episodes,
   getD1Overview, getD1Search, getD1Songs, getD1YearSpins,
 } from './d1Queries.js';
-import { readCacheBlob } from './d1Rollups.js';
 import { runIncrementalSongLinksCron } from './d1SongLinksCron.js';
 import { drawRandomPlaylist, parsePlaylistQuery } from './playlistBuilder.js';
 import {
-  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, isValidAtlasPayload, readR2SongLinksSnapshot,
-  safeDecodeUri, syncR2SnapshotsFromD1, tryServeFromR2, withEdgeCache,
+  PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, getR2ManifestVersion,
+  readR2SongLinksSnapshot, resolveAtlasFallback, safeDecodeUri, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
-import { syncR2SongLinksFromD1 } from './workerSnapshotSync.js';
+import { syncR2AfterIngest } from './workerSnapshotSync.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
@@ -112,9 +111,11 @@ async function constantTimeEquals(expected, provided) {
   return diff === 0;
 }
 
-// Strip query-string credentials from upstream fetch URLs before writing caught errors to Worker logs.
+// Strip Bearer tokens and query-string credentials from upstream fetch URLs before writing caught errors to Worker logs.
 function redactSecrets(message) {
-  return String(message ?? '').replace(/([?&](?:key|token|secret)=)[^&\s"']+/gi, '$1[REDACTED]');
+  return String(message ?? '')
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [REDACTED]')
+    .replace(/([?&](?:key|token|secret)=)[^&\s"']+/gi, '$1[REDACTED]');
 }
 
 function logWorkerError(label, err) {
@@ -150,31 +151,42 @@ async function runIngestAndSync(env, incremental, ctx = null, deferSync = false,
     }
   }
 
+  let r2Sync = { mode: 'skipped', archiveDrift: false };
   if (env?.SNAPSHOT_BUCKET) {
-    const syncFn =
-      result?.episodesUpserted > 0
-        ? () => syncR2SnapshotsFromD1(env.DB, env.SNAPSHOT_BUCKET)
-        : linkResolution?.changesMade
-          ? () => syncR2SongLinksFromD1(env.DB, env.SNAPSHOT_BUCKET)
-          : null;
-    if (syncFn) {
-      const syncTask = syncFn()
-        .then(() => bumpWorkerCacheEpoch())
-        .catch((err) => logWorkerError('Worker R2 snapshot sync error:', err));
-      if (deferSync && ctx?.waitUntil) ctx.waitUntil(syncTask);
-      else await syncTask;
+    const runSync = () =>
+      syncR2AfterIngest({
+        db: env.DB,
+        bucket: env.SNAPSHOT_BUCKET,
+        episodesUpserted: result?.episodesUpserted || 0,
+        linkChangesMade: Boolean(linkResolution?.changesMade),
+        forceSync: options?.forceSync === true,
+      }).then((syncRes) => {
+        if (syncRes.mode !== 'skipped') bumpWorkerCacheEpoch();
+        return syncRes;
+      });
+    if (deferSync && ctx?.waitUntil) {
+      ctx.waitUntil(runSync().catch((err) => logWorkerError('Worker R2 snapshot sync error:', err)));
+      r2Sync = { deferred: true };
+    } else {
+      try {
+        r2Sync = await runSync();
+      } catch (err) {
+        logWorkerError('Worker R2 snapshot sync error:', err);
+        throw err;
+      }
     }
   }
 
   return {
     ...result,
     ...(linkResolution ? { linkResolution } : {}),
+    ...(env?.SNAPSHOT_BUCKET ? { r2Sync } : {}),
   };
 }
 
 async function handleIngest(request, env, corsHeaders, ctx) {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405, corsHeaders);
-  if (!env?.INGEST_SECRET) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
+  if (!String(env?.INGEST_SECRET || '').trim()) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
 
   const authHeader = request.headers.get('Authorization') || '';
   const token = authHeader.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() || '';
@@ -203,31 +215,14 @@ async function handleIngest(request, env, corsHeaders, ctx) {
     }
   }
   if (!env?.DB) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
-  const payload = await runIngestAndSync(env, body?.incremental !== false, ctx, true, {
+  const payload = await runIngestAndSync(env, body?.incremental !== false, ctx, body?.awaitSync !== true, {
     resolveLinks: body?.resolveLinks === true,
+    forceSync: body?.forceSync === true,
   });
-  return jsonResponse(payload, 200, corsHeaders);
+  return jsonResponse(payload, 200, corsHeaders, NO_STORE_HEADERS);
 }
 
 const READ_EXACT_ROUTES = new Set(['/api/overview', '/api/years', '/api/atlas', '/api/episodes', '/api/artists', '/api/songs', '/api/search']);
-
-async function handleAtlasFallback(url, env) {
-  if (env?.DB) {
-    try {
-      const cached = await readCacheBlob(env.DB, 'metadata_atlas');
-      if (isValidAtlasPayload(cached)) return { status: 200, data: cached };
-    } catch { /* fall through to ASSETS */ }
-  }
-  if (env?.ASSETS && typeof env.ASSETS.fetch === 'function') {
-    try {
-      const res = await env.ASSETS.fetch(new Request(new URL('/data/metadata-atlas.json', url.origin), { method: 'GET' }));
-      const ct = String(res?.headers?.get?.('content-type') || '').toLowerCase();
-      const data = res?.ok && !ct.includes('text/html') ? await res.json() : null;
-      if (isValidAtlasPayload(data)) return { status: 200, data };
-    } catch { /* fall through to 503 */ }
-  }
-  return { status: 503, data: { error: 'Metadata atlas snapshot unavailable' }, extraHeaders: NO_STORE_HEADERS };
-}
 
 async function handleReadRoutes(apiPath, url, env) {
   const query = Object.fromEntries(url.searchParams.entries());
@@ -244,7 +239,7 @@ async function handleReadRoutes(apiPath, url, env) {
   if (profDec && !profDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
   if (profDec && !profDec.value.trim()) return { status: 400, data: { error: 'Artist name is required' } };
   if (artDec && !artDec.ok) return { status: 400, data: { error: 'Invalid artist name' } };
-  if (apiPath === '/api/atlas') return await handleAtlasFallback(url, env);
+  if (apiPath === '/api/atlas') return await resolveAtlasFallback(url, env);
   if (!env?.DB) return { status: 503, data: { error: 'Service unavailable' } };
 
   if (apiPath === '/api/overview') return { status: 200, data: await getD1Overview(env.DB) };
@@ -297,7 +292,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
   const corsHeaders = buildCorsHeaders(request);
   if (request.method === 'OPTIONS') return withHeaders(new Response(null, { status: 204 }), corsHeaders);
 
-  const isNoStoreRoute = apiPath === '/api/playlist/random';
+  const isNoStoreRoute = apiPath === '/api/playlist/random' || apiPath === '/api/ingest';
   const ip = request.headers.get('CF-Connecting-IP') || 'local';
   const isIngestPost = apiPath === '/api/ingest' && request.method === 'POST';
   const allowed = checkRateLimit(isIngestPost ? `ingest:${ip}` : `read:${ip}`, isIngestPost ? INGEST_RATE_LIMIT : READ_RATE_LIMIT);
@@ -326,6 +321,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
     if (!env?.DB && !env?.SNAPSHOT_BUCKET && !hasAtlasAssets) return jsonResponse({ error: 'Service unavailable' }, 503, corsHeaders);
     if (request.method !== 'GET') return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
 
+    const cacheVersion = await getR2ManifestVersion(env);
     return await withEdgeCache(
       request,
       apiPath,
@@ -349,6 +345,7 @@ async function handleApi(request, env, apiPath, url, ctx) {
         }
         return await handleReadRoutes(apiPath, url, env);
       },
+      cacheVersion,
     );
   } catch (err) {
     logWorkerError('Worker API error:', err);

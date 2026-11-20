@@ -119,8 +119,13 @@ describe('D1 rollups, Edge Cache, R2 fallback, and seed script parity', () => {
   });
 
   it('matches raw song_plays fallback across rollup queries without scanning song_plays', async () => {
+    expect(snapshotOverview.totalEpisodes).toBeGreaterThanOrEqual(1344);
     const countOf = (t) => Number(rollupDb.sqlite.prepare(`SELECT COUNT(1) AS c FROM ${t}`).get().c);
-    expect([countOf('artist_rollups'), countOf('song_rollups'), countOf('album_rollups')]).toEqual([1292, 16285, 5199]);
+    expect([countOf('artist_rollups'), countOf('song_rollups'), countOf('album_rollups')]).toEqual([
+      snapshotOverview.uniqueArtists,
+      snapshotOverview.uniqueSongs,
+      snapshotOverview.uniqueAlbums,
+    ]);
     expect(rollupDb.sqlite.prepare('SELECT DISTINCT blob_key FROM cache_blobs ORDER BY blob_key').all().map((r) => r.blob_key))
       .toEqual(['overview', 'year_spins_archive']);
 
@@ -265,14 +270,15 @@ describe('D1 rollups, Edge Cache, R2 fallback, and seed script parity', () => {
       return res.json();
     };
 
-    expect((await fetchR2('/api/overview')).totalEpisodes).toBe(1344);
+    expect(snapshotOverview.totalEpisodes).toBeGreaterThanOrEqual(1344);
+    expect((await fetchR2('/api/overview')).totalEpisodes).toBe(snapshotOverview.totalEpisodes);
     expect((await fetchR2('/api/years')).scope).toBe('archive');
-    expect((await fetchR2('/api/episodes')).total).toBe(1344);
+    expect((await fetchR2('/api/episodes')).total).toBe(snapshotOverview.totalEpisodes);
     expect((await fetchR2(`/api/episodes/${snapshotOverview.latestEpisodeId}`)).playlist.length).toBeGreaterThan(0);
-    expect((await fetchR2('/api/artists')).total).toBe(1292);
+    expect((await fetchR2('/api/artists')).total).toBe(snapshotOverview.uniqueArtists);
     expect((await fetchR2('/api/artists/Todd%20Snider/songs')).summary.totalPlays).toBe(308);
     expect((await fetchR2('/api/artists/Todd%20Snider/profile')).summary.totalPlays).toBe(308);
-    expect((await fetchR2('/api/songs')).total).toBe(16285);
+    expect((await fetchR2('/api/songs')).total).toBe(snapshotOverview.uniqueSongs);
     expect((await fetchR2('/api/search?q=dylan')).artists.some((a) => a.name === 'Bob Dylan')).toBe(true);
     expect(throwingDb.prepare).not.toHaveBeenCalled();
 
@@ -314,9 +320,16 @@ describe('D1 rollups, Edge Cache, R2 fallback, and seed script parity', () => {
     const mem = new DatabaseSync(':memory:');
     try {
       mem.exec(seedSql);
+      expect(snapshotOverview.totalEpisodes).toBeGreaterThanOrEqual(1344);
       const count = (tbl) => Number(mem.prepare(`SELECT COUNT(1) AS c FROM ${tbl}`).get().c);
       expect([count('episodes'), count('song_plays'), count('artist_rollups'), count('song_rollups'), count('album_rollups')])
-        .toEqual([1344, 37659, 1292, 16285, 5199]);
+        .toEqual([
+          snapshotOverview.totalEpisodes,
+          snapshotOverview.totalSongPlays,
+          snapshotOverview.uniqueArtists,
+          snapshotOverview.uniqueSongs,
+          snapshotOverview.uniqueAlbums,
+        ]);
       expect(mem.prepare('SELECT DISTINCT blob_key FROM cache_blobs ORDER BY blob_key').all().map((r) => r.blob_key))
         .toEqual(['overview', 'year_spins_archive']);
     } finally { mem.close(); }

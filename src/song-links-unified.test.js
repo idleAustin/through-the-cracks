@@ -240,4 +240,80 @@ print(json.dumps({
     expect(out.bogusRunErr).toContain('bogus');
     expect(out.bogusSongErr).toContain('bogus');
   });
+
+  it('defines song-links:discover:nightly preset and trips --max-run-retries before sleeping on breach', () => {
+    const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+    const nightly = pkg.scripts?.['song-links:discover:nightly'] || '';
+    for (const flag of [
+      '--pass=all', '--search-mode=unified', '--limit 2000', '--min-jitter 5.0',
+      '--max-jitter 9.0', '--batch-size 80', '--cooldown-min 210', '--cooldown-max 300',
+      '--retry-delays 20,60', '--max-run-retries 8',
+    ]) {
+      expect(nightly).toContain(flag);
+    }
+
+    const dir = makeTempDir('ttc-run-retries-');
+    const inputPath = path.join(dir, 'catalog.json');
+    const cliCkpt = path.join(dir, 'cli', 'ckpt.jsonl');
+    const cliLog = path.join(dir, 'cli-calls.jsonl');
+    const pyCkpt = path.join(dir, 'py', 'ckpt.jsonl');
+    const pyLog = path.join(dir, 'py-calls.jsonl');
+    writeRapidFuzzStub(dir);
+    writeFileSync(inputPath, JSON.stringify([
+      { song_key: 'artist one|||song one', artist: 'Artist One', song_title: 'Song One', totalPlays: 3 },
+      { song_key: 'artist two|||song two', artist: 'Artist Two', song_title: 'Song Two', totalPlays: 2 },
+      { song_key: 'artist three|||song three', artist: 'Artist Three', song_title: 'Song Three', totalPlays: 1 },
+    ]), 'utf8');
+    writeFileSync(
+      path.join(dir, 'ytmusicapi.py'),
+      `import json, os
+CALLS = {}
+class YTMusic:
+    def search(self, query, filter=None, limit=10):
+        with open(os.environ["FAKE_YTM_LOG"], "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(query) + "\\n")
+        n = CALLS.get(query, 0) + 1
+        CALLS[query] = n
+        if query == "Artist Two Song Two" and n == 1:
+            raise RuntimeError("429 transient")
+        if query == "Artist Three Song Three":
+            raise RuntimeError("403 forbidden")
+        return [{"videoId": f"vid-{query[-3:].lower()}", "title": query.split(" ", 2)[-1], "artists": [{"name": "Artist"}], "resultType": "song", "duration_seconds": 180, "isAvailable": True}]
+`,
+      'utf8',
+    );
+
+    const cliRes = runPy(dir, cliLog, [
+      DISCOVER_SCRIPT, '--pass=all', '--input', inputPath, '--checkpoint', cliCkpt,
+      '--retry-delays=0,0', '--min-jitter=0', '--max-jitter=0', '--max-run-retries=2',
+    ]);
+    expect(cliRes.status).toBe(1);
+    expect(readCkpt(cliCkpt).map((r) => r.song_key)).toEqual(['artist one|||song one', 'artist two|||song two']);
+    const cliStatus = JSON.parse(readFileSync(path.join(dir, 'cli', 'discovery-status.json'), 'utf8'));
+    expect(cliStatus).toMatchObject({ phase: 'error', retryCount: 2 });
+
+    const pyCheck = `import importlib.util, json
+from pathlib import Path
+import ytmusicapi
+spec = importlib.util.spec_from_file_location("discover", ${JSON.stringify(DISCOVER_SCRIPT)})
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+sleeps, exc_name = [], None
+try:
+    mod.run_discovery(
+        input_path=Path(${JSON.stringify(inputPath)}), checkpoint_path=Path(${JSON.stringify(pyCkpt)}),
+        pass_mode="all", retry_delays=(5.0, 5.0), min_jitter=0.0, max_jitter=0.0, max_run_retries=2,
+        ytm_factory=ytmusicapi.YTMusic, sleep_fn=sleeps.append,
+    )
+except mod.DiscoveryRetryExhaustedError as exc:
+    exc_name = type(exc).__name__
+status = json.loads((Path(${JSON.stringify(pyCkpt)}).parent / "discovery-status.json").read_text(encoding="utf-8"))
+print(json.dumps({"exc": exc_name, "nonZeroSleeps": [s for s in sleeps if s > 0], "status": status}))`;
+    const pyRes = runPy(dir, pyLog, ['-c', pyCheck]);
+    expect(pyRes.status, pyRes.stderr).toBe(0);
+    const out = JSON.parse(pyRes.stdout.trim().split('\n').at(-1));
+    expect(out.exc).toBe('DiscoveryRetryExhaustedError');
+    expect(out.nonZeroSleeps).toEqual([5.0]);
+    expect(out.status).toMatchObject({ phase: 'error', retryCount: 2 });
+    expect(readCkpt(pyCkpt).map((r) => r.song_key)).toEqual(['artist one|||song one', 'artist two|||song two']);
+  });
 });
