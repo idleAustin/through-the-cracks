@@ -6,14 +6,52 @@ on:
   push:
     branches: [ main ]
   schedule:
-    - cron: '17 6 * * 4,0'
+    - cron: '17 6,10,14,18,22 * * 0,4'
+    - cron: '17 2,6,10,14,18,22 * * 1,5'
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
+  check-refresh:
+    name: Check Refresh Needed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_run: ${{ steps.non_schedule.outputs.should_run || steps.schedule_check.outputs.should_run || 'false' }}
+      reason: ${{ steps.non_schedule.outputs.reason || steps.schedule_check.outputs.reason || 'unknown' }}
+    steps:
+      - name: Skip Check for Non-Scheduled Events
+        id: non_schedule
+        if: github.event_name != 'schedule'
+        run: |
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+          echo "reason=${GITHUB_EVENT_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Checkout Preflight Files
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        if: github.event_name == 'schedule'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Evaluate Blogger & Production Freshness
+        id: schedule_check
+        if: github.event_name == 'schedule'
+        run: |
+          git fetch --depth=1 origin +refs/heads/data-snapshot:refs/remotes/origin/data-snapshot >/dev/null 2>&1 || true
+          RESULT=$( (git show origin/data-snapshot:public/data/overview.json 2>/dev/null || cat public/data/overview.json) | node scripts/check-refresh-needed.js --stdin-snapshot )
+          echo "Refresh check result: $RESULT"
+          SHOULD_RUN=$(echo "$RESULT" | jq -r '.shouldRun')
+          REASON=$(echo "$RESULT" | jq -r '.reason')
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+
   validate:
     name: Lint, Security & Build Test
+    needs: check-refresh
+    if: needs.check-refresh.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

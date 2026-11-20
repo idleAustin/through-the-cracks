@@ -1,4 +1,5 @@
 // Cloudflare Worker HTTP API, Edge Cache, R2 snapshot tier, D1 fallback, SPA asset fallback, and Cron entrypoint.
+import { isCatchupCron, shouldSkipCatchupCron } from './broadcastSchedule.js';
 import { ingestBloggerToD1 } from './d1Schema.js';
 import { getD1ArtistProfile } from './d1ArtistProfile.js';
 import { getD1RandomPlaylist } from './d1Playlist.js';
@@ -12,7 +13,7 @@ import {
   PUBLIC_API_CACHE_CONTROL, bumpWorkerCacheEpoch, getR2ManifestVersion,
   readR2SongLinksSnapshot, resolveAtlasFallback, safeDecodeUri, tryServeFromR2, withEdgeCache,
 } from './workerSnapshots.js';
-import { syncR2AfterIngest } from './workerSnapshotSync.js';
+import { getR2SyncStatus, syncR2AfterIngest } from './workerSnapshotSync.js';
 
 const DEFAULT_BLOG_ID = '3469042462299367694';
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
@@ -135,7 +136,8 @@ async function runIngestAndSync(env, incremental, ctx = null, deferSync = false,
   }
 
   let linkResolution = null;
-  if (options?.resolveLinks === true) {
+  const shouldResolveLinks = options?.resolveLinks === true || (options?.resolveLinks === 'on-new-episodes' && result?.episodesUpserted > 0);
+  if (shouldResolveLinks) {
     try {
       linkResolution = await runIncrementalSongLinksCron({
         db: env?.DB,
@@ -383,8 +385,14 @@ export default {
     return handleAssets(request, env, url);
   },
 
-  async scheduled(_controller, env, ctx) {
-    const task = runIngestAndSync(env, true, ctx, false, { resolveLinks: true });
+  async scheduled(controller, env, ctx) {
+    const task = (async () => {
+      const skip = await shouldSkipCatchupCron(controller, env, getR2SyncStatus);
+      if (skip) return skip;
+      return runIngestAndSync(env, true, ctx, false, {
+        resolveLinks: isCatchupCron(controller) ? 'on-new-episodes' : true,
+      });
+    })();
     ctx?.waitUntil?.(task);
     return await task;
   },
