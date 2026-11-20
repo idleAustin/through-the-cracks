@@ -44,6 +44,9 @@ export const UPDATE_RECHECK_PLAYABILITY_SQL = `UPDATE song_links
 SET is_embeddable = ?, us_playable = ?, status_reason = ?, checked_at = ?, updated_at = ?
 WHERE song_key = ?`;
 
+export const UPDATE_RECHECK_TIMESTAMP_ONLY_SQL =
+  'UPDATE song_links SET checked_at = ?, updated_at = ? WHERE song_key = ?';
+
 function parseLimitOption(val, fallback) {
   if (val === undefined || val === null) return fallback;
   const num = Number(val);
@@ -330,12 +333,18 @@ export async function runIncrementalSongLinksCron({
       const stmts = [];
       for (const row of batch.rows) {
         const compat = evaluateYouTubeVideoItem(itemMap.get(String(row.video_id || '').trim()) ?? null);
+        const statusChanged =
+          Number(row.is_embeddable) !== compat.isEmbeddable ||
+          Number(row.us_playable) !== compat.usPlayable ||
+          String(row.status_reason || '') !== compat.statusReason;
         if (Number(row.is_embeddable) !== compat.isEmbeddable || Number(row.us_playable) !== compat.usPlayable) {
           playabilityChangedCount += 1;
         }
         recheckedCount += 1;
         stmts.push(
-          db.prepare(UPDATE_RECHECK_PLAYABILITY_SQL).bind(compat.isEmbeddable, compat.usPlayable, compat.statusReason, ts, ts, row.song_key),
+          statusChanged
+            ? db.prepare(UPDATE_RECHECK_PLAYABILITY_SQL).bind(compat.isEmbeddable, compat.usPlayable, compat.statusReason, ts, ts, row.song_key)
+            : db.prepare(UPDATE_RECHECK_TIMESTAMP_ONLY_SQL).bind(ts, ts, row.song_key),
         );
       }
       if (stmts.length > 0) await db.batch(stmts);

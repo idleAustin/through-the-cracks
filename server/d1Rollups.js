@@ -147,14 +147,12 @@ export async function readCacheBlob(db, key) {
   }
 }
 
-export async function rebuildD1Rollups(db, { now = new Date().toISOString() } = {}) {
-  await db.batch(ROLLUP_REBUILD_SQL.map((sql) => db.prepare(sql)));
-
+export async function refreshRollupCacheBlobs(db, { now = new Date().toISOString() } = {}) {
   const [epStats, latestRow, rollupStats, topArtists, topSongs, yearRows] = await Promise.all([
     qFirst(db, 'SELECT COUNT(1) AS total_episodes, MIN(air_date) AS earliest_date, MAX(air_date) AS latest_date FROM episodes'),
     qFirst(db, 'SELECT id FROM episodes ORDER BY air_date DESC, id DESC LIMIT 1'),
     qFirst(db, `SELECT
-      (SELECT COUNT(1) FROM song_plays) AS total_song_plays,
+      COALESCE((SELECT SUM(total_plays) FROM artist_rollups), 0) AS total_song_plays,
       (SELECT COUNT(1) FROM artist_rollups) AS unique_artists,
       (SELECT COUNT(1) FROM artist_rollups WHERE LENGTH(artist_key) > 0) AS ranked_artists,
       (SELECT COUNT(1) FROM album_rollups) AS unique_albums,
@@ -197,6 +195,11 @@ export async function rebuildD1Rollups(db, { now = new Date().toISOString() } = 
   await writeCacheBlob(db, 'year_spins_archive', yearSpinsArchive, { updatedAt: now });
   clearD1Cache(db);
   return { overview, yearSpinsArchive };
+}
+
+export async function rebuildD1Rollups(db, { now = new Date().toISOString() } = {}) {
+  await db.batch(ROLLUP_REBUILD_SQL.map((sql) => db.prepare(sql)));
+  return await refreshRollupCacheBlobs(db, { now });
 }
 
 export async function getRollupOverview(db) {

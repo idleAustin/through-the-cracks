@@ -158,7 +158,22 @@ ON CONFLICT(song_key) DO UPDATE SET
   status_reason = excluded.status_reason,
   checked_at = excluded.checked_at,
   updated_at = excluded.updated_at
-WHERE song_links.match_tier != 'manual';`;
+WHERE song_links.match_tier != 'manual'
+  AND (
+    song_links.artist IS NOT excluded.artist
+    OR song_links.song_title IS NOT excluded.song_title
+    OR song_links.video_id IS NOT excluded.video_id
+    OR song_links.yt_title IS NOT excluded.yt_title
+    OR song_links.yt_artist IS NOT excluded.yt_artist
+    OR song_links.yt_album IS NOT excluded.yt_album
+    OR song_links.result_type IS NOT excluded.result_type
+    OR song_links.duration_seconds IS NOT excluded.duration_seconds
+    OR song_links.confidence_score IS NOT excluded.confidence_score
+    OR song_links.match_tier IS NOT excluded.match_tier
+    OR song_links.is_embeddable IS NOT excluded.is_embeddable
+    OR song_links.us_playable IS NOT excluded.us_playable
+    OR song_links.status_reason IS NOT excluded.status_reason
+  );`;
 }
 
 export function buildUpsertSqlChunks(rows, chunkSize = DEFAULT_CHUNK_SIZE) {

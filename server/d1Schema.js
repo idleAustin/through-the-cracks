@@ -1,6 +1,13 @@
 // Cloudflare D1 schema DDL, idempotent episode/spin upserts, and Blogger-to-D1 ingestion pipeline.
 import { computeIncrementalStartDate, fetchBloggerPosts, parsePost } from '../scripts/blogger-parser.js';
 import { readCacheBlob, rebuildD1Rollups } from './d1Rollups.js';
+import {
+  collectEpisodeArtistKeys,
+  dedupeEpisodeItems,
+  filterChangedEpisodes,
+  normalizeEpisodeNumber,
+  refreshD1RollupsIncremental,
+} from './d1RollupIncremental.js';
 
 export const D1_TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS episodes (
@@ -90,11 +97,8 @@ export const D1_INDEX_STATEMENTS = [
   'CREATE INDEX IF NOT EXISTS idx_episodes_air_date ON episodes(air_date DESC, id DESC)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_episode_pos ON song_plays(episode_id, position ASC)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_air_date ON song_plays(air_date)',
-  'CREATE INDEX IF NOT EXISTS idx_song_plays_artist ON song_plays(artist)',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_artist_lower ON song_plays(LOWER(TRIM(artist)))',
-  'CREATE INDEX IF NOT EXISTS idx_song_plays_featured_lower ON song_plays(LOWER(featured_artist))',
   'CREATE INDEX IF NOT EXISTS idx_song_plays_song_lower ON song_plays(LOWER(TRIM(song_title)))',
-  'CREATE INDEX IF NOT EXISTS idx_song_plays_album_lower ON song_plays(LOWER(TRIM(album)))',
   'CREATE INDEX IF NOT EXISTS idx_artist_rollups_top ON artist_rollups(total_plays DESC, LOWER(name) ASC)',
   'CREATE INDEX IF NOT EXISTS idx_artist_rollups_obscure ON artist_rollups(total_plays ASC, first_appearance ASC, LOWER(name) ASC)',
   'CREATE INDEX IF NOT EXISTS idx_song_rollups_top ON song_rollups(total_plays DESC, LOWER(song_title) ASC, LOWER(artist) ASC)',
@@ -102,6 +106,12 @@ export const D1_INDEX_STATEMENTS = [
   'CREATE INDEX IF NOT EXISTS idx_album_rollups_plays ON album_rollups(total_plays DESC, LOWER(artist) ASC, LOWER(album) ASC)',
   'CREATE INDEX IF NOT EXISTS idx_song_links_random_pool ON song_links(is_embeddable, us_playable, confidence_score DESC)',
   'CREATE INDEX IF NOT EXISTS idx_song_links_tier ON song_links(match_tier)',
+];
+
+export const LEGACY_DROP_INDEX_STATEMENTS = [
+  'DROP INDEX IF EXISTS idx_song_plays_artist',
+  'DROP INDEX IF EXISTS idx_song_plays_featured_lower',
+  'DROP INDEX IF EXISTS idx_song_plays_album_lower',
 ];
 
 export const D1_SCHEMA_STATEMENTS = [...D1_TABLE_STATEMENTS, ...D1_INDEX_STATEMENTS];
@@ -128,27 +138,40 @@ export async function ensureD1Schema(db) {
     }
     if (alters.length > 0) await db.batch(alters);
   }
+  await db.batch(LEGACY_DROP_INDEX_STATEMENTS.map((sql) => db.prepare(sql)));
   await db.batch(D1_INDEX_STATEMENTS.map((sql) => db.prepare(sql)));
 }
 
 export async function upsertEpisodesIntoD1(
   db,
   episodesData,
-  { now = new Date().toISOString(), batchSize = 250 } = {},
+  { now = new Date().toISOString(), batchSize = 250, skipUnchanged = true } = {},
 ) {
   if (!db) throw new Error('D1 database binding (DB) is not configured');
+  const validItems = [];
+  for (const item of episodesData || []) {
+    const ep = item?.episode ?? item;
+    if (!ep || !/^\d{4}-\d{2}-\d{2}$/.test(ep.airDate || '')) continue;
+    validItems.push(item);
+  }
+
+  const { changedItems, episodesUnchanged, oldArtistKeys } =
+    skipUnchanged !== false
+      ? await filterChangedEpisodes(db, validItems)
+      : { changedItems: dedupeEpisodeItems(validItems), episodesUnchanged: 0, oldArtistKeys: new Set() };
+
   const statements = [];
+  const changedEpisodeIds = [];
   let episodesUpserted = 0;
   let songPlaysUpserted = 0;
   let latestAirDate = null;
 
-  for (const item of episodesData || []) {
+  for (const item of changedItems) {
     const ep = item?.episode ?? item;
-    if (!ep || !/^\d{4}-\d{2}-\d{2}$/.test(ep.airDate || '')) continue;
-
     const epId = String(ep.id);
     const songs = item?.songs ?? ep.songs ?? [];
     episodesUpserted++;
+    changedEpisodeIds.push(epId);
     if (!latestAirDate || ep.airDate > latestAirDate) latestAirDate = ep.airDate;
 
     statements.push(db.prepare(DELETE_SONGS_SQL).bind(epId));
@@ -158,7 +181,7 @@ export async function upsertEpisodesIntoD1(
         ep.title || '',
         ep.airDate,
         ep.dayOfWeek ?? null,
-        ep.episodeNumber ?? null,
+        normalizeEpisodeNumber(ep.episodeNumber),
         ep.publishedAt || null,
         ep.url || null,
         songs.length,
@@ -192,10 +215,21 @@ export async function upsertEpisodesIntoD1(
   }
 
   if (episodesUpserted > 0) {
-    await rebuildD1Rollups(db, { now });
+    const hasRollups = (await readCacheBlob(db, 'overview')) !== null;
+    if (!hasRollups) {
+      await rebuildD1Rollups(db, { now });
+    } else {
+      const newArtistKeys = await collectEpisodeArtistKeys(db, changedEpisodeIds);
+      const affectedKeys = [...new Set([...oldArtistKeys, ...newArtistKeys])];
+      if (affectedKeys.length > 200) {
+        await rebuildD1Rollups(db, { now });
+      } else {
+        await refreshD1RollupsIncremental(db, affectedKeys, { now });
+      }
+    }
   }
 
-  return { episodesUpserted, songPlaysUpserted, latestAirDate };
+  return { episodesUpserted, episodesUnchanged, songPlaysUpserted, latestAirDate };
 }
 
 export async function ingestBloggerToD1({
@@ -225,7 +259,7 @@ export async function ingestBloggerToD1({
     if (result.songs.length > 0) parsed.push(result);
   }
 
-  const { episodesUpserted, songPlaysUpserted, latestAirDate } = await upsertEpisodesIntoD1(db, parsed);
+  const { episodesUpserted, episodesUnchanged, songPlaysUpserted, latestAirDate } = await upsertEpisodesIntoD1(db, parsed);
   if (episodesUpserted === 0 && (await readCacheBlob(db, 'overview')) === null) {
     const row = await db.prepare('SELECT COUNT(1) AS cnt FROM episodes').first();
     if (Number(row?.cnt ?? 0) > 0) {
@@ -237,6 +271,7 @@ export async function ingestBloggerToD1({
     startDateIso,
     fetchedPosts: (rawPosts || []).length,
     episodesUpserted,
+    episodesUnchanged,
     songPlaysUpserted,
     latestAirDate,
   };

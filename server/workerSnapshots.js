@@ -1,6 +1,6 @@
 // Cloudflare Worker Edge Cache, optional R2 snapshot reader, and cache-epoch helpers.
 import { encodeArtistProfileKey, normalizeArtistKey } from './artistProfileBuilder.js';
-import { stripControlChars } from './d1Rollups.js';
+import { readCacheBlob, stripControlChars } from './d1Rollups.js';
 import { serveEpisodeDetailFromR2, serveEpisodesFromR2 } from './r2Episodes.js';
 import { computeCappedPagination, parseCapParam, parsePageParams, parseSortParam } from './routes/queryUtils.js';
 
@@ -37,7 +37,7 @@ export function safeDecodeUri(value) {
   }
 }
 
-export async function withEdgeCache(request, apiPath, url, ctx, makeHeaders, loader) {
+export async function withEdgeCache(request, apiPath, url, ctx, makeHeaders, loader, cacheVersion = '') {
   const isCacheable =
     request.method === 'GET' &&
     apiPath !== '/api/health' &&
@@ -48,7 +48,8 @@ export async function withEdgeCache(request, apiPath, url, ctx, makeHeaders, loa
   if (cache) {
     const entries = Array.from(url.searchParams.entries()).sort(([ak, av], [bk, bv]) => cmpAsc(ak, bk) || cmpAsc(av, bv));
     const qs = new URLSearchParams(entries).toString();
-    cacheReq = new Request(`https://edge-cache.through-the-cracks.internal/v${cacheEpoch}${apiPath}${qs ? `?${qs}` : ''}`, { method: 'GET' });
+    const versionTag = cacheVersion ? `v${cacheEpoch}-${cacheVersion}` : `v${cacheEpoch}`;
+    cacheReq = new Request(`https://edge-cache.through-the-cracks.internal/${versionTag}${apiPath}${qs ? `?${qs}` : ''}`, { method: 'GET' });
     const hit = await cache.match(cacheReq);
     if (hit) {
       const fresh = typeof hit.clone === 'function' ? hit.clone() : hit;
@@ -131,6 +132,17 @@ async function getR2State(bucket) {
     state.checkedAt = now;
   }
   return state.manifest ? state : null;
+}
+
+export async function getR2ManifestVersion(env) {
+  const bucket = env?.SNAPSHOT_BUCKET;
+  if (!bucket || typeof bucket.get !== 'function') return '';
+  try {
+    const state = await getR2State(bucket);
+    return state?.manifest?.updatedAt ? encodeURIComponent(String(state.manifest.updatedAt)) : '';
+  } catch {
+    return '';
+  }
 }
 
 async function loadR2Shared(bucket, state, key) {
@@ -252,6 +264,26 @@ function serveSearchFromR2(artists, songs, albums, q) {
       .sort((a, b) => (Number(b.totalPlays || 0) - Number(a.totalPlays || 0)) || cmpText(a.artist, b.artist) || cmpText(a.album, b.album)).slice(0, 10)
       .map((al) => ({ artist: al.artist, album: al.album, plays: Number(al.totalPlays || 0) })),
   };
+}
+
+export async function resolveAtlasFallback(url, env) {
+  if (env?.DB) {
+    try {
+      const cached = await readCacheBlob(env.DB, 'metadata_atlas');
+      if (isValidAtlasPayload(cached)) return { status: 200, data: cached };
+    } catch { /* fall through to ASSETS */ }
+  }
+  if (env?.ASSETS && typeof env.ASSETS.fetch === 'function') {
+    for (const assetPath of ['/data/metadata-atlas.json', '/through-the-cracks/data/metadata-atlas.json']) {
+      try {
+        const res = await env.ASSETS.fetch(new Request(new URL(assetPath, url.origin), { method: 'GET' }));
+        const ct = String(res?.headers?.get?.('content-type') || '').toLowerCase();
+        const data = res?.ok && !ct.includes('text/html') ? await res.json() : null;
+        if (isValidAtlasPayload(data)) return { status: 200, data };
+      } catch { /* try next path */ }
+    }
+  }
+  return { status: 503, data: { error: 'Metadata atlas snapshot unavailable' }, extraHeaders: { 'Cache-Control': 'no-store' } };
 }
 
 export async function tryServeFromR2(apiPath, query = {}, env = {}, _ctx = null) {

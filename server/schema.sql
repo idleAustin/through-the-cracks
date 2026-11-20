@@ -91,11 +91,8 @@ CREATE TABLE IF NOT EXISTS song_links (
 CREATE INDEX IF NOT EXISTS idx_episodes_air_date ON episodes(air_date DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_song_plays_episode_pos ON song_plays(episode_id, position ASC);
 CREATE INDEX IF NOT EXISTS idx_song_plays_air_date ON song_plays(air_date);
-CREATE INDEX IF NOT EXISTS idx_song_plays_artist ON song_plays(artist);
 CREATE INDEX IF NOT EXISTS idx_song_plays_artist_lower ON song_plays(LOWER(TRIM(artist)));
-CREATE INDEX IF NOT EXISTS idx_song_plays_featured_lower ON song_plays(LOWER(featured_artist));
 CREATE INDEX IF NOT EXISTS idx_song_plays_song_lower ON song_plays(LOWER(TRIM(song_title)));
-CREATE INDEX IF NOT EXISTS idx_song_plays_album_lower ON song_plays(LOWER(TRIM(album)));
 CREATE INDEX IF NOT EXISTS idx_artist_rollups_top ON artist_rollups(total_plays DESC, LOWER(name) ASC);
 CREATE INDEX IF NOT EXISTS idx_artist_rollups_obscure ON artist_rollups(total_plays ASC, first_appearance ASC, LOWER(name) ASC);
 CREATE INDEX IF NOT EXISTS idx_song_rollups_top ON song_rollups(total_plays DESC, LOWER(song_title) ASC, LOWER(artist) ASC);

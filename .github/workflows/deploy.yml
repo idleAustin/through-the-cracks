@@ -6,7 +6,7 @@ on:
   push:
     branches: [ main ]
   schedule:
-    - cron: '0 6 * * 4,0'
+    - cron: '17 6 * * 4,0'
   workflow_dispatch:
 
 permissions: {}
@@ -72,6 +72,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install Dependencies
         run: npm ci
       - name: Install Doppler CLI
@@ -84,6 +88,25 @@ jobs:
             doppler --no-check-version run -- node scripts/ingest.js --incremental --skip-bq
           else
             node scripts/ingest.js --incremental --skip-bq
+          fi
+      - name: Refresh Song Metadata & Atlas
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          if [ -n "$DOPPLER_TOKEN" ] && doppler --no-check-version secrets download --no-file --format env >/dev/null 2>&1; then
+            doppler --no-check-version run -- node scripts/sync-metadata-r2.js pull
+            if [ -f ".cache/song-metadata/checkpoint.jsonl" ]; then
+              node scripts/prepare-song-metadata-input.js
+              doppler --no-check-version run -- python3 scripts/discover-song-metadata.py --pass=all --sources=mb,discogs,wiki --workers=2 --limit-songs=150
+              python3 scripts/reconcile-song-metadata.py
+              python3 scripts/build-metadata-atlas.py
+              doppler --no-check-version run -- node scripts/sync-metadata-r2.js push-checkpoint
+              doppler --no-check-version run -- node scripts/sync-metadata-r2.js push-atlas --bump-manifest
+            else
+              echo "::warning::Skipping metadata discovery because R2 state/song-metadata/checkpoint.jsonl.gz is not seeded yet."
+            fi
+          else
+            echo "::warning::Skipping metadata discovery because DOPPLER_TOKEN is unavailable."
           fi
       - name: Persist Archive Snapshot Branch
         run: |
@@ -137,6 +160,74 @@ jobs:
           fi
           doppler --no-check-version run -- npx --no-install wrangler deploy
           doppler --no-check-version run -- node -e "const { execFileSync } = require('node:child_process'); const put = (k) => execFileSync('npx', ['--no-install', 'wrangler', 'secret', 'put', k], { input: process.env[k], stdio: ['pipe', 'inherit', 'inherit'] }); for (const key of ['BLOGGER_API_KEY', 'BLOGGER_BLOG_ID', 'INGEST_SECRET']) { if (!process.env[key]) throw new Error('Missing Doppler secret: ' + key); put(key); } for (const key of ['YOUTUBE_API_KEY']) { if (process.env[key]) put(key); }"
+      - name: Trigger Production D1 & R2 Refresh
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: |
+          doppler --no-check-version run -- node --input-type=module - <<'EOF'
+          const secret = (process.env.INGEST_SECRET || '').trim();
+          if (!secret) throw new Error('Missing INGEST_SECRET');
+          const base = 'https://idleamericana.com/through-the-cracks/api';
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          await sleep(3000);
+
+          let ingestRes = null;
+          for (let attempt = 1; attempt <= 2; attempt += 1) {
+            let res = null;
+            try {
+              res = await fetch(`${base}/ingest`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ incremental: true, resolveLinks: true, awaitSync: true }),
+              });
+            } catch (err) {
+              if (attempt === 2) throw err;
+              await sleep(5000);
+              continue;
+            }
+            if (res.ok) {
+              ingestRes = await res.json();
+              break;
+            }
+            const errText = await res.text().catch(() => '');
+            const err = new Error(`POST /api/ingest failed (${res.status}): ${errText.slice(0, 300)}`);
+            if (res.status < 500 || attempt === 2) throw err;
+            await sleep(5000);
+          }
+          console.log('Ingest & R2 sync summary:', JSON.stringify({
+            mode: ingestRes?.mode,
+            fetchedPosts: ingestRes?.fetchedPosts,
+            episodesUpserted: ingestRes?.episodesUpserted,
+            episodesUnchanged: ingestRes?.episodesUnchanged,
+            latestAirDate: ingestRes?.latestAirDate,
+            linkResolution: ingestRes?.linkResolution,
+            r2Sync: ingestRes?.r2Sync,
+          }));
+
+          const ovRes = await fetch(`${base}/overview`);
+          if (!ovRes.ok) throw new Error(`GET /api/overview failed (${ovRes.status})`);
+          const ov = await ovRes.json();
+          if (!ov?.totalEpisodes || !ov?.dateRange?.latest) {
+            throw new Error(`GET /api/overview returned incomplete payload: ${JSON.stringify(ov).slice(0, 300)}`);
+          }
+          console.log('Verified /api/overview:', JSON.stringify({
+            totalEpisodes: ov.totalEpisodes,
+            totalSongPlays: ov.totalSongPlays,
+            latestEpisodeId: ov.latestEpisodeId,
+            dateRange: ov.dateRange,
+          }));
+
+          const atlasRes = await fetch(`${base}/atlas`);
+          if (!atlasRes.ok) throw new Error(`GET /api/atlas failed (${atlasRes.status})`);
+          const atlas = await atlasRes.json();
+          if (!atlas?.summary?.totalSongs) {
+            throw new Error('GET /api/atlas returned missing summary');
+          }
+          console.log('Verified /api/atlas:', JSON.stringify({
+            totalSongs: atlas.summary.totalSongs,
+            songsWithYear: atlas.summary.songsWithYear,
+          }));
+          EOF
 
   release:
     name: Tag Release & Publish Notes

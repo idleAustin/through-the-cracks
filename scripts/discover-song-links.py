@@ -206,7 +206,8 @@ def run_discovery(
     retry_delays: Sequence[float] = DEFAULT_RETRY_DELAYS,
     min_jitter: float = 0.25, max_jitter: float = 0.55,
     batch_size: int = 0, cooldown_min: float = 0.0, cooldown_max: float = 0.0,
-    initial_cooldown: float = 0.0, ytm: Any = None, ytm_factory: Callable[[], Any] | None = None,
+    initial_cooldown: float = 0.0, max_run_retries: int = 0,
+    ytm: Any = None, ytm_factory: Callable[[], Any] | None = None,
     sleep_fn: Callable[[float], None] = time.sleep, rng: random.Random | None = None,
 ) -> dict[str, Any]:
     """Run resumable single-threaded Stage 2 discovery against catalog-input.json."""
@@ -216,6 +217,7 @@ def run_discovery(
     if cooldown_min > 0 and cooldown_max < cooldown_min:
         cooldown_max = cooldown_min
     initial_cooldown = max(0.0, float(initial_cooldown))
+    max_run_retries = max(0, int(max_run_retries))
     rng_obj = rng or random
 
     catalog = json.loads(input_path.read_text(encoding="utf-8"))
@@ -270,6 +272,13 @@ def run_discovery(
         def _rotate_client(new_client: Any) -> None:
             ytm_box[0] = new_client
 
+        def _on_retry(evt: dict[str, Any]) -> None:
+            status.record_retry_event(**evt)
+            if max_run_retries > 0 and status.state["retryCount"] >= max_run_retries:
+                raise DiscoveryRetryExhaustedError(
+                    f"Run retry circuit breaker tripped ({max_run_retries} cumulative retries reached): {evt['error']}"
+                )
+
         for idx, song in enumerate(pending, start=1):
             batch_index = ((idx - 1) // batch_size) + 1 if batch_size > 0 else 1
             batch_processed = (idx - 1) % batch_size if batch_size > 0 else idx - 1
@@ -279,7 +288,7 @@ def run_discovery(
                     song, ytm_box[0], retry_delays=retry_delays, min_jitter=min_jitter, max_jitter=max_jitter,
                     rng=rng_obj, sleep_fn=sleep_fn, on_before_retry=flush_checkpoint,
                     has_prior_request=has_prior_request, pacer=pacer,
-                    on_retry_event=lambda evt: status.record_retry_event(**evt),
+                    on_retry_event=_on_retry,
                     log_fn=lambda msg: status.append_log(msg, is_error=True),
                     search_mode=search_mode, ytm_factory=factory, on_ytm_rotated=_rotate_client,
                 )
@@ -335,6 +344,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--cooldown-min", type=float, default=0.0, help="Minimum between-batch cooldown in seconds.")
     parser.add_argument("--cooldown-max", type=float, default=0.0, help="Maximum between-batch cooldown in seconds.")
     parser.add_argument("--initial-cooldown", type=float, default=0.0, help="Initial cooldown in seconds before first batch.")
+    parser.add_argument("--max-run-retries", type=int, default=0, help="Abort run after N cumulative retries across songs (0 disables).")
     args = parser.parse_args(argv)
 
     try:
@@ -345,6 +355,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             min_jitter=args.min_jitter, max_jitter=args.max_jitter,
             batch_size=args.batch_size, cooldown_min=args.cooldown_min,
             cooldown_max=args.cooldown_max, initial_cooldown=args.initial_cooldown,
+            max_run_retries=args.max_run_retries,
         )
     except DiscoveryRetryExhaustedError:
         return 1
