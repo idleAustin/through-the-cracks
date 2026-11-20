@@ -41,17 +41,18 @@ async function computeManifestCountsFromD1(db) {
   try {
     const [epRow, latestRow, playRow] = await Promise.all([
       qFirst(db, 'SELECT COUNT(1) AS total_episodes FROM episodes'),
-      qFirst(db, 'SELECT id FROM episodes ORDER BY air_date DESC, id DESC LIMIT 1'),
+      qFirst(db, 'SELECT id, air_date FROM episodes ORDER BY air_date DESC, id DESC LIMIT 1'),
       qFirst(db, 'SELECT COUNT(1) AS total_song_plays FROM song_plays'),
     ]);
     return {
       totalEpisodes: Number(epRow?.total_episodes ?? 0),
       totalSongPlays: Number(playRow?.total_song_plays ?? 0),
       latestEpisodeId: latestRow?.id ? String(latestRow.id) : null,
+      latestAirDate: latestRow?.air_date ? String(latestRow.air_date) : null,
     };
   } catch (err) {
     if (isMissingTableError(err)) {
-      return { totalEpisodes: 0, totalSongPlays: 0, latestEpisodeId: null };
+      return { totalEpisodes: 0, totalSongPlays: 0, latestEpisodeId: null, latestAirDate: null };
     }
     throw err;
   }
@@ -65,6 +66,7 @@ async function getD1ManifestCounts(db) {
         totalEpisodes: Number(overview.totalEpisodes ?? 0),
         totalSongPlays: Number(overview.totalSongPlays ?? 0),
         latestEpisodeId: overview.latestEpisodeId ? String(overview.latestEpisodeId) : null,
+        latestAirDate: overview.dateRange?.latest ? String(overview.dateRange.latest) : null,
       };
     }
   } catch { /* fall back to direct table counts */ }
@@ -72,18 +74,28 @@ async function getD1ManifestCounts(db) {
 }
 
 /**
+ * Returns D1's latest air date and whether an existing R2 v1/manifest.json has drifted from D1.
+ */
+export async function getR2SyncStatus(db, bucket) {
+  if (!db) return { latestAirDate: null, archiveDrift: false };
+  const d1 = await getD1ManifestCounts(db);
+  if (!bucket) return { latestAirDate: d1.latestAirDate, archiveDrift: false };
+  const existing = await readExistingManifest(bucket);
+  const archiveDrift = Boolean(
+    existing &&
+      (Number(existing.totalEpisodes ?? 0) !== d1.totalEpisodes ||
+        Number(existing.totalSongPlays ?? 0) !== d1.totalSongPlays ||
+        String(existing.latestEpisodeId || '') !== String(d1.latestEpisodeId || '')),
+  );
+  return { latestAirDate: d1.latestAirDate, archiveDrift };
+}
+
+/**
  * Returns true when an existing R2 v1/manifest.json has drifted from D1 episode/spin totals.
  */
 export async function isR2ArchiveOutOfSync(db, bucket) {
   if (!db || !bucket) return false;
-  const existing = await readExistingManifest(bucket);
-  if (!existing) return false;
-  const d1 = await getD1ManifestCounts(db);
-  return (
-    Number(existing.totalEpisodes ?? 0) !== d1.totalEpisodes ||
-    Number(existing.totalSongPlays ?? 0) !== d1.totalSongPlays ||
-    String(existing.latestEpisodeId || '') !== String(d1.latestEpisodeId || '')
-  );
+  return (await getR2SyncStatus(db, bucket)).archiveDrift;
 }
 
 /**

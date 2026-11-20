@@ -37,6 +37,10 @@
     }
   ],
   "triggers": {
-    "crons": ["0 6 * * SUN,THU"]
+    "crons": [
+      "0 6 * * SUN,THU",
+      "0 10,14,18,22 * * SUN,THU",
+      "0 2,6,10,14,18,22 * * MON,FRI"
+    ]
   }
 }
