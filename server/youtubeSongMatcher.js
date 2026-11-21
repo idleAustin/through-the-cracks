@@ -50,6 +50,64 @@ export function normalizeMatchText(text) {
     .trim();
 }
 
+/**
+ * Strip parenthetical/bracketed suffixes and featuring clauses for looser YouTube fallback search queries.
+ */
+export function stripSearchQueryNoise(text) {
+  return decodeBasicHtmlEntities(text)
+    .replace(/\([^)]*\)|\[[^\]]*\]/g, ' ')
+    .replace(/\b(?:feat\.?|ft\.?|featuring)\b.*$/i, ' ')
+    .replace(/\bw\/.*$/i, ' ')
+    .replace(/["“”]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Build bounded, deduplicated fallback YouTube search queries when the primary artist+title query misses.
+ */
+export function buildFallbackSearchQueries(song, { pass1Empty = false, maxQueries = 2 } = {}) {
+  const limit = Math.max(0, Math.trunc(Number(maxQueries) || 0));
+  if (limit === 0) return [];
+  const rawArtist = String(song?.artist ?? '').trim();
+  const rawTitle = String(song?.song_title ?? song?.songTitle ?? '').trim();
+  const rawQuery = `${rawArtist} ${rawTitle}`.replace(/\s+/g, ' ').trim();
+  const stripQuotes = (v) => decodeBasicHtmlEntities(v).replace(/["“”]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleanArtist = stripSearchQueryNoise(rawArtist) || stripQuotes(rawArtist);
+  const cleanTitle = stripSearchQueryNoise(rawTitle) || stripQuotes(rawTitle);
+  if (!cleanArtist || !cleanTitle) return [];
+
+  const queries = [];
+  const seen = new Set([rawQuery.toLowerCase()]);
+  const add = (candidate) => {
+    if (queries.length >= limit) return;
+    const normalized = String(candidate || '').replace(/\s+/g, ' ').trim();
+    const key = normalized.toLowerCase();
+    if (!normalized || seen.has(key)) return;
+    seen.add(key);
+    queries.push(normalized);
+  };
+
+  add(`${cleanArtist} ${cleanTitle}`);
+  if (pass1Empty) {
+    const clauses = cleanTitle.split(/\s*[,;:/]\s*/).map((s) => s.trim()).filter(Boolean);
+    if (clauses.length >= 2) {
+      add(`${cleanArtist} ${clauses[clauses.length - 1]}`);
+      add(`${cleanArtist} ${clauses[0]}`);
+    } else {
+      const words = cleanTitle.replace(/[,;:/]+/g, ' ').split(/\s+/).filter(Boolean);
+      if (words.length >= 3) {
+        const mid = Math.floor(words.length / 2);
+        add(`${cleanArtist} ${words.slice(mid).join(' ')}`);
+        add(`${cleanArtist} ${words.slice(0, mid).join(' ')}`);
+      }
+    }
+  } else {
+    add(`"${cleanArtist}" ${cleanTitle}`);
+  }
+  return queries;
+}
+
 export function levenshteinSimilarity(a, b) {
   const s1 = String(a ?? '');
   const s2 = String(b ?? '');
