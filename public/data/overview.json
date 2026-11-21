@@ -1,16 +1,16 @@
 {
-  "lastUpdated": "2026-11-14T06:00:10.731Z",
-  "latestEpisodeId": "4423069433994810612",
-  "totalEpisodes": 1344,
-  "totalSongPlays": 37659,
-  "uniqueArtists": 1292,
-  "uniqueAlbums": 5199,
-  "uniqueSongs": 16285,
-  "oneSpinArtists": 239,
-  "oneSpinSongs": 6996,
+  "lastUpdated": "2026-11-21T05:11:06.206Z",
+  "latestEpisodeId": "509842342907687366",
+  "totalEpisodes": 1346,
+  "totalSongPlays": 37718,
+  "uniqueArtists": 1295,
+  "uniqueAlbums": 5203,
+  "uniqueSongs": 16315,
+  "oneSpinArtists": 240,
+  "oneSpinSongs": 7013,
   "dateRange": {
     "earliest": "2013-06-22",
-    "latest": "2026-11-11"
+    "latest": "2026-11-18"
   },
   "topArtists": [
     {
@@ -51,7 +51,7 @@
     },
     {
       "name": "Rodney Crowell",
-      "plays": 175
+      "plays": 176
     }
   ],
   "topSongs": [
@@ -197,9 +197,9 @@
     },
     {
       "year": "2026",
-      "episodeCount": 86,
-      "songCount": 2466,
-      "uniqueArtists": 726
+      "episodeCount": 88,
+      "songCount": 2525,
+      "uniqueArtists": 732
     }
   ]
 }
