@@ -1,6 +1,7 @@
 // Unit tests for YouTube snippet scoring, Topic channel stripping, ISO-8601 duration parsing, playability evaluation, and failure classification.
 import { describe, expect, it } from 'vitest';
 import {
+  buildFallbackSearchQueries,
   classifyYouTubeFailure,
   decodeBasicHtmlEntities,
   evaluateYouTubeVideoItem,
@@ -9,6 +10,7 @@ import {
   parseIsoDuration,
   pickBestSearchCandidate,
   scoreSearchCandidate,
+  stripSearchQueryNoise,
   stripTopicSuffix,
 } from '../server/youtubeSongMatcher.js';
 
@@ -196,5 +198,39 @@ describe('youtubeSongMatcher', () => {
     expect(classifyYouTubeFailure({ ok: false, status: 503 }, {})).toBe('http_503');
     expect(classifyYouTubeFailure({ ok: true, status: 200 }, { error: { message: 'Bad' } })).toBe('youtube_api_error');
     expect(classifyYouTubeFailure({ ok: true, status: 200 }, { items: [] })).toBeNull();
+  });
+
+  it('builds deduplicated stripped, quoted, and split fallback search queries', () => {
+    expect(stripSearchQueryNoise('Stepping Outside (w/ Tyler Childers)')).toBe('Stepping Outside');
+    expect(stripSearchQueryNoise('Song Title feat. Guest Artist [Live]')).toBe('Song Title');
+    expect(stripSearchQueryNoise('Rock &amp; Roll w/ Band')).toBe('Rock & Roll');
+
+    expect(buildFallbackSearchQueries(
+      { artist: 'Star & Micey', song_title: "Can't Keep Running Back (w/ Kait Lawson)" },
+      { pass1Empty: false },
+    )).toEqual(["Star & Micey Can't Keep Running Back", "\"Star & Micey\" Can't Keep Running Back"]);
+
+    expect(buildFallbackSearchQueries(
+      { artist: 'Artist', song_title: 'Track Name feat. Somebody' },
+      { maxQueries: 1 },
+    )).toEqual(['Artist Track Name']);
+
+    expect(buildFallbackSearchQueries(
+      { artist: 'Circle Birds', song_title: 'Evolution' },
+      { pass1Empty: false },
+    )).toEqual(['"Circle Birds" Evolution']);
+
+    expect(buildFallbackSearchQueries(
+      { artist: 'Margo Cilker', song_title: 'Mayhill Peaches, Goodnoe Pairs' },
+      { pass1Empty: true },
+    )).toEqual(['Margo Cilker Goodnoe Pairs', 'Margo Cilker Mayhill Peaches']);
+
+    expect(buildFallbackSearchQueries(
+      { artist: 'Todd Snider', song_title: 'One Two Three Four' },
+      { pass1Empty: true },
+    )).toEqual(['Todd Snider Three Four', 'Todd Snider One Two']);
+
+    expect(buildFallbackSearchQueries({ artist: 'Circle Birds', song_title: 'Evolution' }, { pass1Empty: true })).toEqual([]);
+    expect(buildFallbackSearchQueries({ artist: '', song_title: 'Evolution' })).toEqual([]);
   });
 });

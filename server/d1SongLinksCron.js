@@ -2,7 +2,7 @@
 import { upsertSongLink } from './d1Playlist.js';
 import { clearD1Cache, qAll, qFirst } from './d1Rollups.js';
 import { buildSongKey } from './playlistBuilder.js';
-import { classifyYouTubeFailure, evaluateYouTubeVideoItem, pickBestSearchCandidate } from './youtubeSongMatcher.js';
+import { buildFallbackSearchQueries, classifyYouTubeFailure, evaluateYouTubeVideoItem, pickBestSearchCandidate } from './youtubeSongMatcher.js';
 
 export const DEFAULT_MAX_NEW_SONGS = 25;
 export const DEFAULT_MAX_RECHECK = 250;
@@ -130,13 +130,16 @@ export async function selectRecheckRows(db, limit = DEFAULT_MAX_RECHECK, exclude
   return excludeSet.size === 0 ? rows.slice(0, safeLimit) : rows.filter((r) => !excludeSet.has(r.song_key)).slice(0, safeLimit);
 }
 
-export function buildSearchUrl(song, apiKey) {
+export function buildSearchUrl(song, apiKey, queryOverride = null) {
   const url = new URL('https://www.googleapis.com/youtube/v3/search');
   url.searchParams.set('part', 'snippet');
   url.searchParams.set('type', 'video');
   url.searchParams.set('videoEmbeddable', 'true');
   url.searchParams.set('maxResults', '5');
-  url.searchParams.set('q', `${String(song?.artist || '').trim()} ${String(song?.song_title || song?.songTitle || '').trim()}`.trim());
+  const q = typeof queryOverride === 'string' && queryOverride.trim()
+    ? queryOverride.trim()
+    : `${String(song?.artist || '').trim()} ${String(song?.song_title || song?.songTitle || '').trim()}`.trim();
+  url.searchParams.set('q', q);
   url.searchParams.set('key', String(apiKey || '').trim());
   return url.toString();
 }
@@ -198,36 +201,109 @@ function groupRecheckBatches(rows, maxIdsPerBatch = VIDEOS_BATCH_SIZE) {
 }
 
 async function persistDiscoveryResults({ db, candidateQueue, unmatchedQueue, verifiedVideoMap, getNowIso, verifiedThisRun }) {
-  let resolvedCount = 0;
-  let unmatchedCount = 0;
+  const saveRow = async (song, patch) => {
+    const ts = getNowIso();
+    const songKey = buildSongKey(song.artist, song.song_title) || song.song_key;
+    await upsertSongLink(db, {
+      song_key: songKey, artist: song.artist, song_title: song.song_title,
+      yt_album: null, checked_at: ts, updated_at: ts, ...patch,
+    });
+    verifiedThisRun.add(songKey);
+  };
   for (const { song, best } of candidateQueue) {
     const compat = evaluateYouTubeVideoItem(verifiedVideoMap.get(best.videoId) ?? null);
-    const ts = getNowIso();
-    const songKey = buildSongKey(song.artist, song.song_title) || song.song_key;
-    await upsertSongLink(db, {
-      song_key: songKey, artist: song.artist, song_title: song.song_title,
-      video_id: best.videoId, yt_title: best.ytTitle, yt_artist: best.ytArtist, yt_album: null,
+    await saveRow(song, {
+      video_id: best.videoId, yt_title: best.ytTitle, yt_artist: best.ytArtist,
       result_type: best.resultType, duration_seconds: compat.durationSeconds,
       confidence_score: best.score, match_tier: best.matchTier,
-      is_embeddable: compat.isEmbeddable, us_playable: compat.usPlayable,
-      status_reason: compat.statusReason, checked_at: ts, updated_at: ts,
+      is_embeddable: compat.isEmbeddable, us_playable: compat.usPlayable, status_reason: compat.statusReason,
     });
-    resolvedCount += 1;
-    verifiedThisRun.add(songKey);
   }
   for (const { song, statusReason } of unmatchedQueue) {
-    const ts = getNowIso();
-    const songKey = buildSongKey(song.artist, song.song_title) || song.song_key;
-    await upsertSongLink(db, {
-      song_key: songKey, artist: song.artist, song_title: song.song_title,
-      video_id: null, yt_title: null, yt_artist: null, yt_album: null, result_type: null,
-      duration_seconds: null, confidence_score: 0, match_tier: 'unmatched',
-      is_embeddable: 0, us_playable: 0, status_reason: statusReason, checked_at: ts, updated_at: ts,
+    await saveRow(song, {
+      video_id: null, yt_title: null, yt_artist: null, result_type: null, duration_seconds: null,
+      confidence_score: 0, match_tier: 'unmatched', is_embeddable: 0, us_playable: 0, status_reason: statusReason,
     });
-    unmatchedCount += 1;
-    verifiedThisRun.add(songKey);
   }
-  return { resolvedCount, unmatchedCount };
+  return { resolvedCount: candidateQueue.length, unmatchedCount: unmatchedQueue.length };
+}
+
+async function fetchVideosBatchIntoMap(ids, cleanKey, callFetch, maxExternalFetches, state, itemMap) {
+  if (state.externalFetches >= maxExternalFetches) { state.stoppedEarlyReason = 'max_external_fetches'; return false; }
+  state.externalFetches += 1;
+  const vidRes = await fetchYouTubeJson(buildVideosUrl(ids, cleanKey), callFetch);
+  if (!vidRes.ok) { state.stoppedEarlyReason = vidRes.reason; return false; }
+  state.quotaUnits += VIDEOS_QUOTA_UNITS;
+  for (const item of vidRes.data?.items || []) {
+    if (item?.id) itemMap.set(String(item.id), item);
+  }
+  return true;
+}
+
+async function searchSongCandidate({
+  song, queryOverride = null, cleanKey, callFetch, maxExternalFetches, uniqueCandidateIds, state,
+}) {
+  const projectedVerifyCalls = Math.ceil((uniqueCandidateIds.size + 1) / VIDEOS_BATCH_SIZE);
+  if (state.externalFetches + 1 + projectedVerifyCalls > maxExternalFetches) {
+    return { budgetExceeded: true, best: null, statusReason: null };
+  }
+  state.externalFetches += 1;
+  const searchRes = await fetchYouTubeJson(buildSearchUrl(song, cleanKey, queryOverride), callFetch);
+  if (!searchRes.ok) {
+    state.stoppedEarlyReason = searchRes.reason;
+    return { budgetExceeded: false, best: null, statusReason: null };
+  }
+  state.quotaUnits += SEARCH_QUOTA_UNITS;
+  const items = Array.isArray(searchRes.data?.items) ? searchRes.data.items : [];
+  return {
+    budgetExceeded: false,
+    best: pickBestSearchCandidate(song, items),
+    statusReason: items.length === 0 ? 'no_search_results' : 'no_confident_match',
+  };
+}
+
+async function discoverUnresolvedSongs({ db, cleanKey, callFetch, maxNewSongs, maxExternalFetches, state }) {
+  const searchBudget = Math.min(maxNewSongs, Math.max(0, maxExternalFetches - 1));
+  const unresolvedSongs = searchBudget > 0 ? await selectUnresolvedSongs(db, searchBudget) : [];
+  const candidateQueue = [];
+  const unmatchedQueue = [];
+  const pass1Misses = [];
+  const uniqueCandidateIds = new Set();
+
+  for (const song of unresolvedSongs) {
+    const step = await searchSongCandidate({
+      song, cleanKey, callFetch, maxExternalFetches, uniqueCandidateIds, state,
+    });
+    if (step.budgetExceeded) { state.stoppedEarlyReason = 'max_external_fetches'; break; }
+    if (state.stoppedEarlyReason) break;
+    if (step.best) { candidateQueue.push({ song, best: step.best }); uniqueCandidateIds.add(step.best.videoId); }
+    else pass1Misses.push({ song, statusReason: step.statusReason });
+  }
+
+  if (state.stoppedEarlyReason) {
+    unmatchedQueue.push(...pass1Misses);
+    return { candidateQueue, unmatchedQueue, uniqueCandidateIds };
+  }
+
+  for (const miss of pass1Misses) {
+    let matched = null;
+    let latestReason = miss.statusReason;
+    let interrupted = false;
+    const fallbacks = buildFallbackSearchQueries(miss.song, { pass1Empty: miss.statusReason === 'no_search_results' });
+    for (const fallbackQuery of fallbacks) {
+      const step = await searchSongCandidate({
+        song: miss.song, queryOverride: fallbackQuery, cleanKey, callFetch, maxExternalFetches, uniqueCandidateIds, state,
+      });
+      if (step.budgetExceeded) { state.pass2BudgetExhausted = true; interrupted = true; break; }
+      if (state.stoppedEarlyReason) { interrupted = true; break; }
+      if (step.best) { matched = step.best; break; }
+      if (step.statusReason === 'no_confident_match') latestReason = 'no_confident_match';
+    }
+    if (matched) { candidateQueue.push({ song: miss.song, best: matched }); uniqueCandidateIds.add(matched.videoId); }
+    else if (!interrupted) unmatchedQueue.push({ song: miss.song, statusReason: latestReason });
+    if (state.stoppedEarlyReason || state.pass2BudgetExhausted) break;
+  }
+  return { candidateQueue, unmatchedQueue, uniqueCandidateIds };
 }
 
 export async function runIncrementalSongLinksCron({
@@ -250,96 +326,49 @@ export async function runIncrementalSongLinksCron({
   const rawFetch = fetchImpl ?? globalThis.fetch;
   const callFetch = (url, init) => (rawFetch === globalThis.fetch ? globalThis.fetch(url, init) : rawFetch(url, init));
 
-  let resolvedCount = 0;
-  let unmatchedCount = 0;
   let recheckedCount = 0;
   let playabilityChangedCount = 0;
-  let externalFetches = 0;
-  let quotaUnits = 0;
-  let stoppedEarlyReason = null;
+  const state = { externalFetches: 0, quotaUnits: 0, stoppedEarlyReason: null, pass2BudgetExhausted: false };
   const verifiedThisRun = new Set();
 
-  // Step A: Unresolved Song Discovery (leaves >= 1 external fetch for batched videos.list verification).
-  const searchBudget = Math.min(safeMaxNewSongs, Math.max(0, safeMaxExternalFetches - 1));
-  const unresolvedSongs = searchBudget > 0 ? await selectUnresolvedSongs(db, searchBudget) : [];
-  const candidateQueue = [];
-  const unmatchedQueue = [];
-  const uniqueCandidateIds = new Set();
-
-  for (const song of unresolvedSongs) {
-    const projectedVerifyCalls = Math.max(1, Math.ceil((uniqueCandidateIds.size + 1) / VIDEOS_BATCH_SIZE));
-    if (externalFetches + 1 + projectedVerifyCalls > safeMaxExternalFetches) {
-      stoppedEarlyReason = 'max_external_fetches';
-      break;
-    }
-    externalFetches += 1;
-    const searchRes = await fetchYouTubeJson(buildSearchUrl(song, cleanKey), callFetch);
-    if (!searchRes.ok) { stoppedEarlyReason = searchRes.reason; break; }
-    quotaUnits += SEARCH_QUOTA_UNITS;
-
-    const items = Array.isArray(searchRes.data?.items) ? searchRes.data.items : [];
-    const best = pickBestSearchCandidate(song, items);
-    if (!best) {
-      unmatchedQueue.push({ song, statusReason: items.length === 0 ? 'no_search_results' : 'no_confident_match' });
-    } else {
-      candidateQueue.push({ song, best });
-      uniqueCandidateIds.add(best.videoId);
-    }
-  }
+  // Step A: Two-pass discovery (Pass 1 raw query, Pass 2 stripped/fallback queries; reserves >= 1 fetch for videos.list).
+  const { candidateQueue, unmatchedQueue, uniqueCandidateIds } = await discoverUnresolvedSongs({
+    db, cleanKey, callFetch, maxNewSongs: safeMaxNewSongs, maxExternalFetches: safeMaxExternalFetches, state,
+  });
 
   let videosFailed = false;
   const verifiedVideoMap = new Map();
-  if (!stoppedEarlyReason && uniqueCandidateIds.size > 0) {
+  if (!state.stoppedEarlyReason && uniqueCandidateIds.size > 0) {
     for (const batchIds of chunkIds([...uniqueCandidateIds], VIDEOS_BATCH_SIZE)) {
-      if (externalFetches >= safeMaxExternalFetches) { stoppedEarlyReason = 'max_external_fetches'; videosFailed = true; break; }
-      externalFetches += 1;
-      const vidRes = await fetchYouTubeJson(buildVideosUrl(batchIds, cleanKey), callFetch);
-      if (!vidRes.ok) { stoppedEarlyReason = vidRes.reason; videosFailed = true; break; }
-      quotaUnits += VIDEOS_QUOTA_UNITS;
-      for (const item of vidRes.data?.items || []) {
-        if (item?.id) verifiedVideoMap.set(String(item.id), item);
+      if (!(await fetchVideosBatchIntoMap(batchIds, cleanKey, callFetch, safeMaxExternalFetches, state, verifiedVideoMap))) {
+        videosFailed = true;
+        break;
       }
     }
   }
 
-  if (!videosFailed) {
-    const persisted = await persistDiscoveryResults({
-      db,
-      candidateQueue: stoppedEarlyReason ? [] : candidateQueue,
-      unmatchedQueue,
-      verifiedVideoMap,
-      getNowIso,
-      verifiedThisRun,
+  const { resolvedCount, unmatchedCount } = videosFailed
+    ? { resolvedCount: 0, unmatchedCount: 0 }
+    : await persistDiscoveryResults({
+      db, candidateQueue: state.stoppedEarlyReason ? [] : candidateQueue,
+      unmatchedQueue, verifiedVideoMap, getNowIso, verifiedThisRun,
     });
-    resolvedCount = persisted.resolvedCount;
-    unmatchedCount = persisted.unmatchedCount;
-  }
+  if (state.pass2BudgetExhausted && !state.stoppedEarlyReason) state.stoppedEarlyReason = 'max_external_fetches';
 
   // Step B: Rotating Health Recheck (<= 250 rows ordered by checked_at ASC; preserves manual choices/scores).
-  if (!stoppedEarlyReason && safeMaxRecheck > 0) {
+  if (!state.stoppedEarlyReason && safeMaxRecheck > 0) {
     const recheckRows = await selectRecheckRows(db, safeMaxRecheck, verifiedThisRun);
     for (const batch of groupRecheckBatches(recheckRows, VIDEOS_BATCH_SIZE)) {
-      if (externalFetches >= safeMaxExternalFetches) { stoppedEarlyReason = 'max_external_fetches'; break; }
-      externalFetches += 1;
-      const vidRes = await fetchYouTubeJson(buildVideosUrl(batch.ids, cleanKey), callFetch);
-      if (!vidRes.ok) { stoppedEarlyReason = vidRes.reason; break; }
-      quotaUnits += VIDEOS_QUOTA_UNITS;
-
       const itemMap = new Map();
-      for (const item of vidRes.data?.items || []) {
-        if (item?.id) itemMap.set(String(item.id), item);
-      }
+      if (!(await fetchVideosBatchIntoMap(batch.ids, cleanKey, callFetch, safeMaxExternalFetches, state, itemMap))) break;
       const ts = getNowIso();
       const stmts = [];
       for (const row of batch.rows) {
         const compat = evaluateYouTubeVideoItem(itemMap.get(String(row.video_id || '').trim()) ?? null);
-        const statusChanged =
-          Number(row.is_embeddable) !== compat.isEmbeddable ||
-          Number(row.us_playable) !== compat.usPlayable ||
-          String(row.status_reason || '') !== compat.statusReason;
-        if (Number(row.is_embeddable) !== compat.isEmbeddable || Number(row.us_playable) !== compat.usPlayable) {
-          playabilityChangedCount += 1;
-        }
+        const playChanged =
+          Number(row.is_embeddable) !== compat.isEmbeddable || Number(row.us_playable) !== compat.usPlayable;
+        const statusChanged = playChanged || String(row.status_reason || '') !== compat.statusReason;
+        if (playChanged) playabilityChangedCount += 1;
         recheckedCount += 1;
         stmts.push(
           statusChanged
@@ -355,7 +384,8 @@ export async function runIncrementalSongLinksCron({
   if (changesMade) clearD1Cache(db);
 
   return {
-    skipped: null, resolvedCount, unmatchedCount, recheckedCount,
-    playabilityChangedCount, externalFetches, quotaUnits, stoppedEarlyReason, changesMade,
+    skipped: null, resolvedCount, unmatchedCount, recheckedCount, playabilityChangedCount,
+    externalFetches: state.externalFetches, quotaUnits: state.quotaUnits,
+    stoppedEarlyReason: state.stoppedEarlyReason, changesMade,
   };
 }

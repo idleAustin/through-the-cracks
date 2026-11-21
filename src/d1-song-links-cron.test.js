@@ -298,4 +298,102 @@ describe('d1SongLinksCron incremental resolver and health recheck', () => {
     expect(vidFail).toMatchObject({ resolvedCount: 0, unmatchedCount: 0, stoppedEarlyReason: 'http_500', changesMade: false });
     expect(db2.sqlite.prepare('SELECT COUNT(1) AS c FROM song_links').get().c).toBe(0);
   });
+
+  it('runs Pass 1 raw queries first then Pass 2 stripped/fallback queries across the four 11/18 tracks', async () => {
+    const db = await trackDb();
+    await upsertEpisodesIntoD1(db, [{
+      id: 'ep-1118', airDate: '2026-11-18', title: "Playlist for WEVL's Through The Cracks, Wednesday 11/18/2026",
+      songs: [
+        { position: 4, artist: 'Star & Micey', songTitle: "Can't Keep Running Back (w/ Kait Lawson)", album: 'A' },
+        { position: 6, artist: 'Circle Birds', songTitle: 'Evolution', album: 'B' },
+        { position: 22, artist: 'Margo Cilker', songTitle: 'Mayhill Peaches, Goodnoe Pairs', album: 'C' },
+        { position: 26, artist: 'Cory Branan', songTitle: 'Stepping Outside (w/ Tyler Childers)', album: 'D' },
+      ],
+    }]);
+
+    const queries = [];
+    let verifyBatch = [];
+    const responses = new Map([
+      ["Star & Micey Can't Keep Running Back (w/ Kait Lawson)", [{ id: { videoId: 'bad-1' }, snippet: { title: 'Unrelated Clip', channelTitle: 'Other' } }]],
+      ['Circle Birds Evolution', [{ id: { videoId: 'bad-2' }, snippet: { title: 'Angry Bird Drawing', channelTitle: 'Kids' } }]],
+      ['Margo Cilker Mayhill Peaches, Goodnoe Pairs', []],
+      ['Cory Branan Stepping Outside (w/ Tyler Childers)', [{ id: { videoId: 'bad-3' }, snippet: { title: 'Sour Mash', channelTitle: 'Fan' } }]],
+      ["Star & Micey Can't Keep Running Back", [{ id: { videoId: 'ys4-3tVluoA' }, snippet: { title: "Can't Keep Running Back", channelTitle: 'Star & Micey - Topic' } }]],
+      ['"Circle Birds" Evolution', [{ id: { videoId: '3-7PvLC-asg' }, snippet: { title: 'Evolution', channelTitle: 'Circle Birds - Topic' } }]],
+      ['Margo Cilker Goodnoe Pairs', [{ id: { videoId: 'margo-id' }, snippet: { title: 'Maryhill Peaches, Goodnoe Pairs', channelTitle: 'Margo Cilker - Topic' } }]],
+      ['Cory Branan Stepping Outside', [{ id: { videoId: 'pQ5F4eLzHpo' }, snippet: { title: 'Cory Branan - "Steppin\' Outside" (Official Audio)', channelTitle: 'cory branan' } }]],
+    ]);
+
+    const res = await runIncrementalSongLinksCron({
+      db, apiKey: 'yt-key', maxRecheck: 0,
+      fetchImpl: vi.fn(async (url) => {
+        const u = new URL(url);
+        if (u.pathname.endsWith('/search')) {
+          const q = u.searchParams.get('q');
+          queries.push(q);
+          return jsonRes({ items: responses.get(q) || [] });
+        }
+        verifyBatch = u.searchParams.get('id').split(',');
+        return jsonRes({ items: verifyBatch.map((id) => ytItem(id)) });
+      }),
+    });
+
+    expect(queries.slice(0, 4)).toEqual([
+      "Star & Micey Can't Keep Running Back (w/ Kait Lawson)",
+      'Circle Birds Evolution',
+      'Margo Cilker Mayhill Peaches, Goodnoe Pairs',
+      'Cory Branan Stepping Outside (w/ Tyler Childers)',
+    ]);
+    expect(queries.slice(4)).toEqual([
+      "Star & Micey Can't Keep Running Back",
+      '"Circle Birds" Evolution',
+      'Margo Cilker Goodnoe Pairs',
+      'Cory Branan Stepping Outside',
+    ]);
+    expect(verifyBatch).toEqual(['ys4-3tVluoA', '3-7PvLC-asg', 'margo-id', 'pQ5F4eLzHpo']);
+    expect(res).toMatchObject({ resolvedCount: 4, unmatchedCount: 0, externalFetches: 9, quotaUnits: 801, changesMade: true });
+    const rows = db.sqlite.prepare('SELECT video_id, match_tier, is_embeddable FROM song_links ORDER BY song_key').all();
+    expect(rows.every((r) => r.match_tier === 'high' && r.is_embeddable === 1)).toBe(true);
+  });
+
+  it('respects maxExternalFetches in Pass 2 without dropping Pass 1 hits and skips false unmatched on Pass 2 errors', async () => {
+    const budgetDb = await trackDb();
+    await upsertEpisodesIntoD1(budgetDb, [{
+      id: 'ep-b', airDate: '2026-11-18', title: 'Show B',
+      songs: [
+        { position: 1, artist: 'Alpha', songTitle: 'Clean Song', album: 'A' },
+        { position: 2, artist: 'Beta', songTitle: 'Miss One (w/ Guest)', album: 'B' },
+        { position: 3, artist: 'Gamma', songTitle: 'Miss Two (w/ Guest)', album: 'C' },
+      ],
+    }]);
+    const budgetRes = await runIncrementalSongLinksCron({
+      db: budgetDb, apiKey: 'yt-key', maxExternalFetches: 5, maxRecheck: 0,
+      fetchImpl: vi.fn(async (url) => {
+        const u = new URL(url);
+        if (u.pathname.endsWith('/search')) {
+          const q = u.searchParams.get('q');
+          if (q === 'Alpha Clean Song') return jsonRes({ items: [{ id: { videoId: 'v-a' }, snippet: { title: 'Clean Song', channelTitle: 'Alpha - Topic' } }] });
+          if (q === 'Beta Miss One') return jsonRes({ items: [{ id: { videoId: 'v-b' }, snippet: { title: 'Miss One', channelTitle: 'Beta - Topic' } }] });
+          return jsonRes({ items: [] });
+        }
+        return jsonRes({ items: u.searchParams.get('id').split(',').map((id) => ytItem(id)) });
+      }),
+    });
+    expect(budgetRes).toMatchObject({ resolvedCount: 2, unmatchedCount: 0, externalFetches: 5, stoppedEarlyReason: 'max_external_fetches' });
+    expect(budgetDb.sqlite.prepare("SELECT song_key FROM song_links ORDER BY song_key").all().map((r) => r.song_key))
+      .toEqual(['alpha|||clean song', 'beta|||miss one (w/ guest)']);
+
+    const errDb = await trackDb();
+    await upsertEpisodesIntoD1(errDb, [{
+      id: 'ep-e', airDate: '2026-11-18', title: 'Show E',
+      songs: [{ position: 1, artist: 'Beta', songTitle: 'Long Broken Title Without Hit', album: 'A' }],
+    }]);
+    let callIdx = 0;
+    const errRes = await runIncrementalSongLinksCron({
+      db: errDb, apiKey: 'yt-key', maxRecheck: 0,
+      fetchImpl: vi.fn(async () => (++callIdx === 1 ? jsonRes({ items: [] }) : jsonRes({ error: { message: 'Rate limited' } }, 429))),
+    });
+    expect(errRes).toMatchObject({ resolvedCount: 0, unmatchedCount: 0, externalFetches: 2, stoppedEarlyReason: 'http_429', changesMade: false });
+    expect(errDb.sqlite.prepare('SELECT COUNT(1) AS c FROM song_links').get().c).toBe(0);
+  });
 });
