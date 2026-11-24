@@ -22,9 +22,75 @@ def normalize_text(text: str) -> str:
     s = s.lower().strip().replace("&", " and ")
     s = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", s)
     s = re.sub(r"\b(feat\.?|ft\.?|featuring)\b.*$", " ", s)
+    s = re.sub(r"\bw/.*$", " ", s)
     s = re.sub(r"[^a-z0-9\s]", " ", s)
     s = re.sub(r"^the\s+", "", s)
     return re.sub(r"\s+", " ", s).strip()
+
+
+def strip_query_noise(text: str) -> str:
+    """Strip parentheticals, brackets, featuring/with clauses, and quotes for fallback searches."""
+    s = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", text or "")
+    s = re.sub(r"\b(?:feat\.?|ft\.?|featuring)\b.*$", " ", s, flags=re.I)
+    s = re.sub(r"\bw/.*$", " ", s, flags=re.I)
+    s = re.sub(r'["“”]', " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def extract_primary_artist(artist: str) -> str:
+    """Return the lead artist name when an archive artist credit lists multiple acts."""
+    raw = re.sub(r"\s+", " ", str(artist or "")).strip()
+    if not raw:
+        return ""
+    parts = re.split(r"\s+(?:&|and|/|with|feat\.?|ft\.?|w/)\s+", raw, maxsplit=1, flags=re.I)
+    lead = parts[0].strip() if parts else ""
+    return lead if lead and len(lead) < len(raw) else ""
+
+
+def build_fallback_queries(song: dict[str, Any]) -> list[tuple[str, str, str | None]]:
+    """Build ordered, deduplicated (label, query, filter) fallback searches for an unmatched track."""
+    raw_artist = str(song.get("artist") or "").strip()
+    raw_title = song_title_of(song)
+    raw_query = re.sub(r"\s+", " ", f"{raw_artist} {raw_title}").strip().lower()
+    strip_q = lambda v: re.sub(r"\s+", " ", re.sub(r'["“”]', " ", str(v or ""))).strip()
+    clean_artist = strip_query_noise(raw_artist) or strip_q(raw_artist)
+    unwrapped = strip_query_noise(re.sub(r"^\(([^)]+)\)", r"\1 ", raw_title)) if raw_title.lstrip().startswith("(") else ""
+    clean_title = strip_query_noise(raw_title) or strip_q(raw_title)
+    base_title = unwrapped or clean_title
+    if not clean_artist or not base_title:
+        return []
+
+    queries: list[tuple[str, str, str | None]] = []
+    seen: set[tuple[str, str | None]] = {(raw_query, None)}
+
+    def add(label: str, query: str, search_filter: str | None) -> None:
+        norm_q = re.sub(r"\s+", " ", str(query or "")).strip()
+        key = (norm_q.lower(), search_filter)
+        if norm_q and key not in seen:
+            seen.add(key)
+            queries.append((label, norm_q, search_filter))
+
+    if unwrapped and unwrapped.lower() != raw_title.lower():
+        add("unwrapped_unified", f"{clean_artist} {unwrapped}", None)
+    elif clean_title.lower() != raw_title.lower() or clean_artist.lower() != raw_artist.lower():
+        add("stripped_unified", f"{clean_artist} {clean_title}", None)
+
+    add("songs_filter", f"{clean_artist} {base_title}", "songs")
+    add("videos_filter", f'"{clean_artist}" {base_title}', "videos")
+
+    lead_artist = extract_primary_artist(clean_artist)
+    if lead_artist and lead_artist.lower() != clean_artist.lower():
+        add("primary_artist", f"{lead_artist} {base_title}", None)
+    else:
+        clauses = [c.strip() for c in re.split(r"\s*[,;:/]\s*", base_title) if c.strip()]
+        if len(clauses) >= 2:
+            add("partial_title", f"{clean_artist} {clauses[-1]}", None)
+        else:
+            words = [w for w in re.sub(r"[,;:/]+", " ", base_title).split() if w]
+            if len(words) >= 3:
+                add("partial_title", f"{clean_artist} {' '.join(words[len(words) // 2:])}", None)
+
+    return queries
 
 
 def parse_duration_seconds(item: dict[str, Any]) -> int | None:
@@ -73,13 +139,28 @@ def score_candidate(song: dict[str, Any], item: dict[str, Any]) -> dict[str, Any
         yt_title_no_artist = re.sub(rf"\b{re.escape(norm_arch_artist)}\b", " ", norm_yt_title)
         yt_title_no_artist = re.sub(r"^the\s+", "", re.sub(r"\s+", " ", yt_title_no_artist).strip())
 
+    title_segments = [seg.strip() for seg in re.split(r"\s+[-–—|·]\s+", yt_title) if seg.strip()]
+    title_candidates: list[str] = []
+    for cand in (norm_yt_title, yt_title_no_artist):
+        if cand and cand not in title_candidates:
+            title_candidates.append(cand)
+    for seg in title_segments:
+        norm_seg = normalize_text(seg)
+        if norm_seg and norm_seg != norm_arch_artist and norm_seg not in title_candidates:
+            title_candidates.append(norm_seg)
+    for quoted in re.findall(r'["“]([^"”]{2,})["”]', yt_title):
+        norm_q = normalize_text(quoted)
+        if norm_q and norm_q not in title_candidates:
+            title_candidates.append(norm_q)
+
     title_sim = max(
-        fuzz.ratio(norm_arch_title, norm_yt_title),
-        fuzz.token_sort_ratio(norm_arch_title, norm_yt_title),
-        fuzz.ratio(norm_arch_title, yt_title_no_artist) if yt_title_no_artist else 0,
-        fuzz.token_sort_ratio(norm_arch_title, yt_title_no_artist) if yt_title_no_artist else 0,
+        (
+            max(fuzz.ratio(norm_arch_title, cand), fuzz.token_sort_ratio(norm_arch_title, cand))
+            for cand in title_candidates
+        ),
+        default=0.0,
     )
-    if norm_arch_title and (norm_arch_title == norm_yt_title or norm_arch_title == yt_title_no_artist):
+    if norm_arch_title and norm_arch_title in title_candidates:
         title_pts = 35
     elif title_sim >= 90:
         title_pts = 30
@@ -95,9 +176,17 @@ def score_candidate(song: dict[str, Any], item: dict[str, Any]) -> dict[str, Any
 
     best_artist_sim = 0.0
     artist_candidates = list(yt_artists)
-    if not artist_candidates and " - " in yt_title:
-        artist_candidates.append(yt_title.split(" - ", 1)[0])
+    if len(yt_artists) > 1:
+        artist_candidates.append(" & ".join(yt_artists))
+    if title_segments:
+        artist_candidates.append(title_segments[0])
+        if len(title_segments) >= 2:
+            seg0_norm = normalize_text(title_segments[0])
+            seg0_sim = max(fuzz.ratio(norm_arch_title, seg0_norm), fuzz.token_sort_ratio(norm_arch_title, seg0_norm)) if (norm_arch_title and seg0_norm) else 0.0
+            if norm_arch_title and seg0_norm and (seg0_norm == norm_arch_title or seg0_sim >= 80):
+                artist_candidates.append(title_segments[1])
 
+    arch_tokens = set(norm_arch_artist.split())
     for cand_a in artist_candidates:
         norm_cand = normalize_text(cand_a)
         if not norm_cand:
@@ -105,12 +194,15 @@ def score_candidate(song: dict[str, Any], item: dict[str, Any]) -> dict[str, Any
         if norm_cand == norm_arch_artist:
             best_artist_sim = 100.0
             break
-        sim = max(fuzz.token_set_ratio(norm_arch_artist, norm_cand), fuzz.token_sort_ratio(norm_arch_artist, norm_cand))
+        sim = max(fuzz.ratio(norm_arch_artist, norm_cand), fuzz.token_sort_ratio(norm_arch_artist, norm_cand))
+        cand_tokens = set(norm_cand.split())
+        if (arch_tokens and arch_tokens <= cand_tokens) or (len(cand_tokens) >= 2 and cand_tokens <= arch_tokens):
+            sim = max(sim, fuzz.token_set_ratio(norm_arch_artist, norm_cand))
         if norm_arch_artist and re.search(rf"\b{re.escape(norm_arch_artist)}\b", norm_cand):
             sim = max(sim, 90.0)
         best_artist_sim = max(best_artist_sim, sim)
 
-    if best_artist_sim < 65 and norm_arch_artist and re.search(rf"\b{re.escape(norm_arch_artist)}\b", norm_yt_title):
+    if best_artist_sim < 65 and len(title_segments) <= 1 and norm_arch_artist and re.search(rf"\b{re.escape(norm_arch_artist)}\b", norm_yt_title):
         best_artist_sim = 85.0
 
     if best_artist_sim == 100.0:
