@@ -7,18 +7,18 @@
     "firstAppearance": "2013-07-31"
   },
   {
+    "artist": "Kinky Friedman",
+    "album": "Resurrection",
+    "totalPlays": 43,
+    "uniqueSongs": 7,
+    "firstAppearance": "2019-11-02"
+  },
+  {
     "artist": "Delta Joe Sanders",
     "album": "Like Pearls On A String",
     "totalPlays": 42,
     "uniqueSongs": 8,
     "firstAppearance": "2019-12-07"
-  },
-  {
-    "artist": "Kinky Friedman",
-    "album": "Resurrection",
-    "totalPlays": 42,
-    "uniqueSongs": 7,
-    "firstAppearance": "2019-11-02"
   },
   {
     "artist": "Amy LaVere",
@@ -308,6 +308,13 @@
     "firstAppearance": "2017-08-12"
   },
   {
+    "artist": "Skip Battin",
+    "album": "Skip",
+    "totalPlays": 30,
+    "uniqueSongs": 7,
+    "firstAppearance": "2014-10-01"
+  },
+  {
     "artist": "William Bell",
     "album": "This Is Where I Live",
     "totalPlays": 30,
@@ -327,6 +334,13 @@
     "totalPlays": 29,
     "uniqueSongs": 8,
     "firstAppearance": "2021-07-07"
+  },
+  {
+    "artist": "Heather Eatman",
+    "album": "Gorgeous Maze",
+    "totalPlays": 29,
+    "uniqueSongs": 13,
+    "firstAppearance": "2021-03-06"
   },
   {
     "artist": "Kim Richardson",
@@ -357,13 +371,6 @@
     "firstAppearance": "2013-10-16"
   },
   {
-    "artist": "Skip Battin",
-    "album": "Skip",
-    "totalPlays": 29,
-    "uniqueSongs": 7,
-    "firstAppearance": "2014-10-01"
-  },
-  {
     "artist": "Southern Avenue",
     "album": "Keep On",
     "totalPlays": 29,
@@ -392,11 +399,11 @@
     "firstAppearance": "2014-01-04"
   },
   {
-    "artist": "Heather Eatman",
-    "album": "Gorgeous Maze",
+    "artist": "Help Yourself",
+    "album": "Strange Affair",
     "totalPlays": 28,
-    "uniqueSongs": 13,
-    "firstAppearance": "2021-03-06"
+    "uniqueSongs": 7,
+    "firstAppearance": "2014-12-10"
   },
   {
     "artist": "It's A Beautiful Day",
@@ -497,18 +504,18 @@
     "firstAppearance": "2013-08-08"
   },
   {
+    "artist": "David Crosby",
+    "album": "If I Could Only Remember My Name",
+    "totalPlays": 27,
+    "uniqueSongs": 6,
+    "firstAppearance": "2013-12-07"
+  },
+  {
     "artist": "Drew Holcomb & The Neighbors",
     "album": "Dragons",
     "totalPlays": 27,
     "uniqueSongs": 8,
     "firstAppearance": "2019-08-24"
-  },
-  {
-    "artist": "Help Yourself",
-    "album": "Strange Affair",
-    "totalPlays": 27,
-    "uniqueSongs": 7,
-    "firstAppearance": "2014-12-10"
   },
   {
     "artist": "Jen Mize",
@@ -712,13 +719,6 @@
     "totalPlays": 26,
     "uniqueSongs": 9,
     "firstAppearance": "2016-09-17"
-  },
-  {
-    "artist": "David Crosby",
-    "album": "If I Could Only Remember My Name",
-    "totalPlays": 26,
-    "uniqueSongs": 6,
-    "firstAppearance": "2013-12-07"
   },
   {
     "artist": "Hem",
@@ -1302,6 +1302,13 @@
     "firstAppearance": "2021-01-13"
   },
   {
+    "artist": "Dolly Varden",
+    "album": "For A While",
+    "totalPlays": 23,
+    "uniqueSongs": 8,
+    "firstAppearance": "2013-08-03"
+  },
+  {
     "artist": "Frazey Ford",
     "album": "Indian Ocean",
     "totalPlays": 23,
@@ -1470,6 +1477,13 @@
     "firstAppearance": "2013-08-17"
   },
   {
+    "artist": "Brigitte Demeyer",
+    "album": "Savannah Road",
+    "totalPlays": 22,
+    "uniqueSongs": 8,
+    "firstAppearance": "2015-01-17"
+  },
+  {
     "artist": "Colin Brooks, Kelley Mickwee & John Chipman",
     "album": "Birds Of A Feather",
     "totalPlays": 22,
@@ -1503,13 +1517,6 @@
     "totalPlays": 22,
     "uniqueSongs": 7,
     "firstAppearance": "2014-06-21"
-  },
-  {
-    "artist": "Dolly Varden",
-    "album": "For A While",
-    "totalPlays": 22,
-    "uniqueSongs": 8,
-    "firstAppearance": "2013-08-03"
   },
   {
     "artist": "Gurf Morlix",
@@ -1601,6 +1608,13 @@
     "totalPlays": 22,
     "uniqueSongs": 8,
     "firstAppearance": "2020-06-13"
+  },
+  {
+    "artist": "Shemekia Copeland",
+    "album": "Done Come Too Far",
+    "totalPlays": 22,
+    "uniqueSongs": 9,
+    "firstAppearance": "2022-09-03"
   },
   {
     "artist": "Shovels & Rope",
@@ -1695,13 +1709,6 @@
   },
   {
     "artist": "Brigitte Demeyer",
-    "album": "Savannah Road",
-    "totalPlays": 21,
-    "uniqueSongs": 8,
-    "firstAppearance": "2015-01-17"
-  },
-  {
-    "artist": "Brigitte Demeyer",
     "album": "Seeker",
     "totalPlays": 21,
     "uniqueSongs": 11,
@@ -1741,6 +1748,13 @@
     "totalPlays": 21,
     "uniqueSongs": 7,
     "firstAppearance": "2022-10-12"
+  },
+  {
+    "artist": "Dan Montgomery",
+    "album": "Dispatches From The Desert",
+    "totalPlays": 21,
+    "uniqueSongs": 8,
+    "firstAppearance": "2026-02-04"
   },
   {
     "artist": "Dave Rawlings Machine",
@@ -1876,6 +1890,13 @@
     "firstAppearance": "2015-03-11"
   },
   {
+    "artist": "Lynn Miles",
+    "album": "Winter",
+    "totalPlays": 21,
+    "uniqueSongs": 11,
+    "firstAppearance": "2016-01-23"
+  },
+  {
     "artist": "Madison Cunningham",
     "album": "Revealer",
     "totalPlays": 21,
@@ -1932,13 +1953,6 @@
     "firstAppearance": "2022-12-14"
   },
   {
-    "artist": "Shemekia Copeland",
-    "album": "Done Come Too Far",
-    "totalPlays": 21,
-    "uniqueSongs": 9,
-    "firstAppearance": "2022-09-03"
-  },
-  {
     "artist": "Terri Binion",
     "album": "Leavin' This Town",
     "totalPlays": 21,
@@ -1965,6 +1979,13 @@
     "totalPlays": 21,
     "uniqueSongs": 5,
     "firstAppearance": "2014-02-19"
+  },
+  {
+    "artist": "Watkins Family Hour",
+    "album": "Vol. II",
+    "totalPlays": 21,
+    "uniqueSongs": 9,
+    "firstAppearance": "2022-08-31"
   },
   {
     "artist": "Willie Sugarcapps",
@@ -1995,6 +2016,20 @@
     "firstAppearance": "2014-01-29"
   },
   {
+    "artist": "Anny Celsi",
+    "album": "Tangle-Free World",
+    "totalPlays": 20,
+    "uniqueSongs": 8,
+    "firstAppearance": "2013-11-13"
+  },
+  {
+    "artist": "Big Star",
+    "album": "#1 Record",
+    "totalPlays": 20,
+    "uniqueSongs": 8,
+    "firstAppearance": "2013-11-06"
+  },
+  {
     "artist": "Blair Combest",
     "album": "Blair Combest",
     "totalPlays": 20,
@@ -2021,13 +2056,6 @@
     "totalPlays": 20,
     "uniqueSongs": 8,
     "firstAppearance": "2016-07-02"
-  },
-  {
-    "artist": "Dan Montgomery",
-    "album": "Dispatches From The Desert",
-    "totalPlays": 20,
-    "uniqueSongs": 8,
-    "firstAppearance": "2026-02-04"
   },
   {
     "artist": "Dave Carter & Tracy Grammer",
@@ -2070,6 +2098,13 @@
     "totalPlays": 20,
     "uniqueSongs": 8,
     "firstAppearance": "2021-06-19"
+  },
+  {
+    "artist": "Grayson Capps",
+    "album": "Scarlett Roses",
+    "totalPlays": 20,
+    "uniqueSongs": 7,
+    "firstAppearance": "2018-02-04"
   },
   {
     "artist": "Indigo Girls",
@@ -2191,13 +2226,6 @@
     "firstAppearance": "2016-11-05"
   },
   {
-    "artist": "Lynn Miles",
-    "album": "Winter",
-    "totalPlays": 20,
-    "uniqueSongs": 11,
-    "firstAppearance": "2016-01-23"
-  },
-  {
     "artist": "Madeleine Peyroux",
     "album": "Secular Hymns",
     "totalPlays": 20,
@@ -2269,6 +2297,13 @@
   },
   {
     "artist": "Randall Bramblett",
+    "album": "Paradise Breakdown",
+    "totalPlays": 20,
+    "uniqueSongs": 12,
+    "firstAppearance": "2024-11-06"
+  },
+  {
+    "artist": "Randall Bramblett",
     "album": "Pine Needle Fire",
     "totalPlays": 20,
     "uniqueSongs": 12,
@@ -2294,6 +2329,13 @@
     "totalPlays": 20,
     "uniqueSongs": 8,
     "firstAppearance": "2017-02-25"
+  },
+  {
+    "artist": "Rick Danko",
+    "album": "Rick Danko",
+    "totalPlays": 20,
+    "uniqueSongs": 5,
+    "firstAppearance": "2014-10-11"
   },
   {
     "artist": "Rosanne Cash",
@@ -2408,6 +2450,13 @@
     "firstAppearance": "2020-07-18"
   },
   {
+    "artist": "The Stray Birds",
+    "album": "Let It Pass",
+    "totalPlays": 20,
+    "uniqueSongs": 7,
+    "firstAppearance": "2018-09-23"
+  },
+  {
     "artist": "Tony Manard",
     "album": "Know Why",
     "totalPlays": 20,
@@ -2420,13 +2469,6 @@
     "totalPlays": 20,
     "uniqueSongs": 12,
     "firstAppearance": "2023-06-21"
-  },
-  {
-    "artist": "Watkins Family Hour",
-    "album": "Vol. II",
-    "totalPlays": 20,
-    "uniqueSongs": 8,
-    "firstAppearance": "2022-08-31"
   },
   {
     "artist": "Will Kimbrough",
@@ -2464,13 +2506,6 @@
     "firstAppearance": "2019-08-24"
   },
   {
-    "artist": "Anny Celsi",
-    "album": "Tangle-Free World",
-    "totalPlays": 19,
-    "uniqueSongs": 7,
-    "firstAppearance": "2013-11-13"
-  },
-  {
     "artist": "Becca Mancari",
     "album": "Good Woman",
     "totalPlays": 19,
@@ -2483,13 +2518,6 @@
     "totalPlays": 19,
     "uniqueSongs": 9,
     "firstAppearance": "2018-05-19"
-  },
-  {
-    "artist": "Big Star",
-    "album": "#1 Record",
-    "totalPlays": 19,
-    "uniqueSongs": 8,
-    "firstAppearance": "2013-11-06"
   },
   {
     "artist": "Birds Of Chicago",
@@ -2541,6 +2569,13 @@
     "firstAppearance": "2023-08-23"
   },
   {
+    "artist": "Davy Ray Bennett",
+    "album": "Out Here",
+    "totalPlays": 19,
+    "uniqueSongs": 10,
+    "firstAppearance": "2025-01-08"
+  },
+  {
     "artist": "Drew Holcomb & The Neighbors",
     "album": "Strangers No More",
     "totalPlays": 19,
@@ -2581,13 +2616,6 @@
     "totalPlays": 19,
     "uniqueSongs": 9,
     "firstAppearance": "2013-08-08"
-  },
-  {
-    "artist": "Grayson Capps",
-    "album": "Scarlett Roses",
-    "totalPlays": 19,
-    "uniqueSongs": 7,
-    "firstAppearance": "2018-02-04"
   },
   {
     "artist": "Gretchen Peters",
@@ -2786,20 +2814,6 @@
     "firstAppearance": "2023-06-24"
   },
   {
-    "artist": "Randall Bramblett",
-    "album": "Paradise Breakdown",
-    "totalPlays": 19,
-    "uniqueSongs": 11,
-    "firstAppearance": "2024-11-06"
-  },
-  {
-    "artist": "Rick Danko",
-    "album": "Rick Danko",
-    "totalPlays": 19,
-    "uniqueSongs": 4,
-    "firstAppearance": "2014-10-11"
-  },
-  {
     "artist": "River Whyless",
     "album": "Monoflora",
     "totalPlays": 19,
@@ -2826,6 +2840,13 @@
     "totalPlays": 19,
     "uniqueSongs": 5,
     "firstAppearance": "2013-08-03"
+  },
+  {
+    "artist": "Shovels & Rope",
+    "album": "Little Seeds",
+    "totalPlays": 19,
+    "uniqueSongs": 6,
+    "firstAppearance": "2016-10-29"
   },
   {
     "artist": "Stephen Stills",
@@ -2861,13 +2882,6 @@
     "totalPlays": 19,
     "uniqueSongs": 7,
     "firstAppearance": "2016-06-11"
-  },
-  {
-    "artist": "The Stray Birds",
-    "album": "Let It Pass",
-    "totalPlays": 19,
-    "uniqueSongs": 7,
-    "firstAppearance": "2018-09-23"
   },
   {
     "artist": "The Weepies",
@@ -3008,13 +3022,6 @@
     "totalPlays": 18,
     "uniqueSongs": 8,
     "firstAppearance": "2013-07-31"
-  },
-  {
-    "artist": "Davy Ray Bennett",
-    "album": "Out Here",
-    "totalPlays": 18,
-    "uniqueSongs": 9,
-    "firstAppearance": "2025-01-08"
   },
   {
     "artist": "Dayna Kurtz",
@@ -3311,13 +3318,6 @@
     "firstAppearance": "2021-05-29"
   },
   {
-    "artist": "Shovels & Rope",
-    "album": "Little Seeds",
-    "totalPlays": 18,
-    "uniqueSongs": 6,
-    "firstAppearance": "2016-10-29"
-  },
-  {
     "artist": "Slaid Cleaves",
     "album": "Ghost On The Car Radio",
     "totalPlays": 18,
@@ -3542,11 +3542,25 @@
     "firstAppearance": "2020-06-27"
   },
   {
+    "artist": "Bonnie Raitt",
+    "album": "Bonnie Raitt",
+    "totalPlays": 17,
+    "uniqueSongs": 9,
+    "firstAppearance": "2013-12-14"
+  },
+  {
     "artist": "Brandi Carlile",
     "album": "In These Silent Days",
     "totalPlays": 17,
     "uniqueSongs": 6,
     "firstAppearance": "2021-10-09"
+  },
+  {
+    "artist": "Brennen Leigh",
+    "album": "Ain't Through Honky Tonkin' Yet",
+    "totalPlays": 17,
+    "uniqueSongs": 12,
+    "firstAppearance": "2023-08-16"
   },
   {
     "artist": "Bruce Cockburn",
@@ -4123,20 +4137,6 @@
     "firstAppearance": "2013-07-31"
   },
   {
-    "artist": "Bonnie Raitt",
-    "album": "Bonnie Raitt",
-    "totalPlays": 16,
-    "uniqueSongs": 8,
-    "firstAppearance": "2013-12-14"
-  },
-  {
-    "artist": "Brennen Leigh",
-    "album": "Ain't Through Honky Tonkin' Yet",
-    "totalPlays": 16,
-    "uniqueSongs": 11,
-    "firstAppearance": "2023-08-16"
-  },
-  {
     "artist": "Carrie Rodriguez",
     "album": "Live In Louisville",
     "totalPlays": 16,
@@ -4613,6 +4613,13 @@
     "firstAppearance": "2013-09-21"
   },
   {
+    "artist": "Paul Kelly",
+    "album": "The Merri Soul Sessions",
+    "totalPlays": 16,
+    "uniqueSongs": 8,
+    "firstAppearance": "2015-01-24"
+  },
+  {
     "artist": "Peter Wolf",
     "album": "Midnight Souvenirs",
     "totalPlays": 16,
@@ -4830,6 +4837,13 @@
     "firstAppearance": "2018-02-04"
   },
   {
+    "artist": "Victor Mecyssne",
+    "album": "Personal Mercury",
+    "totalPlays": 16,
+    "uniqueSongs": 6,
+    "firstAppearance": "2013-10-12"
+  },
+  {
     "artist": "Walt Wilkins",
     "album": "Hopewell",
     "totalPlays": 16,
@@ -4884,6 +4898,13 @@
     "totalPlays": 15,
     "uniqueSongs": 7,
     "firstAppearance": "2013-10-09"
+  },
+  {
+    "artist": "Bailey Bigger",
+    "album": "Coyote Red",
+    "totalPlays": 15,
+    "uniqueSongs": 8,
+    "firstAppearance": "2022-03-26"
   },
   {
     "artist": "Ben Vaughn",
@@ -5446,13 +5467,6 @@
     "firstAppearance": "2017-09-09"
   },
   {
-    "artist": "Paul Kelly",
-    "album": "The Merri Soul Sessions",
-    "totalPlays": 15,
-    "uniqueSongs": 8,
-    "firstAppearance": "2015-01-24"
-  },
-  {
     "artist": "Paul Thorn",
     "album": "Too Blessed To Be Stressed",
     "totalPlays": 15,
@@ -5642,6 +5656,13 @@
     "firstAppearance": "2014-07-19"
   },
   {
+    "artist": "The Stray Birds",
+    "album": "Magic Fire",
+    "totalPlays": 15,
+    "uniqueSongs": 6,
+    "firstAppearance": "2016-08-27"
+  },
+  {
     "artist": "The Wealthy West",
     "album": "Long Play",
     "totalPlays": 15,
@@ -5677,18 +5698,18 @@
     "firstAppearance": "2020-11-14"
   },
   {
-    "artist": "Victor Mecyssne",
-    "album": "Personal Mercury",
-    "totalPlays": 15,
-    "uniqueSongs": 6,
-    "firstAppearance": "2013-10-12"
-  },
-  {
     "artist": "Willie Nelson",
     "album": "A Beautiful Time",
     "totalPlays": 15,
     "uniqueSongs": 8,
     "firstAppearance": "2022-05-21"
+  },
+  {
+    "artist": "Allison Moorer",
+    "album": "Wish For You",
+    "totalPlays": 14,
+    "uniqueSongs": 5,
+    "firstAppearance": "2022-02-26"
   },
   {
     "artist": "Amanda Shires & Bobbie Nelson",
@@ -5717,13 +5738,6 @@
     "totalPlays": 14,
     "uniqueSongs": 5,
     "firstAppearance": "2013-12-14"
-  },
-  {
-    "artist": "Bailey Bigger",
-    "album": "Coyote Red",
-    "totalPlays": 14,
-    "uniqueSongs": 7,
-    "firstAppearance": "2022-03-26"
   },
   {
     "artist": "Bob Schneider",
@@ -6335,6 +6349,13 @@
     "firstAppearance": "2015-01-03"
   },
   {
+    "artist": "Reigning Sound",
+    "album": "Break Up...Break Down",
+    "totalPlays": 14,
+    "uniqueSongs": 6,
+    "firstAppearance": "2017-06-03"
+  },
+  {
     "artist": "Rice Drewry",
     "album": "Crisis In The Chakras",
     "totalPlays": 14,
@@ -6531,13 +6552,6 @@
     "firstAppearance": "2026-01-10"
   },
   {
-    "artist": "The Stray Birds",
-    "album": "Magic Fire",
-    "totalPlays": 14,
-    "uniqueSongs": 6,
-    "firstAppearance": "2016-08-27"
-  },
-  {
     "artist": "The Weepies",
     "album": "Sirens",
     "totalPlays": 14,
@@ -6571,6 +6585,13 @@
     "totalPlays": 14,
     "uniqueSongs": 6,
     "firstAppearance": "2025-12-10"
+  },
+  {
+    "artist": "Toni Price",
+    "album": "Midnight Pumpkin",
+    "totalPlays": 14,
+    "uniqueSongs": 4,
+    "firstAppearance": "2013-07-24"
   },
   {
     "artist": "Tony Manard",
@@ -6657,13 +6678,6 @@
     "firstAppearance": "2013-10-23"
   },
   {
-    "artist": "Allison Moorer",
-    "album": "Wish For You",
-    "totalPlays": 13,
-    "uniqueSongs": 5,
-    "firstAppearance": "2022-02-26"
-  },
-  {
     "artist": "Amy Rigby",
     "album": "The Sugar Tree",
     "totalPlays": 13,
@@ -6739,6 +6753,13 @@
     "totalPlays": 13,
     "uniqueSongs": 6,
     "firstAppearance": "2018-02-24"
+  },
+  {
+    "artist": "Brandy Zdan",
+    "album": "Falcon",
+    "totalPlays": 13,
+    "uniqueSongs": 6,
+    "firstAppearance": "2021-11-06"
   },
   {
     "artist": "Brigitte Demeyer & Will Kimbrough",
@@ -7063,6 +7084,13 @@
     "firstAppearance": "2013-08-21"
   },
   {
+    "artist": "Jonathan Byrd",
+    "album": "Cackalack",
+    "totalPlays": 13,
+    "uniqueSongs": 6,
+    "firstAppearance": "2013-08-10"
+  },
+  {
     "artist": "Jonell Mosser",
     "album": "Enough Rope",
     "totalPlays": 13,
@@ -7231,6 +7259,13 @@
     "firstAppearance": "2013-08-21"
   },
   {
+    "artist": "Marti Jones",
+    "album": "Any Kind Of Lie",
+    "totalPlays": 13,
+    "uniqueSongs": 3,
+    "firstAppearance": "2013-09-04"
+  },
+  {
     "artist": "Martin Sexton",
     "album": "The American",
     "totalPlays": 13,
@@ -7315,6 +7350,13 @@
     "firstAppearance": "2013-08-17"
   },
   {
+    "artist": "Ollabelle",
+    "album": "Before This Time",
+    "totalPlays": 13,
+    "uniqueSongs": 6,
+    "firstAppearance": "2013-11-30"
+  },
+  {
     "artist": "Over The Rhine",
     "album": "The Trumpet Child",
     "totalPlays": 13,
@@ -7390,13 +7432,6 @@
     "totalPlays": 13,
     "uniqueSongs": 4,
     "firstAppearance": "2015-01-31"
-  },
-  {
-    "artist": "Reigning Sound",
-    "album": "Break Up...Break Down",
-    "totalPlays": 13,
-    "uniqueSongs": 6,
-    "firstAppearance": "2017-06-03"
   },
   {
     "artist": "Rhiannon Giddens & Francesco Turrisi",
@@ -7658,13 +7693,6 @@
     "firstAppearance": "2024-08-17"
   },
   {
-    "artist": "Toni Price",
-    "album": "Midnight Pumpkin",
-    "totalPlays": 13,
-    "uniqueSongs": 4,
-    "firstAppearance": "2013-07-24"
-  },
-  {
     "artist": "Townes Van Zandt",
     "album": "No Deeper Blue",
     "totalPlays": 13,
@@ -7728,6 +7756,13 @@
     "firstAppearance": "2013-08-15"
   },
   {
+    "artist": "Big Star",
+    "album": "Third/ Sister Lovers",
+    "totalPlays": 12,
+    "uniqueSongs": 4,
+    "firstAppearance": "2014-12-24"
+  },
+  {
     "artist": "Bob Dylan",
     "album": "Christmas In The Heart",
     "totalPlays": 12,
@@ -7775,13 +7810,6 @@
     "totalPlays": 12,
     "uniqueSongs": 3,
     "firstAppearance": "2013-10-23"
-  },
-  {
-    "artist": "Brandy Zdan",
-    "album": "Falcon",
-    "totalPlays": 12,
-    "uniqueSongs": 6,
-    "firstAppearance": "2021-11-06"
   },
   {
     "artist": "Buddy Miller",
@@ -7887,6 +7915,13 @@
     "totalPlays": 12,
     "uniqueSongs": 8,
     "firstAppearance": "2026-08-26"
+  },
+  {
+    "artist": "Emmylou Harris",
+    "album": "Cowgirl's Prayer",
+    "totalPlays": 12,
+    "uniqueSongs": 6,
+    "firstAppearance": "2014-04-12"
   },
   {
     "artist": "Emmylou Harris",
@@ -8078,11 +8113,11 @@
     "firstAppearance": "2013-08-15"
   },
   {
-    "artist": "Jonathan Byrd",
-    "album": "Cackalack",
+    "artist": "Jonatha Brooke",
+    "album": "Back In The Circus",
     "totalPlays": 12,
-    "uniqueSongs": 6,
-    "firstAppearance": "2013-08-10"
+    "uniqueSongs": 5,
+    "firstAppearance": "2013-10-05"
   },
   {
     "artist": "Jonell Mosser",
@@ -8104,6 +8139,13 @@
     "totalPlays": 12,
     "uniqueSongs": 5,
     "firstAppearance": "2013-10-30"
+  },
+  {
+    "artist": "Judy Collins",
+    "album": "Who Knows Where The Time Goes",
+    "totalPlays": 12,
+    "uniqueSongs": 5,
+    "firstAppearance": "2015-05-02"
   },
   {
     "artist": "Kate Campbell",
@@ -8239,13 +8281,6 @@
     "firstAppearance": "2014-01-08"
   },
   {
-    "artist": "Marti Jones",
-    "album": "Any Kind Of Lie",
-    "totalPlays": 12,
-    "uniqueSongs": 3,
-    "firstAppearance": "2013-09-04"
-  },
-  {
     "artist": "Martin Sexton",
     "album": "Black Sheep",
     "totalPlays": 12,
@@ -8302,6 +8337,13 @@
     "firstAppearance": "2014-02-08"
   },
   {
+    "artist": "Michelle Malone",
+    "album": "Sugarfoot",
+    "totalPlays": 12,
+    "uniqueSongs": 5,
+    "firstAppearance": "2013-11-06"
+  },
+  {
     "artist": "Miko Marks & The Resurrectors",
     "album": "Feel Like Going Home",
     "totalPlays": 12,
@@ -8335,13 +8377,6 @@
     "totalPlays": 12,
     "uniqueSongs": 4,
     "firstAppearance": "2013-12-11"
-  },
-  {
-    "artist": "Ollabelle",
-    "album": "Before This Time",
-    "totalPlays": 12,
-    "uniqueSongs": 6,
-    "firstAppearance": "2013-11-30"
   },
   {
     "artist": "Patty Griffin",
@@ -8433,6 +8468,13 @@
     "totalPlays": 12,
     "uniqueSongs": 10,
     "firstAppearance": "2025-05-14"
+  },
+  {
+    "artist": "Sarah Harmer",
+    "album": "You Were Here",
+    "totalPlays": 12,
+    "uniqueSongs": 6,
+    "firstAppearance": "2013-10-19"
   },
   {
     "artist": "Shawn Colvin",
@@ -8582,6 +8624,13 @@
     "firstAppearance": "2018-08-11"
   },
   {
+    "artist": "The Jayhawks",
+    "album": "Sanctuary Park",
+    "totalPlays": 12,
+    "uniqueSongs": 10,
+    "firstAppearance": "2026-09-02"
+  },
+  {
     "artist": "The Roches",
     "album": "A Dove",
     "totalPlays": 12,
@@ -8622,6 +8671,13 @@
     "totalPlays": 12,
     "uniqueSongs": 6,
     "firstAppearance": "2014-11-29"
+  },
+  {
+    "artist": "Timbuk 3",
+    "album": "Looks Like Dark To Me",
+    "totalPlays": 12,
+    "uniqueSongs": 5,
+    "firstAppearance": "2013-11-13"
   },
   {
     "artist": "Todd Snider",
@@ -8706,13 +8762,6 @@
     "totalPlays": 11,
     "uniqueSongs": 8,
     "firstAppearance": "2025-12-10"
-  },
-  {
-    "artist": "Big Star",
-    "album": "Third/ Sister Lovers",
-    "totalPlays": 11,
-    "uniqueSongs": 4,
-    "firstAppearance": "2014-12-24"
   },
   {
     "artist": "Bill Kirchen",
@@ -8918,11 +8967,11 @@
     "firstAppearance": "2020-03-07"
   },
   {
-    "artist": "Emmylou Harris",
-    "album": "Cowgirl's Prayer",
+    "artist": "Eilen Jewell",
+    "album": "Letters From Sinners & Strangers",
     "totalPlays": 11,
-    "uniqueSongs": 6,
-    "firstAppearance": "2014-04-12"
+    "uniqueSongs": 5,
+    "firstAppearance": "2013-08-15"
   },
   {
     "artist": "Eric Lewis",
@@ -8930,6 +8979,13 @@
     "totalPlays": 11,
     "uniqueSongs": 6,
     "firstAppearance": "2019-05-04"
+  },
+  {
+    "artist": "Erin McKeown",
+    "album": "Sing You Sinners",
+    "totalPlays": 11,
+    "uniqueSongs": 5,
+    "firstAppearance": "2013-09-11"
   },
   {
     "artist": "Grace Askew",
@@ -9114,13 +9170,6 @@
     "firstAppearance": "2015-09-02"
   },
   {
-    "artist": "Jonatha Brooke",
-    "album": "Back In The Circus",
-    "totalPlays": 11,
-    "uniqueSongs": 5,
-    "firstAppearance": "2013-10-05"
-  },
-  {
     "artist": "Jonathan Edwards",
     "album": "Honky-Tonk Stardust Cowboy",
     "totalPlays": 11,
@@ -9154,13 +9203,6 @@
     "totalPlays": 11,
     "uniqueSongs": 5,
     "firstAppearance": "2014-09-06"
-  },
-  {
-    "artist": "Judy Collins",
-    "album": "Who Knows Where The Time Goes",
-    "totalPlays": 11,
-    "uniqueSongs": 5,
-    "firstAppearance": "2015-05-02"
   },
   {
     "artist": "Jules Shear",
@@ -9289,6 +9331,13 @@
     "firstAppearance": "2014-09-27"
   },
   {
+    "artist": "Margaret Glaspy",
+    "album": "I Am Both",
+    "totalPlays": 11,
+    "uniqueSongs": 8,
+    "firstAppearance": "2026-08-19"
+  },
+  {
     "artist": "Mark Edgar Stuart",
     "album": "Bonneville E.P.",
     "totalPlays": 11,
@@ -9336,13 +9385,6 @@
     "totalPlays": 11,
     "uniqueSongs": 2,
     "firstAppearance": "2020-04-08"
-  },
-  {
-    "artist": "Michelle Malone",
-    "album": "Sugarfoot",
-    "totalPlays": 11,
-    "uniqueSongs": 5,
-    "firstAppearance": "2013-11-06"
   },
   {
     "artist": "Michelle Shocked",
@@ -9471,6 +9513,13 @@
     "firstAppearance": "2013-07-06"
   },
   {
+    "artist": "Ruthie Foster",
+    "album": "Just Say Yes",
+    "totalPlays": 11,
+    "uniqueSongs": 10,
+    "firstAppearance": "2026-09-09"
+  },
+  {
     "artist": "Ry Cooder",
     "album": "Boomer's Story",
     "totalPlays": 11,
@@ -9483,13 +9532,6 @@
     "totalPlays": 11,
     "uniqueSongs": 4,
     "firstAppearance": "2013-12-11"
-  },
-  {
-    "artist": "Sarah Harmer",
-    "album": "You Were Here",
-    "totalPlays": 11,
-    "uniqueSongs": 6,
-    "firstAppearance": "2013-10-19"
   },
   {
     "artist": "Savannah Brister",
@@ -9597,13 +9639,6 @@
     "firstAppearance": "2016-06-04"
   },
   {
-    "artist": "The Jayhawks",
-    "album": "Sanctuary Park",
-    "totalPlays": 11,
-    "uniqueSongs": 10,
-    "firstAppearance": "2026-09-02"
-  },
-  {
     "artist": "The Kinks",
     "album": "Misfits",
     "totalPlays": 11,
@@ -9686,13 +9721,6 @@
     "totalPlays": 11,
     "uniqueSongs": 5,
     "firstAppearance": "2014-11-29"
-  },
-  {
-    "artist": "Timbuk 3",
-    "album": "Looks Like Dark To Me",
-    "totalPlays": 11,
-    "uniqueSongs": 4,
-    "firstAppearance": "2013-11-13"
   },
   {
     "artist": "Van Morrison",
@@ -9934,13 +9962,6 @@
   },
   {
     "artist": "Eilen Jewell",
-    "album": "Letters From Sinners & Strangers",
-    "totalPlays": 10,
-    "uniqueSongs": 4,
-    "firstAppearance": "2013-08-15"
-  },
-  {
-    "artist": "Eilen Jewell",
     "album": "Queen Of The Minor Key",
     "totalPlays": 10,
     "uniqueSongs": 3,
@@ -9966,13 +9987,6 @@
     "totalPlays": 10,
     "uniqueSongs": 5,
     "firstAppearance": "2021-12-11"
-  },
-  {
-    "artist": "Erin McKeown",
-    "album": "Sing You Sinners",
-    "totalPlays": 10,
-    "uniqueSongs": 4,
-    "firstAppearance": "2013-09-11"
   },
   {
     "artist": "Erin McKeown",
@@ -10036,6 +10050,13 @@
     "totalPlays": 10,
     "uniqueSongs": 6,
     "firstAppearance": "2016-06-11"
+  },
+  {
+    "artist": "Hayes Carll",
+    "album": "We're Only Human",
+    "totalPlays": 10,
+    "uniqueSongs": 5,
+    "firstAppearance": "2025-08-20"
   },
   {
     "artist": "Indigo Girls",
@@ -10295,13 +10316,6 @@
     "totalPlays": 10,
     "uniqueSongs": 5,
     "firstAppearance": "2014-05-10"
-  },
-  {
-    "artist": "Margaret Glaspy",
-    "album": "I Am Both",
-    "totalPlays": 10,
-    "uniqueSongs": 7,
-    "firstAppearance": "2026-08-19"
   },
   {
     "artist": "Maria McKee",
@@ -11102,13 +11116,6 @@
     "firstAppearance": "2026-08-29"
   },
   {
-    "artist": "Hayes Carll",
-    "album": "We're Only Human",
-    "totalPlays": 9,
-    "uniqueSongs": 5,
-    "firstAppearance": "2025-08-20"
-  },
-  {
     "artist": "Hem",
     "album": "Departure And Farewell",
     "totalPlays": 9,
@@ -11142,6 +11149,13 @@
     "totalPlays": 9,
     "uniqueSongs": 7,
     "firstAppearance": "2025-08-16"
+  },
+  {
+    "artist": "Jeff Hulett",
+    "album": "Summer Plans",
+    "totalPlays": 9,
+    "uniqueSongs": 2,
+    "firstAppearance": "2026-08-22"
   },
   {
     "artist": "Jesse Colin Young",
@@ -11340,6 +11354,13 @@
     "firstAppearance": "2014-01-01"
   },
   {
+    "artist": "Laura Love",
+    "album": "Welcome To Pagan Place",
+    "totalPlays": 9,
+    "uniqueSongs": 5,
+    "firstAppearance": "2015-01-10"
+  },
+  {
     "artist": "Levon Helm",
     "album": "Ramble At The Ryman",
     "totalPlays": 9,
@@ -11394,6 +11415,13 @@
     "totalPlays": 9,
     "uniqueSongs": 4,
     "firstAppearance": "2013-12-11"
+  },
+  {
+    "artist": "Marcia Ball",
+    "album": "Presumed Innocent",
+    "totalPlays": 9,
+    "uniqueSongs": 6,
+    "firstAppearance": "2016-06-22"
   },
   {
     "artist": "Maria Muldaur",
@@ -11632,13 +11660,6 @@
     "totalPlays": 9,
     "uniqueSongs": 3,
     "firstAppearance": "2014-12-20"
-  },
-  {
-    "artist": "Ruthie Foster",
-    "album": "Just Say Yes",
-    "totalPlays": 9,
-    "uniqueSongs": 9,
-    "firstAppearance": "2026-09-09"
   },
   {
     "artist": "Ruthie Foster",
@@ -12110,6 +12131,13 @@
     "firstAppearance": "2013-10-16"
   },
   {
+    "artist": "Cory Branan",
+    "album": "You'll Live",
+    "totalPlays": 8,
+    "uniqueSongs": 6,
+    "firstAppearance": "2026-10-14"
+  },
+  {
     "artist": "Cry Cry Cry",
     "album": "Cry, Cry, Cry",
     "totalPlays": 8,
@@ -12257,6 +12285,13 @@
     "firstAppearance": "2013-09-11"
   },
   {
+    "artist": "Garrison Starr",
+    "album": "The Gospel Truth",
+    "totalPlays": 8,
+    "uniqueSongs": 7,
+    "firstAppearance": "2026-09-30"
+  },
+  {
     "artist": "Gary Louris",
     "album": "Vagabonds",
     "totalPlays": 8,
@@ -12306,13 +12341,6 @@
     "firstAppearance": "2019-10-12"
   },
   {
-    "artist": "Jeff Hulett",
-    "album": "Summer Plans",
-    "totalPlays": 8,
-    "uniqueSongs": 2,
-    "firstAppearance": "2026-08-22"
-  },
-  {
     "artist": "Jeffrey Foucault",
     "album": "Stripping Cane",
     "totalPlays": 8,
@@ -12325,6 +12353,13 @@
     "totalPlays": 8,
     "uniqueSongs": 6,
     "firstAppearance": "2014-10-15"
+  },
+  {
+    "artist": "Jim Infantino",
+    "album": "Assemble Yourself",
+    "totalPlays": 8,
+    "uniqueSongs": 6,
+    "firstAppearance": "2025-11-15"
   },
   {
     "artist": "Jim Lauderdale & The Po' Ramblin' Boys",
@@ -12360,6 +12395,13 @@
     "totalPlays": 8,
     "uniqueSongs": 4,
     "firstAppearance": "2015-03-25"
+  },
+  {
+    "artist": "John Hiatt",
+    "album": "Bring The Family",
+    "totalPlays": 8,
+    "uniqueSongs": 5,
+    "firstAppearance": "2014-11-01"
   },
   {
     "artist": "John Hiatt",
@@ -12481,13 +12523,6 @@
     "firstAppearance": "2013-12-11"
   },
   {
-    "artist": "Laura Love",
-    "album": "Welcome To Pagan Place",
-    "totalPlays": 8,
-    "uniqueSongs": 4,
-    "firstAppearance": "2015-01-10"
-  },
-  {
     "artist": "Leo Kottke",
     "album": "Great Big Boy",
     "totalPlays": 8,
@@ -12528,13 +12563,6 @@
     "totalPlays": 8,
     "uniqueSongs": 4,
     "firstAppearance": "2015-04-08"
-  },
-  {
-    "artist": "Marcia Ball",
-    "album": "Presumed Innocent",
-    "totalPlays": 8,
-    "uniqueSongs": 5,
-    "firstAppearance": "2016-06-22"
   },
   {
     "artist": "Marcia Ball",
@@ -12635,6 +12663,13 @@
     "firstAppearance": "2014-09-20"
   },
   {
+    "artist": "Nick Drake",
+    "album": "Pink Moon",
+    "totalPlays": 8,
+    "uniqueSongs": 3,
+    "firstAppearance": "2013-11-20"
+  },
+  {
     "artist": "Nicki Bluhm",
     "album": "Rancho Deluxe",
     "totalPlays": 8,
@@ -12717,6 +12752,13 @@
     "totalPlays": 8,
     "uniqueSongs": 4,
     "firstAppearance": "2014-12-10"
+  },
+  {
+    "artist": "Rhiannon Giddens",
+    "album": "Hope Is The Thing With Feathers",
+    "totalPlays": 8,
+    "uniqueSongs": 7,
+    "firstAppearance": "2026-09-23"
   },
   {
     "artist": "Richard Shindell",
@@ -13140,6 +13182,13 @@
   },
   {
     "artist": "Bruce Cockburn",
+    "album": "Small Source Of Comfort",
+    "totalPlays": 7,
+    "uniqueSongs": 4,
+    "firstAppearance": "2019-10-26"
+  },
+  {
+    "artist": "Bruce Cockburn",
     "album": "You've Never Seen Everything",
     "totalPlays": 7,
     "uniqueSongs": 3,
@@ -13200,6 +13249,13 @@
     "totalPlays": 7,
     "uniqueSongs": 7,
     "firstAppearance": "2022-09-07"
+  },
+  {
+    "artist": "Cowboy Junkies",
+    "album": "More Acoustic Junk",
+    "totalPlays": 7,
+    "uniqueSongs": 7,
+    "firstAppearance": "2025-11-15"
   },
   {
     "artist": "Crooked Still",
@@ -13284,13 +13340,6 @@
     "totalPlays": 7,
     "uniqueSongs": 5,
     "firstAppearance": "2014-05-21"
-  },
-  {
-    "artist": "Garrison Starr",
-    "album": "The Gospel Truth",
-    "totalPlays": 7,
-    "uniqueSongs": 6,
-    "firstAppearance": "2026-09-30"
   },
   {
     "artist": "Grace Askew & The Black Market Goods",
@@ -13405,13 +13454,6 @@
     "firstAppearance": "2014-08-02"
   },
   {
-    "artist": "Jim Infantino",
-    "album": "Assemble Yourself",
-    "totalPlays": 7,
-    "uniqueSongs": 5,
-    "firstAppearance": "2025-11-15"
-  },
-  {
     "artist": "Jim Lauderdale",
     "album": "The Long And Lonesome Letting Go",
     "totalPlays": 7,
@@ -13424,13 +13466,6 @@
     "totalPlays": 7,
     "uniqueSongs": 3,
     "firstAppearance": "2013-08-28"
-  },
-  {
-    "artist": "John Hiatt",
-    "album": "Bring The Family",
-    "totalPlays": 7,
-    "uniqueSongs": 5,
-    "firstAppearance": "2014-11-01"
   },
   {
     "artist": "John Prine",
@@ -13692,6 +13727,13 @@
     "firstAppearance": "2016-10-22"
   },
   {
+    "artist": "Margo Cilker",
+    "album": "Little White Cross",
+    "totalPlays": 7,
+    "uniqueSongs": 6,
+    "firstAppearance": "2026-10-28"
+  },
+  {
     "artist": "Mark Erelli",
     "album": "Delivered",
     "totalPlays": 7,
@@ -13711,6 +13753,13 @@
     "totalPlays": 7,
     "uniqueSongs": 4,
     "firstAppearance": "2014-07-05"
+  },
+  {
+    "artist": "Mavis Staples",
+    "album": "Have A Little Faith",
+    "totalPlays": 7,
+    "uniqueSongs": 5,
+    "firstAppearance": "2014-07-16"
   },
   {
     "artist": "Melissa Ferrick",
@@ -13802,13 +13851,6 @@
     "totalPlays": 7,
     "uniqueSongs": 2,
     "firstAppearance": "2013-10-30"
-  },
-  {
-    "artist": "Nick Drake",
-    "album": "Pink Moon",
-    "totalPlays": 7,
-    "uniqueSongs": 3,
-    "firstAppearance": "2013-11-20"
   },
   {
     "artist": "Nick Drake",
@@ -13935,13 +13977,6 @@
     "totalPlays": 7,
     "uniqueSongs": 5,
     "firstAppearance": "2014-09-20"
-  },
-  {
-    "artist": "Rhiannon Giddens",
-    "album": "Hope Is The Thing With Feathers",
-    "totalPlays": 7,
-    "uniqueSongs": 6,
-    "firstAppearance": "2026-09-23"
   },
   {
     "artist": "Richie Havens",
@@ -14215,6 +14250,13 @@
     "totalPlays": 7,
     "uniqueSongs": 2,
     "firstAppearance": "2016-12-14"
+  },
+  {
+    "artist": "The Flatlanders",
+    "album": "Hills And Valleys",
+    "totalPlays": 7,
+    "uniqueSongs": 5,
+    "firstAppearance": "2014-02-22"
   },
   {
     "artist": "The Jayhawks",
@@ -14533,13 +14575,6 @@
   },
   {
     "artist": "Bruce Cockburn",
-    "album": "Small Source Of Comfort",
-    "totalPlays": 6,
-    "uniqueSongs": 3,
-    "firstAppearance": "2019-10-26"
-  },
-  {
-    "artist": "Bruce Cockburn",
     "album": "Stealing Fire",
     "totalPlays": 6,
     "uniqueSongs": 2,
@@ -14623,6 +14658,13 @@
     "firstAppearance": "2025-11-08"
   },
   {
+    "artist": "Continental Drifters",
+    "album": "Drifted: In The Beginning And Beyond",
+    "totalPlays": 6,
+    "uniqueSongs": 3,
+    "firstAppearance": "2015-08-29"
+  },
+  {
     "artist": "Cory Branan",
     "album": "12 Songs",
     "totalPlays": 6,
@@ -14635,13 +14677,6 @@
     "totalPlays": 6,
     "uniqueSongs": 4,
     "firstAppearance": "2014-12-10"
-  },
-  {
-    "artist": "Cowboy Junkies",
-    "album": "More Acoustic Junk",
-    "totalPlays": 6,
-    "uniqueSongs": 6,
-    "firstAppearance": "2025-11-15"
   },
   {
     "artist": "Daddy",
@@ -14875,6 +14910,13 @@
     "firstAppearance": "2014-08-27"
   },
   {
+    "artist": "Jesse Winchester",
+    "album": "Learn To Love It",
+    "totalPlays": 6,
+    "uniqueSongs": 5,
+    "firstAppearance": "2014-04-12"
+  },
+  {
     "artist": "Jim Lauderdale",
     "album": "Persimmons",
     "totalPlays": 6,
@@ -14957,6 +14999,13 @@
     "totalPlays": 6,
     "uniqueSongs": 2,
     "firstAppearance": "2013-06-22"
+  },
+  {
+    "artist": "Jon Dee Graham",
+    "album": "Escape From Monster Island",
+    "totalPlays": 6,
+    "uniqueSongs": 4,
+    "firstAppearance": "2015-01-17"
   },
   {
     "artist": "Jonatha Brooke",
@@ -15134,6 +15183,13 @@
     "firstAppearance": "2026-10-03"
   },
   {
+    "artist": "Lori McKenna",
+    "album": "Pieces Of Me",
+    "totalPlays": 6,
+    "uniqueSongs": 3,
+    "firstAppearance": "2017-07-22"
+  },
+  {
     "artist": "Loudon Wainwright III",
     "album": "Album III",
     "totalPlays": 6,
@@ -15244,13 +15300,6 @@
     "totalPlays": 6,
     "uniqueSongs": 6,
     "firstAppearance": "2026-10-03"
-  },
-  {
-    "artist": "Mavis Staples",
-    "album": "Have A Little Faith",
-    "totalPlays": 6,
-    "uniqueSongs": 4,
-    "firstAppearance": "2014-07-16"
   },
   {
     "artist": "Memphis Dawls",
@@ -15512,6 +15561,13 @@
     "firstAppearance": "2013-08-15"
   },
   {
+    "artist": "Rodney Crowell",
+    "album": "Then Again",
+    "totalPlays": 6,
+    "uniqueSongs": 5,
+    "firstAppearance": "2026-08-19"
+  },
+  {
     "artist": "Ron Sexsmith",
     "album": "Exit Strategy Of The Soul",
     "totalPlays": 6,
@@ -15715,13 +15771,6 @@
     "firstAppearance": "2013-12-04"
   },
   {
-    "artist": "The Flatlanders",
-    "album": "Hills And Valleys",
-    "totalPlays": 6,
-    "uniqueSongs": 4,
-    "firstAppearance": "2014-02-22"
-  },
-  {
     "artist": "The Jayhawks",
     "album": "Mockingbird Time",
     "totalPlays": 6,
@@ -15734,6 +15783,13 @@
     "totalPlays": 6,
     "uniqueSongs": 2,
     "firstAppearance": "2013-08-15"
+  },
+  {
+    "artist": "Tift Merritt",
+    "album": "Sugar",
+    "totalPlays": 6,
+    "uniqueSongs": 4,
+    "firstAppearance": "2026-08-19"
   },
   {
     "artist": "Tift Merritt",
@@ -15811,6 +15867,13 @@
     "totalPlays": 6,
     "uniqueSongs": 2,
     "firstAppearance": "2013-11-09"
+  },
+  {
+    "artist": "Valerie June",
+    "album": "Brighter Blue (ext. single)",
+    "totalPlays": 6,
+    "uniqueSongs": 3,
+    "firstAppearance": "2026-09-30"
   },
   {
     "artist": "Valerie June",
@@ -15951,6 +16014,13 @@
     "totalPlays": 5,
     "uniqueSongs": 4,
     "firstAppearance": "2022-09-10"
+  },
+  {
+    "artist": "Ben Vaughn",
+    "album": "Magnetic East: The Deer Tick Sessions",
+    "totalPlays": 5,
+    "uniqueSongs": 4,
+    "firstAppearance": "2026-11-04"
   },
   {
     "artist": "Ben Vaughn",
@@ -16101,6 +16171,13 @@
   },
   {
     "artist": "Catie Curtis",
+    "album": "C'mon Butterfly",
+    "totalPlays": 5,
+    "uniqueSongs": 5,
+    "firstAppearance": "2026-08-22"
+  },
+  {
+    "artist": "Catie Curtis",
     "album": "My Shirt Looks Good On You",
     "totalPlays": 5,
     "uniqueSongs": 4,
@@ -16177,25 +16254,11 @@
     "firstAppearance": "2013-11-09"
   },
   {
-    "artist": "Continental Drifters",
-    "album": "Drifted: In The Beginning And Beyond",
-    "totalPlays": 5,
-    "uniqueSongs": 3,
-    "firstAppearance": "2015-08-29"
-  },
-  {
     "artist": "Cory Branan",
     "album": "Live At The High Dive",
     "totalPlays": 5,
     "uniqueSongs": 3,
     "firstAppearance": "2016-07-13"
-  },
-  {
-    "artist": "Cory Branan",
-    "album": "You'll Live",
-    "totalPlays": 5,
-    "uniqueSongs": 4,
-    "firstAppearance": "2026-10-14"
   },
   {
     "artist": "Courtney Marie Andrews",
@@ -16350,6 +16413,13 @@
     "totalPlays": 5,
     "uniqueSongs": 2,
     "firstAppearance": "2014-12-06"
+  },
+  {
+    "artist": "Freakwater",
+    "album": "Old Paint",
+    "totalPlays": 5,
+    "uniqueSongs": 5,
+    "firstAppearance": "2023-01-07"
   },
   {
     "artist": "Gaby Moreno",
@@ -16542,13 +16612,6 @@
   },
   {
     "artist": "Jesse Winchester",
-    "album": "Learn To Love It",
-    "totalPlays": 5,
-    "uniqueSongs": 4,
-    "firstAppearance": "2014-04-12"
-  },
-  {
-    "artist": "Jesse Winchester",
     "album": "Live From Mountain Stage",
     "totalPlays": 5,
     "uniqueSongs": 2,
@@ -16651,13 +16714,6 @@
     "totalPlays": 5,
     "uniqueSongs": 5,
     "firstAppearance": "2016-10-01"
-  },
-  {
-    "artist": "Jon Dee Graham",
-    "album": "Escape From Monster Island",
-    "totalPlays": 5,
-    "uniqueSongs": 4,
-    "firstAppearance": "2015-01-17"
   },
   {
     "artist": "Jonatha Brooke",
@@ -16791,13 +16847,6 @@
     "totalPlays": 5,
     "uniqueSongs": 3,
     "firstAppearance": "2015-01-10"
-  },
-  {
-    "artist": "Lori McKenna",
-    "album": "Pieces Of Me",
-    "totalPlays": 5,
-    "uniqueSongs": 3,
-    "firstAppearance": "2017-07-22"
   },
   {
     "artist": "Lori McKenna",
@@ -16961,6 +17010,13 @@
     "firstAppearance": "2014-02-26"
   },
   {
+    "artist": "Mary Gauthier",
+    "album": "Between Daylight And Dark",
+    "totalPlays": 5,
+    "uniqueSongs": 4,
+    "firstAppearance": "2015-03-21"
+  },
+  {
     "artist": "Mary Lee's Corvette",
     "album": "Blood On The Tracks, Arlene Grocery NYC",
     "totalPlays": 5,
@@ -16987,6 +17043,13 @@
     "totalPlays": 5,
     "uniqueSongs": 3,
     "firstAppearance": "2021-07-17"
+  },
+  {
+    "artist": "Miko Marks",
+    "album": "Hell Or High Water",
+    "totalPlays": 5,
+    "uniqueSongs": 5,
+    "firstAppearance": "2026-11-04"
   },
   {
     "artist": "Milk Carton Kids",
@@ -17262,13 +17325,6 @@
     "firstAppearance": "2015-11-14"
   },
   {
-    "artist": "Rodney Crowell",
-    "album": "Then Again",
-    "totalPlays": 5,
-    "uniqueSongs": 5,
-    "firstAppearance": "2026-08-19"
-  },
-  {
     "artist": "Rodney Crowell, Emmylou Harris & Vince Gill",
     "album": "Quiet About It: Tribute To Jesse Winchester",
     "totalPlays": 5,
@@ -17500,13 +17556,6 @@
     "firstAppearance": "2019-02-09"
   },
   {
-    "artist": "Tift Merritt",
-    "album": "Sugar",
-    "totalPlays": 5,
-    "uniqueSongs": 4,
-    "firstAppearance": "2026-08-19"
-  },
-  {
     "artist": "Tim Easton",
     "album": "Ammunition",
     "totalPlays": 5,
@@ -17612,13 +17661,6 @@
     "firstAppearance": "2026-08-22"
   },
   {
-    "artist": "Valerie June",
-    "album": "Brighter Blue (ext. single)",
-    "totalPlays": 5,
-    "uniqueSongs": 3,
-    "firstAppearance": "2026-09-30"
-  },
-  {
     "artist": "Van Duren",
     "album": "Are You Serious?",
     "totalPlays": 5,
@@ -17659,6 +17701,13 @@
     "totalPlays": 5,
     "uniqueSongs": 2,
     "firstAppearance": "2015-11-21"
+  },
+  {
+    "artist": "Will Sexton",
+    "album": "Move The Balance",
+    "totalPlays": 5,
+    "uniqueSongs": 4,
+    "firstAppearance": "2022-09-24"
   },
   {
     "artist": "William Lee Ellis",
@@ -18011,13 +18060,6 @@
     "firstAppearance": "2023-11-22"
   },
   {
-    "artist": "Catie Curtis",
-    "album": "C'mon Butterfly",
-    "totalPlays": 4,
-    "uniqueSongs": 4,
-    "firstAppearance": "2026-08-22"
-  },
-  {
     "artist": "Catie Curtis & Mary Gauthier",
     "album": "Hello, Stranger",
     "totalPlays": 4,
@@ -18037,6 +18079,13 @@
     "totalPlays": 4,
     "uniqueSongs": 3,
     "firstAppearance": "2016-06-04"
+  },
+  {
+    "artist": "Circle Birds",
+    "album": "Circle Birds",
+    "totalPlays": 4,
+    "uniqueSongs": 4,
+    "firstAppearance": "2026-11-11"
   },
   {
     "artist": "Colin Gilmore",
@@ -18242,6 +18291,13 @@
     "firstAppearance": "2015-10-24"
   },
   {
+    "artist": "Floyd Mercantile",
+    "album": "Floyd Mercantile",
+    "totalPlays": 4,
+    "uniqueSongs": 4,
+    "firstAppearance": "2026-08-22"
+  },
+  {
     "artist": "Flying Burrito Brothers",
     "album": "Farther Along: The Best Of...",
     "totalPlays": 4,
@@ -18261,13 +18317,6 @@
     "totalPlays": 4,
     "uniqueSongs": 4,
     "firstAppearance": "2023-11-29"
-  },
-  {
-    "artist": "Freakwater",
-    "album": "Old Paint",
-    "totalPlays": 4,
-    "uniqueSongs": 4,
-    "firstAppearance": "2023-01-07"
   },
   {
     "artist": "Fred Eaglesmith",
@@ -18893,13 +18942,6 @@
     "firstAppearance": "2022-08-10"
   },
   {
-    "artist": "Margo Cilker",
-    "album": "Little White Cross",
-    "totalPlays": 4,
-    "uniqueSongs": 4,
-    "firstAppearance": "2026-10-28"
-  },
-  {
     "artist": "Maria Muldaur",
     "album": "...And Her Garden Of Joy",
     "totalPlays": 4,
@@ -18947,13 +18989,6 @@
     "totalPlays": 4,
     "uniqueSongs": 2,
     "firstAppearance": "2019-07-20"
-  },
-  {
-    "artist": "Mary Gauthier",
-    "album": "Between Daylight And Dark",
-    "totalPlays": 4,
-    "uniqueSongs": 3,
-    "firstAppearance": "2015-03-21"
   },
   {
     "artist": "Mary Lee's Corvette",
@@ -19712,13 +19747,6 @@
     "firstAppearance": "2013-06-22"
   },
   {
-    "artist": "Will Sexton",
-    "album": "Move The Balance",
-    "totalPlays": 4,
-    "uniqueSongs": 3,
-    "firstAppearance": "2022-09-24"
-  },
-  {
     "artist": "Will Taylor & Strings Attached",
     "album": "Collaborations",
     "totalPlays": 4,
@@ -19850,13 +19878,6 @@
     "totalPlays": 3,
     "uniqueSongs": 1,
     "firstAppearance": "2021-09-08"
-  },
-  {
-    "artist": "Ben Vaughn",
-    "album": "Magnetic East: The Deer Tick Sessions",
-    "totalPlays": 3,
-    "uniqueSongs": 3,
-    "firstAppearance": "2026-11-04"
   },
   {
     "artist": "Bettye LaVette",
@@ -20042,6 +20063,13 @@
   },
   {
     "artist": "Chris Smither",
+    "album": "Drive You Home Again",
+    "totalPlays": 3,
+    "uniqueSongs": 3,
+    "firstAppearance": "2014-02-01"
+  },
+  {
+    "artist": "Chris Smither",
     "album": "Small Revelations",
     "totalPlays": 3,
     "uniqueSongs": 2,
@@ -20144,6 +20172,13 @@
     "totalPlays": 3,
     "uniqueSongs": 2,
     "firstAppearance": "2018-09-08"
+  },
+  {
+    "artist": "Darrell Scott",
+    "album": "A Crooked Road",
+    "totalPlays": 3,
+    "uniqueSongs": 3,
+    "firstAppearance": "2014-10-04"
   },
   {
     "artist": "Darrell Scott",
@@ -20349,13 +20384,6 @@
     "firstAppearance": "2019-12-21"
   },
   {
-    "artist": "Floyd Mercantile",
-    "album": "Floyd Mercantile",
-    "totalPlays": 3,
-    "uniqueSongs": 3,
-    "firstAppearance": "2026-08-22"
-  },
-  {
     "artist": "Flying Burrito Brothers",
     "album": "Gilded Palace Of Sin",
     "totalPlays": 3,
@@ -20536,6 +20564,13 @@
     "totalPlays": 3,
     "uniqueSongs": 3,
     "firstAppearance": "2016-06-15"
+  },
+  {
+    "artist": "Jack Barksdale",
+    "album": "Battleground",
+    "totalPlays": 3,
+    "uniqueSongs": 3,
+    "firstAppearance": "2026-11-14"
   },
   {
     "artist": "Jason Isbell",
@@ -21294,6 +21329,13 @@
     "firstAppearance": "2014-04-02"
   },
   {
+    "artist": "Nicki Bluhm",
+    "album": "Measure Of A Man (single)",
+    "totalPlays": 3,
+    "uniqueSongs": 2,
+    "firstAppearance": "2026-11-14"
+  },
+  {
     "artist": "Norah Jones",
     "album": "The Lost Notebooks Of Hank Williams",
     "totalPlays": 3,
@@ -21789,6 +21831,13 @@
     "totalPlays": 3,
     "uniqueSongs": 3,
     "firstAppearance": "2017-08-26"
+  },
+  {
+    "artist": "Sugar & The Hi Lows",
+    "album": "High Roller",
+    "totalPlays": 3,
+    "uniqueSongs": 2,
+    "firstAppearance": "2022-01-26"
   },
   {
     "artist": "Susan Marshall",
@@ -22716,13 +22765,6 @@
   },
   {
     "artist": "Chris Smither",
-    "album": "Drive You Home Again",
-    "totalPlays": 2,
-    "uniqueSongs": 2,
-    "firstAppearance": "2014-02-01"
-  },
-  {
-    "artist": "Chris Smither",
     "album": "Time Stands Still",
     "totalPlays": 2,
     "uniqueSongs": 2,
@@ -22888,13 +22930,6 @@
     "totalPlays": 2,
     "uniqueSongs": 2,
     "firstAppearance": "2016-04-23"
-  },
-  {
-    "artist": "Darrell Scott",
-    "album": "A Crooked Road",
-    "totalPlays": 2,
-    "uniqueSongs": 2,
-    "firstAppearance": "2014-10-04"
   },
   {
     "artist": "Darrell Scott",
@@ -23380,6 +23415,13 @@
     "firstAppearance": "2014-12-20"
   },
   {
+    "artist": "Greg Trooper",
+    "album": "Upside-Down Town",
+    "totalPlays": 2,
+    "uniqueSongs": 2,
+    "firstAppearance": "2023-08-30"
+  },
+  {
     "artist": "Grin",
     "album": "1+1",
     "totalPlays": 2,
@@ -23805,6 +23847,13 @@
     "totalPlays": 2,
     "uniqueSongs": 2,
     "firstAppearance": "2014-08-02"
+  },
+  {
+    "artist": "John Hiatt",
+    "album": "Walk On",
+    "totalPlays": 2,
+    "uniqueSongs": 2,
+    "firstAppearance": "2013-09-28"
   },
   {
     "artist": "John Hiatt",
@@ -24661,13 +24710,6 @@
     "firstAppearance": "2014-09-27"
   },
   {
-    "artist": "Miko Marks",
-    "album": "Hell Or High Water",
-    "totalPlays": 2,
-    "uniqueSongs": 2,
-    "firstAppearance": "2026-11-04"
-  },
-  {
     "artist": "Milk Carton Kids",
     "album": "Christmas In A Minor Key",
     "totalPlays": 2,
@@ -25144,6 +25186,13 @@
     "firstAppearance": "2016-05-28"
   },
   {
+    "artist": "Robert Plant",
+    "album": "Saving Grace: All That Glitters...",
+    "totalPlays": 2,
+    "uniqueSongs": 2,
+    "firstAppearance": "2026-11-11"
+  },
+  {
     "artist": "Robinella",
     "album": "Solace To The Lonely",
     "totalPlays": 2,
@@ -25502,13 +25551,6 @@
   },
   {
     "artist": "Sugar & The Hi Lows",
-    "album": "High Roller",
-    "totalPlays": 2,
-    "uniqueSongs": 2,
-    "firstAppearance": "2022-01-26"
-  },
-  {
-    "artist": "Sugar & The Hi Lows",
     "album": "Shangri La",
     "totalPlays": 2,
     "uniqueSongs": 2,
@@ -25688,6 +25730,13 @@
     "totalPlays": 2,
     "uniqueSongs": 1,
     "firstAppearance": "2018-07-11"
+  },
+  {
+    "artist": "The Beatles",
+    "album": "Past Masters, Vol. 1",
+    "totalPlays": 2,
+    "uniqueSongs": 2,
+    "firstAppearance": "2021-01-16"
   },
   {
     "artist": "The Beatles",
@@ -27433,6 +27482,13 @@
     "firstAppearance": "2023-07-22"
   },
   {
+    "artist": "Cassandra Wilson",
+    "album": "Travelin' Miles",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-18"
+  },
+  {
     "artist": "Catie Curtis",
     "album": "A Crash Course In Roses",
     "totalPlays": 1,
@@ -27650,13 +27706,6 @@
     "firstAppearance": "2025-05-10"
   },
   {
-    "artist": "Circle Birds",
-    "album": "Circle Birds",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "firstAppearance": "2026-11-11"
-  },
-  {
     "artist": "Colin Brooks, John Chipman & Kelley Mickwee",
     "album": "Birds Of A Feather",
     "totalPlays": 1,
@@ -27746,6 +27795,13 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2018-05-26"
+  },
+  {
+    "artist": "Corey Harris",
+    "album": "Daily Bread",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-21"
   },
   {
     "artist": "Cory Branan",
@@ -27984,6 +28040,13 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2020-07-08"
+  },
+  {
+    "artist": "Darden Smith",
+    "album": "Love Callin'",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-21"
   },
   {
     "artist": "Darden Smith & Boo Hewerdine",
@@ -28365,6 +28428,13 @@
   },
   {
     "artist": "Delbert McClinton",
+    "album": "KGSR's Broadcasts, Vol. 6",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-25"
+  },
+  {
+    "artist": "Delbert McClinton",
     "album": "Outdated Emotions",
     "totalPlays": 1,
     "uniqueSongs": 1,
@@ -28642,6 +28712,13 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2016-12-24"
+  },
+  {
+    "artist": "Elizabeth Cook & Wynona",
+    "album": "Great Television",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-14"
   },
   {
     "artist": "Elizabeth King & The Gospel Souls",
@@ -29391,13 +29468,6 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2017-11-04"
-  },
-  {
-    "artist": "Greg Trooper",
-    "album": "Upside-Down Town",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "firstAppearance": "2023-08-30"
   },
   {
     "artist": "Gretchen Peters",
@@ -30157,6 +30227,13 @@
   },
   {
     "artist": "Jim Lauderdale",
+    "album": "Soul Searching, Vol. 1 - Memphis",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-25"
+  },
+  {
+    "artist": "Jim Lauderdale",
     "album": "Soul Searching/ Memphis",
     "totalPlays": 1,
     "uniqueSongs": 1,
@@ -30308,6 +30385,13 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2017-12-27"
+  },
+  {
+    "artist": "Joan Armatrading",
+    "album": "The Key",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "firstAppearance": "2026-11-21"
   },
   {
     "artist": "Joan Armatrading",
@@ -30497,13 +30581,6 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2014-01-25"
-  },
-  {
-    "artist": "John Hiatt",
-    "album": "Walk On",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "firstAppearance": "2013-09-28"
   },
   {
     "artist": "John Hiatt",
@@ -33922,13 +33999,6 @@
     "firstAppearance": "2022-06-25"
   },
   {
-    "artist": "Robert Plant",
-    "album": "Saving Grace: All That Glitters...",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "firstAppearance": "2026-11-11"
-  },
-  {
     "artist": "Robert Plant & Alison Krauss",
     "album": "Love The Coopers (Soundtrack)",
     "totalPlays": 1,
@@ -35208,13 +35278,6 @@
     "totalPlays": 1,
     "uniqueSongs": 1,
     "firstAppearance": "2020-04-29"
-  },
-  {
-    "artist": "The Beatles",
-    "album": "Past Masters, Vol. 1",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "firstAppearance": "2021-01-16"
   },
   {
     "artist": "The Beatles",

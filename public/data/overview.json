@@ -1,16 +1,16 @@
 {
-  "lastUpdated": "2026-11-14T06:00:10.731Z",
-  "latestEpisodeId": "4423069433994810612",
-  "totalEpisodes": 1344,
-  "totalSongPlays": 37659,
-  "uniqueArtists": 1292,
-  "uniqueAlbums": 5199,
-  "uniqueSongs": 16285,
-  "oneSpinArtists": 239,
-  "oneSpinSongs": 6996,
+  "lastUpdated": "2026-11-26T16:59:22.188Z",
+  "latestEpisodeId": "5950432731617187116",
+  "totalEpisodes": 1348,
+  "totalSongPlays": 37777,
+  "uniqueArtists": 1296,
+  "uniqueAlbums": 5208,
+  "uniqueSongs": 16341,
+  "oneSpinArtists": 240,
+  "oneSpinSongs": 7023,
   "dateRange": {
     "earliest": "2013-06-22",
-    "latest": "2026-11-11"
+    "latest": "2026-11-25"
   },
   "topArtists": [
     {
@@ -27,7 +27,7 @@
     },
     {
       "name": "Jim Lauderdale",
-      "plays": 214
+      "plays": 215
     },
     {
       "name": "John Prine",
@@ -47,11 +47,11 @@
     },
     {
       "name": "Bonnie Raitt",
-      "plays": 177
+      "plays": 178
     },
     {
       "name": "Rodney Crowell",
-      "plays": 175
+      "plays": 176
     }
   ],
   "topSongs": [
@@ -197,9 +197,9 @@
     },
     {
       "year": "2026",
-      "episodeCount": 86,
-      "songCount": 2466,
-      "uniqueArtists": 726
+      "episodeCount": 90,
+      "songCount": 2584,
+      "uniqueArtists": 736
     }
   ]
 }

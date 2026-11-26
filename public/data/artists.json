@@ -28,12 +28,12 @@
   },
   {
     "name": "Jim Lauderdale",
-    "totalPlays": 214,
+    "totalPlays": 215,
     "uniqueSongs": 112,
-    "uniqueAlbums": 34,
-    "episodeCount": 212,
+    "uniqueAlbums": 35,
+    "episodeCount": 213,
     "firstAppearance": "2013-08-15",
-    "lastAppearance": "2026-10-07"
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "John Prine",
@@ -73,30 +73,30 @@
   },
   {
     "name": "Bonnie Raitt",
-    "totalPlays": 177,
-    "uniqueSongs": 87,
+    "totalPlays": 178,
+    "uniqueSongs": 88,
     "uniqueAlbums": 24,
-    "episodeCount": 177,
+    "episodeCount": 178,
     "firstAppearance": "2013-07-20",
-    "lastAppearance": "2026-08-15"
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Rodney Crowell",
-    "totalPlays": 175,
+    "totalPlays": 176,
     "uniqueSongs": 86,
     "uniqueAlbums": 32,
-    "episodeCount": 174,
+    "episodeCount": 175,
     "firstAppearance": "2013-08-15",
-    "lastAppearance": "2026-10-14"
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Dan Montgomery",
-    "totalPlays": 173,
+    "totalPlays": 174,
     "uniqueSongs": 62,
     "uniqueAlbums": 26,
-    "episodeCount": 171,
+    "episodeCount": 172,
     "firstAppearance": "2013-07-24",
-    "lastAppearance": "2026-11-07"
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Joan Osborne",
@@ -109,12 +109,12 @@
   },
   {
     "name": "Eilen Jewell",
-    "totalPlays": 164,
-    "uniqueSongs": 57,
+    "totalPlays": 165,
+    "uniqueSongs": 58,
     "uniqueAlbums": 18,
-    "episodeCount": 164,
+    "episodeCount": 165,
     "firstAppearance": "2013-08-15",
-    "lastAppearance": "2026-10-31"
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Will Kimbrough",
@@ -163,21 +163,21 @@
   },
   {
     "name": "Bruce Cockburn",
-    "totalPlays": 138,
-    "uniqueSongs": 62,
+    "totalPlays": 139,
+    "uniqueSongs": 63,
     "uniqueAlbums": 19,
-    "episodeCount": 138,
+    "episodeCount": 139,
     "firstAppearance": "2013-07-27",
-    "lastAppearance": "2026-10-21"
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Keith Sykes",
-    "totalPlays": 136,
+    "totalPlays": 137,
     "uniqueSongs": 62,
     "uniqueAlbums": 23,
-    "episodeCount": 135,
+    "episodeCount": 136,
     "firstAppearance": "2013-07-20",
-    "lastAppearance": "2026-10-17"
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Rosanne Cash",
@@ -190,12 +190,21 @@
   },
   {
     "name": "Emmylou Harris",
-    "totalPlays": 131,
+    "totalPlays": 132,
     "uniqueSongs": 61,
     "uniqueAlbums": 29,
-    "episodeCount": 128,
+    "episodeCount": 129,
     "firstAppearance": "2013-07-24",
-    "lastAppearance": "2026-09-02"
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "Mary Gauthier",
+    "totalPlays": 131,
+    "uniqueSongs": 53,
+    "uniqueAlbums": 20,
+    "episodeCount": 131,
+    "firstAppearance": "2013-06-29",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Over The Rhine",
@@ -214,15 +223,6 @@
     "episodeCount": 130,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-07-22"
-  },
-  {
-    "name": "Mary Gauthier",
-    "totalPlays": 130,
-    "uniqueSongs": 52,
-    "uniqueAlbums": 20,
-    "episodeCount": 130,
-    "firstAppearance": "2013-06-29",
-    "lastAppearance": "2026-11-07"
   },
   {
     "name": "Richard Thompson",
@@ -262,12 +262,12 @@
   },
   {
     "name": "Shannon McNally",
-    "totalPlays": 126,
+    "totalPlays": 127,
     "uniqueSongs": 51,
     "uniqueAlbums": 13,
-    "episodeCount": 126,
+    "episodeCount": 127,
     "firstAppearance": "2013-07-06",
-    "lastAppearance": "2026-11-11"
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Tedeschi Trucks Band",
@@ -279,6 +279,15 @@
     "lastAppearance": "2026-09-09"
   },
   {
+    "name": "Cory Branan",
+    "totalPlays": 125,
+    "uniqueSongs": 48,
+    "uniqueAlbums": 18,
+    "episodeCount": 124,
+    "firstAppearance": "2013-07-31",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Tim O'Brien",
     "totalPlays": 125,
     "uniqueSongs": 57,
@@ -286,6 +295,15 @@
     "episodeCount": 125,
     "firstAppearance": "2013-07-24",
     "lastAppearance": "2026-10-21"
+  },
+  {
+    "name": "Garrison Starr",
+    "totalPlays": 123,
+    "uniqueSongs": 53,
+    "uniqueAlbums": 18,
+    "episodeCount": 123,
+    "firstAppearance": "2013-09-04",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Shawn Colvin",
@@ -297,22 +315,13 @@
     "lastAppearance": "2026-10-10"
   },
   {
-    "name": "Cory Branan",
+    "name": "Lynn Miles",
     "totalPlays": 122,
-    "uniqueSongs": 46,
-    "uniqueAlbums": 18,
-    "episodeCount": 121,
-    "firstAppearance": "2013-07-31",
-    "lastAppearance": "2026-11-11"
-  },
-  {
-    "name": "Garrison Starr",
-    "totalPlays": 122,
-    "uniqueSongs": 53,
-    "uniqueAlbums": 18,
+    "uniqueSongs": 52,
+    "uniqueAlbums": 16,
     "episodeCount": 122,
-    "firstAppearance": "2013-09-04",
-    "lastAppearance": "2026-11-04"
+    "firstAppearance": "2013-07-27",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Donna The Buffalo",
@@ -322,15 +331,6 @@
     "episodeCount": 121,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-09-16"
-  },
-  {
-    "name": "Lynn Miles",
-    "totalPlays": 121,
-    "uniqueSongs": 52,
-    "uniqueAlbums": 16,
-    "episodeCount": 121,
-    "firstAppearance": "2013-07-27",
-    "lastAppearance": "2026-06-24"
   },
   {
     "name": "Amy LaVere",
@@ -378,6 +378,24 @@
     "lastAppearance": "2026-11-11"
   },
   {
+    "name": "Ruthie Foster",
+    "totalPlays": 119,
+    "uniqueSongs": 56,
+    "uniqueAlbums": 8,
+    "episodeCount": 119,
+    "firstAppearance": "2013-09-04",
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "Chris Smither",
+    "totalPlays": 118,
+    "uniqueSongs": 54,
+    "uniqueAlbums": 15,
+    "episodeCount": 118,
+    "firstAppearance": "2013-11-20",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Madeleine Peyroux",
     "totalPlays": 118,
     "uniqueSongs": 51,
@@ -385,6 +403,15 @@
     "episodeCount": 118,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-09-12"
+  },
+  {
+    "name": "Valerie June",
+    "totalPlays": 118,
+    "uniqueSongs": 47,
+    "uniqueAlbums": 13,
+    "episodeCount": 118,
+    "firstAppearance": "2013-06-29",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Alejandro Escovedo",
@@ -396,31 +423,13 @@
     "lastAppearance": "2026-08-08"
   },
   {
-    "name": "Chris Smither",
-    "totalPlays": 117,
-    "uniqueSongs": 54,
-    "uniqueAlbums": 15,
-    "episodeCount": 117,
-    "firstAppearance": "2013-11-20",
-    "lastAppearance": "2026-10-21"
-  },
-  {
-    "name": "Ruthie Foster",
-    "totalPlays": 117,
-    "uniqueSongs": 55,
-    "uniqueAlbums": 8,
-    "episodeCount": 117,
-    "firstAppearance": "2013-09-04",
-    "lastAppearance": "2026-10-10"
-  },
-  {
-    "name": "Valerie June",
-    "totalPlays": 117,
-    "uniqueSongs": 47,
-    "uniqueAlbums": 13,
-    "episodeCount": 117,
-    "firstAppearance": "2013-06-29",
-    "lastAppearance": "2026-10-28"
+    "name": "The Jayhawks",
+    "totalPlays": 116,
+    "uniqueSongs": 52,
+    "uniqueAlbums": 10,
+    "episodeCount": 116,
+    "firstAppearance": "2013-08-28",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Loudon Wainwright III",
@@ -430,15 +439,6 @@
     "episodeCount": 115,
     "firstAppearance": "2013-08-08",
     "lastAppearance": "2026-10-28"
-  },
-  {
-    "name": "The Jayhawks",
-    "totalPlays": 115,
-    "uniqueSongs": 52,
-    "uniqueAlbums": 10,
-    "episodeCount": 115,
-    "firstAppearance": "2013-08-28",
-    "lastAppearance": "2026-10-07"
   },
   {
     "name": "Joe Henry",
@@ -486,6 +486,33 @@
     "lastAppearance": "2026-08-12"
   },
   {
+    "name": "Allison Moorer",
+    "totalPlays": 113,
+    "uniqueSongs": 43,
+    "uniqueAlbums": 11,
+    "episodeCount": 113,
+    "firstAppearance": "2013-08-03",
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "Hayes Carll",
+    "totalPlays": 113,
+    "uniqueSongs": 49,
+    "uniqueAlbums": 13,
+    "episodeCount": 113,
+    "firstAppearance": "2013-09-18",
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "John Hiatt",
+    "totalPlays": 113,
+    "uniqueSongs": 56,
+    "uniqueAlbums": 22,
+    "episodeCount": 113,
+    "firstAppearance": "2013-09-28",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Nanci Griffith",
     "totalPlays": 113,
     "uniqueSongs": 49,
@@ -513,22 +540,13 @@
     "lastAppearance": "2026-09-30"
   },
   {
-    "name": "Allison Moorer",
-    "totalPlays": 112,
-    "uniqueSongs": 43,
-    "uniqueAlbums": 11,
-    "episodeCount": 112,
-    "firstAppearance": "2013-08-03",
-    "lastAppearance": "2026-11-07"
-  },
-  {
-    "name": "Hayes Carll",
-    "totalPlays": 112,
-    "uniqueSongs": 49,
+    "name": "Toni Price",
+    "totalPlays": 113,
+    "uniqueSongs": 44,
     "uniqueAlbums": 13,
-    "episodeCount": 112,
-    "firstAppearance": "2013-09-18",
-    "lastAppearance": "2026-09-12"
+    "episodeCount": 111,
+    "firstAppearance": "2013-07-24",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Kate Campbell",
@@ -540,13 +558,13 @@
     "lastAppearance": "2026-10-17"
   },
   {
-    "name": "Toni Price",
+    "name": "Randall Bramblett",
     "totalPlays": 112,
-    "uniqueSongs": 44,
-    "uniqueAlbums": 13,
-    "episodeCount": 110,
-    "firstAppearance": "2013-07-24",
-    "lastAppearance": "2026-08-15"
+    "uniqueSongs": 54,
+    "uniqueAlbums": 7,
+    "episodeCount": 112,
+    "firstAppearance": "2013-06-22",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Guy Clark",
@@ -558,15 +576,6 @@
     "lastAppearance": "2026-10-10"
   },
   {
-    "name": "John Hiatt",
-    "totalPlays": 111,
-    "uniqueSongs": 55,
-    "uniqueAlbums": 22,
-    "episodeCount": 111,
-    "firstAppearance": "2013-09-28",
-    "lastAppearance": "2026-07-08"
-  },
-  {
     "name": "Justin Townes Earle",
     "totalPlays": 111,
     "uniqueSongs": 38,
@@ -574,15 +583,6 @@
     "episodeCount": 103,
     "firstAppearance": "2013-08-28",
     "lastAppearance": "2026-10-21"
-  },
-  {
-    "name": "Randall Bramblett",
-    "totalPlays": 111,
-    "uniqueSongs": 53,
-    "uniqueAlbums": 7,
-    "episodeCount": 111,
-    "firstAppearance": "2013-06-22",
-    "lastAppearance": "2026-07-08"
   },
   {
     "name": "Chuck Prophet",
@@ -658,12 +658,21 @@
   },
   {
     "name": "Jesse Winchester",
-    "totalPlays": 106,
-    "uniqueSongs": 52,
+    "totalPlays": 107,
+    "uniqueSongs": 53,
     "uniqueAlbums": 17,
-    "episodeCount": 94,
+    "episodeCount": 95,
     "firstAppearance": "2013-07-24",
-    "lastAppearance": "2026-10-31"
+    "lastAppearance": "2026-11-14"
+  },
+  {
+    "name": "Mavis Staples",
+    "totalPlays": 105,
+    "uniqueSongs": 44,
+    "uniqueAlbums": 9,
+    "episodeCount": 105,
+    "firstAppearance": "2013-07-20",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Jess Klein",
@@ -675,15 +684,6 @@
     "lastAppearance": "2026-10-03"
   },
   {
-    "name": "Mavis Staples",
-    "totalPlays": 104,
-    "uniqueSongs": 43,
-    "uniqueAlbums": 9,
-    "episodeCount": 104,
-    "firstAppearance": "2013-07-20",
-    "lastAppearance": "2026-10-14"
-  },
-  {
     "name": "Short In The Sleeve",
     "totalPlays": 103,
     "uniqueSongs": 33,
@@ -691,6 +691,15 @@
     "episodeCount": 103,
     "firstAppearance": "2014-08-30",
     "lastAppearance": "2026-03-11"
+  },
+  {
+    "name": "Lori McKenna",
+    "totalPlays": 102,
+    "uniqueSongs": 48,
+    "uniqueAlbums": 14,
+    "episodeCount": 102,
+    "firstAppearance": "2013-06-22",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Los Lobos",
@@ -702,6 +711,15 @@
     "lastAppearance": "2026-08-01"
   },
   {
+    "name": "Tift Merritt",
+    "totalPlays": 102,
+    "uniqueSongs": 51,
+    "uniqueAlbums": 14,
+    "episodeCount": 102,
+    "firstAppearance": "2013-06-29",
+    "lastAppearance": "2026-11-18"
+  },
+  {
     "name": "Hem",
     "totalPlays": 101,
     "uniqueSongs": 36,
@@ -709,15 +727,6 @@
     "episodeCount": 101,
     "firstAppearance": "2013-07-13",
     "lastAppearance": "2026-08-29"
-  },
-  {
-    "name": "Lori McKenna",
-    "totalPlays": 101,
-    "uniqueSongs": 48,
-    "uniqueAlbums": 14,
-    "episodeCount": 101,
-    "firstAppearance": "2013-06-22",
-    "lastAppearance": "2026-10-10"
   },
   {
     "name": "Peter Case",
@@ -736,15 +745,6 @@
     "episodeCount": 101,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-11-11"
-  },
-  {
-    "name": "Tift Merritt",
-    "totalPlays": 101,
-    "uniqueSongs": 51,
-    "uniqueAlbums": 14,
-    "episodeCount": 101,
-    "firstAppearance": "2013-06-29",
-    "lastAppearance": "2026-10-10"
   },
   {
     "name": "Amy Rigby",
@@ -882,6 +882,15 @@
     "lastAppearance": "2026-09-16"
   },
   {
+    "name": "The Beatles",
+    "totalPlays": 92,
+    "uniqueSongs": 52,
+    "uniqueAlbums": 19,
+    "episodeCount": 92,
+    "firstAppearance": "2013-07-13",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "The Roches",
     "totalPlays": 92,
     "uniqueSongs": 39,
@@ -900,22 +909,13 @@
     "lastAppearance": "2026-09-05"
   },
   {
-    "name": "The Beatles",
-    "totalPlays": 91,
-    "uniqueSongs": 51,
-    "uniqueAlbums": 19,
-    "episodeCount": 91,
-    "firstAppearance": "2013-07-13",
-    "lastAppearance": "2026-11-11"
-  },
-  {
     "name": "Margaret Glaspy",
-    "totalPlays": 89,
-    "uniqueSongs": 39,
+    "totalPlays": 90,
+    "uniqueSongs": 40,
     "uniqueAlbums": 7,
-    "episodeCount": 89,
+    "episodeCount": 90,
     "firstAppearance": "2016-08-13",
-    "lastAppearance": "2026-11-11"
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Amy Helm",
@@ -925,6 +925,15 @@
     "episodeCount": 88,
     "firstAppearance": "2015-08-01",
     "lastAppearance": "2025-08-16"
+  },
+  {
+    "name": "Delbert McClinton",
+    "totalPlays": 88,
+    "uniqueSongs": 42,
+    "uniqueAlbums": 18,
+    "episodeCount": 88,
+    "firstAppearance": "2013-07-06",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Josh Ritter",
@@ -945,6 +954,15 @@
     "lastAppearance": "2026-10-24"
   },
   {
+    "name": "Michelle Malone",
+    "totalPlays": 88,
+    "uniqueSongs": 41,
+    "uniqueAlbums": 12,
+    "episodeCount": 88,
+    "firstAppearance": "2013-09-07",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Neil Young",
     "totalPlays": 88,
     "uniqueSongs": 47,
@@ -963,31 +981,22 @@
     "lastAppearance": "2026-06-24"
   },
   {
-    "name": "Delbert McClinton",
-    "totalPlays": 87,
-    "uniqueSongs": 41,
-    "uniqueAlbums": 17,
-    "episodeCount": 87,
-    "firstAppearance": "2013-07-06",
-    "lastAppearance": "2026-04-01"
-  },
-  {
-    "name": "Michelle Malone",
-    "totalPlays": 87,
-    "uniqueSongs": 41,
-    "uniqueAlbums": 12,
-    "episodeCount": 87,
-    "firstAppearance": "2013-09-07",
-    "lastAppearance": "2026-07-15"
-  },
-  {
     "name": "Darden Smith",
-    "totalPlays": 86,
+    "totalPlays": 87,
     "uniqueSongs": 38,
-    "uniqueAlbums": 12,
-    "episodeCount": 86,
+    "uniqueAlbums": 13,
+    "episodeCount": 87,
     "firstAppearance": "2013-07-06",
-    "lastAppearance": "2026-10-17"
+    "lastAppearance": "2026-11-21"
+  },
+  {
+    "name": "Rufus Wainwright",
+    "totalPlays": 87,
+    "uniqueSongs": 46,
+    "uniqueAlbums": 12,
+    "episodeCount": 87,
+    "firstAppearance": "2013-09-18",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Dayna Kurtz",
@@ -1045,12 +1054,12 @@
   },
   {
     "name": "Marcia Ball",
-    "totalPlays": 84,
-    "uniqueSongs": 32,
+    "totalPlays": 85,
+    "uniqueSongs": 33,
     "uniqueAlbums": 13,
-    "episodeCount": 84,
+    "episodeCount": 85,
     "firstAppearance": "2013-08-15",
-    "lastAppearance": "2026-05-23"
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Marshall Chapman",
@@ -1080,15 +1089,6 @@
     "lastAppearance": "2026-03-25"
   },
   {
-    "name": "Rufus Wainwright",
-    "totalPlays": 84,
-    "uniqueSongs": 45,
-    "uniqueAlbums": 12,
-    "episodeCount": 84,
-    "firstAppearance": "2013-09-18",
-    "lastAppearance": "2026-08-12"
-  },
-  {
     "name": "Sam Phillips",
     "totalPlays": 84,
     "uniqueSongs": 37,
@@ -1107,6 +1107,24 @@
     "lastAppearance": "2026-10-28"
   },
   {
+    "name": "Catie Curtis",
+    "totalPlays": 83,
+    "uniqueSongs": 50,
+    "uniqueAlbums": 15,
+    "episodeCount": 83,
+    "firstAppearance": "2013-07-27",
+    "lastAppearance": "2026-11-18"
+  },
+  {
+    "name": "Rhiannon Giddens",
+    "totalPlays": 83,
+    "uniqueSongs": 36,
+    "uniqueAlbums": 10,
+    "episodeCount": 83,
+    "firstAppearance": "2014-09-13",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Tommy Womack",
     "totalPlays": 83,
     "uniqueSongs": 37,
@@ -1116,13 +1134,13 @@
     "lastAppearance": "2026-07-18"
   },
   {
-    "name": "Catie Curtis",
+    "name": "Kinky Friedman",
     "totalPlays": 82,
-    "uniqueSongs": 49,
-    "uniqueAlbums": 15,
+    "uniqueSongs": 28,
+    "uniqueAlbums": 5,
     "episodeCount": 82,
-    "firstAppearance": "2013-07-27",
-    "lastAppearance": "2026-10-10"
+    "firstAppearance": "2013-06-29",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Nick Lowe",
@@ -1134,22 +1152,13 @@
     "lastAppearance": "2026-08-15"
   },
   {
-    "name": "Rhiannon Giddens",
-    "totalPlays": 82,
-    "uniqueSongs": 35,
-    "uniqueAlbums": 10,
-    "episodeCount": 82,
-    "firstAppearance": "2014-09-13",
-    "lastAppearance": "2026-10-24"
-  },
-  {
-    "name": "Kinky Friedman",
+    "name": "The Stray Birds",
     "totalPlays": 81,
-    "uniqueSongs": 28,
-    "uniqueAlbums": 5,
+    "uniqueSongs": 27,
+    "uniqueAlbums": 7,
     "episodeCount": 81,
-    "firstAppearance": "2013-06-29",
-    "lastAppearance": "2026-05-13"
+    "firstAppearance": "2013-10-02",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Amy Speace",
@@ -1215,15 +1224,6 @@
     "lastAppearance": "2026-09-16"
   },
   {
-    "name": "The Stray Birds",
-    "totalPlays": 79,
-    "uniqueSongs": 27,
-    "uniqueAlbums": 7,
-    "episodeCount": 79,
-    "firstAppearance": "2013-10-02",
-    "lastAppearance": "2026-06-10"
-  },
-  {
     "name": "The Bottle Rockets",
     "totalPlays": 78,
     "uniqueSongs": 38,
@@ -1240,6 +1240,15 @@
     "episodeCount": 78,
     "firstAppearance": "2015-10-24",
     "lastAppearance": "2026-09-16"
+  },
+  {
+    "name": "Bailey Bigger",
+    "totalPlays": 77,
+    "uniqueSongs": 26,
+    "uniqueAlbums": 7,
+    "episodeCount": 77,
+    "firstAppearance": "2020-01-04",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Drew Holcomb & The Neighbors",
@@ -1267,15 +1276,6 @@
     "episodeCount": 77,
     "firstAppearance": "2014-03-12",
     "lastAppearance": "2026-08-12"
-  },
-  {
-    "name": "Bailey Bigger",
-    "totalPlays": 76,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 7,
-    "episodeCount": 76,
-    "firstAppearance": "2020-01-04",
-    "lastAppearance": "2026-02-14"
   },
   {
     "name": "Ry Cooder",
@@ -1377,6 +1377,15 @@
     "lastAppearance": "2026-09-05"
   },
   {
+    "name": "Jonatha Brooke",
+    "totalPlays": 72,
+    "uniqueSongs": 28,
+    "uniqueAlbums": 14,
+    "episodeCount": 72,
+    "firstAppearance": "2013-08-21",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Jonell Mosser",
     "totalPlays": 72,
     "uniqueSongs": 31,
@@ -1420,15 +1429,6 @@
     "episodeCount": 72,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-10-31"
-  },
-  {
-    "name": "Jonatha Brooke",
-    "totalPlays": 71,
-    "uniqueSongs": 28,
-    "uniqueAlbums": 14,
-    "episodeCount": 71,
-    "firstAppearance": "2013-08-21",
-    "lastAppearance": "2026-07-22"
   },
   {
     "name": "Marshall Crenshaw",
@@ -1476,6 +1476,15 @@
     "lastAppearance": "2026-07-08"
   },
   {
+    "name": "Paul Kelly",
+    "totalPlays": 70,
+    "uniqueSongs": 42,
+    "uniqueAlbums": 12,
+    "episodeCount": 70,
+    "firstAppearance": "2015-01-24",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Sid Selvidge",
     "totalPlays": 70,
     "uniqueSongs": 26,
@@ -1492,6 +1501,24 @@
     "episodeCount": 66,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-08-22"
+  },
+  {
+    "name": "The Flatlanders",
+    "totalPlays": 70,
+    "uniqueSongs": 33,
+    "uniqueAlbums": 7,
+    "episodeCount": 68,
+    "firstAppearance": "2013-08-08",
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "Brigitte Demeyer",
+    "totalPlays": 69,
+    "uniqueSongs": 28,
+    "uniqueAlbums": 4,
+    "episodeCount": 69,
+    "firstAppearance": "2013-07-06",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Caroline Herring",
@@ -1512,22 +1539,13 @@
     "lastAppearance": "2026-07-11"
   },
   {
-    "name": "Paul Kelly",
+    "name": "Shovels & Rope",
     "totalPlays": 69,
-    "uniqueSongs": 42,
-    "uniqueAlbums": 12,
+    "uniqueSongs": 29,
+    "uniqueAlbums": 4,
     "episodeCount": 69,
-    "firstAppearance": "2015-01-24",
-    "lastAppearance": "2026-03-18"
-  },
-  {
-    "name": "The Flatlanders",
-    "totalPlays": 69,
-    "uniqueSongs": 32,
-    "uniqueAlbums": 7,
-    "episodeCount": 67,
-    "firstAppearance": "2013-08-08",
-    "lastAppearance": "2026-07-15"
+    "firstAppearance": "2014-12-27",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Brandi Carlile",
@@ -1537,15 +1555,6 @@
     "episodeCount": 67,
     "firstAppearance": "2013-09-18",
     "lastAppearance": "2026-08-29"
-  },
-  {
-    "name": "Brigitte Demeyer",
-    "totalPlays": 68,
-    "uniqueSongs": 28,
-    "uniqueAlbums": 4,
-    "episodeCount": 68,
-    "firstAppearance": "2013-07-06",
-    "lastAppearance": "2026-08-12"
   },
   {
     "name": "Jimmy LaFave",
@@ -1575,15 +1584,6 @@
     "lastAppearance": "2026-03-18"
   },
   {
-    "name": "Shovels & Rope",
-    "totalPlays": 68,
-    "uniqueSongs": 29,
-    "uniqueAlbums": 4,
-    "episodeCount": 68,
-    "firstAppearance": "2014-12-27",
-    "lastAppearance": "2026-02-21"
-  },
-  {
     "name": "The Wealthy West",
     "totalPlays": 68,
     "uniqueSongs": 19,
@@ -1611,6 +1611,15 @@
     "lastAppearance": "2026-09-12"
   },
   {
+    "name": "Jon Dee Graham",
+    "totalPlays": 67,
+    "uniqueSongs": 31,
+    "uniqueAlbums": 9,
+    "episodeCount": 66,
+    "firstAppearance": "2013-06-29",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Bonny Light Horseman",
     "totalPlays": 66,
     "uniqueSongs": 25,
@@ -1636,15 +1645,6 @@
     "episodeCount": 66,
     "firstAppearance": "2014-03-12",
     "lastAppearance": "2026-08-22"
-  },
-  {
-    "name": "Jon Dee Graham",
-    "totalPlays": 66,
-    "uniqueSongs": 31,
-    "uniqueAlbums": 9,
-    "episodeCount": 65,
-    "firstAppearance": "2013-06-29",
-    "lastAppearance": "2026-05-23"
   },
   {
     "name": "Pierce Pettis",
@@ -1692,6 +1692,15 @@
     "lastAppearance": "2026-10-31"
   },
   {
+    "name": "Erin McKeown",
+    "totalPlays": 65,
+    "uniqueSongs": 28,
+    "uniqueAlbums": 8,
+    "episodeCount": 65,
+    "firstAppearance": "2013-06-22",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Hard Working Americans",
     "totalPlays": 65,
     "uniqueSongs": 25,
@@ -1737,13 +1746,13 @@
     "lastAppearance": "2026-08-01"
   },
   {
-    "name": "Erin McKeown",
+    "name": "Darrell Scott",
     "totalPlays": 64,
-    "uniqueSongs": 28,
-    "uniqueAlbums": 8,
+    "uniqueSongs": 35,
+    "uniqueAlbums": 10,
     "episodeCount": 64,
-    "firstAppearance": "2013-06-22",
-    "lastAppearance": "2026-09-30"
+    "firstAppearance": "2013-08-21",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Gillian Welch",
@@ -1753,6 +1762,15 @@
     "episodeCount": 64,
     "firstAppearance": "2013-07-27",
     "lastAppearance": "2026-09-26"
+  },
+  {
+    "name": "Greg Trooper",
+    "totalPlays": 64,
+    "uniqueSongs": 26,
+    "uniqueAlbums": 8,
+    "episodeCount": 60,
+    "firstAppearance": "2013-10-12",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Jimmie Dale Gilmore",
@@ -1773,6 +1791,15 @@
     "lastAppearance": "2026-09-23"
   },
   {
+    "name": "Nicki Bluhm",
+    "totalPlays": 64,
+    "uniqueSongs": 34,
+    "uniqueAlbums": 9,
+    "episodeCount": 64,
+    "firstAppearance": "2018-06-09",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "River Whyless",
     "totalPlays": 64,
     "uniqueSongs": 23,
@@ -1780,24 +1807,6 @@
     "episodeCount": 64,
     "firstAppearance": "2016-09-03",
     "lastAppearance": "2026-08-22"
-  },
-  {
-    "name": "Darrell Scott",
-    "totalPlays": 63,
-    "uniqueSongs": 34,
-    "uniqueAlbums": 10,
-    "episodeCount": 63,
-    "firstAppearance": "2013-08-21",
-    "lastAppearance": "2026-11-04"
-  },
-  {
-    "name": "Greg Trooper",
-    "totalPlays": 63,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 8,
-    "episodeCount": 59,
-    "firstAppearance": "2013-10-12",
-    "lastAppearance": "2026-08-01"
   },
   {
     "name": "Louise Taylor",
@@ -1825,6 +1834,15 @@
     "episodeCount": 63,
     "firstAppearance": "2013-07-13",
     "lastAppearance": "2026-07-22"
+  },
+  {
+    "name": "Sarah Harmer",
+    "totalPlays": 62,
+    "uniqueSongs": 27,
+    "uniqueAlbums": 6,
+    "episodeCount": 62,
+    "firstAppearance": "2013-10-19",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Sue Foley",
@@ -1870,24 +1888,6 @@
     "episodeCount": 61,
     "firstAppearance": "2013-08-28",
     "lastAppearance": "2026-10-31"
-  },
-  {
-    "name": "Nicki Bluhm",
-    "totalPlays": 61,
-    "uniqueSongs": 33,
-    "uniqueAlbums": 8,
-    "episodeCount": 61,
-    "firstAppearance": "2018-06-09",
-    "lastAppearance": "2026-11-11"
-  },
-  {
-    "name": "Sarah Harmer",
-    "totalPlays": 61,
-    "uniqueSongs": 27,
-    "uniqueAlbums": 6,
-    "episodeCount": 61,
-    "firstAppearance": "2013-10-19",
-    "lastAppearance": "2026-09-02"
   },
   {
     "name": "William Lee Ellis",
@@ -2034,6 +2034,15 @@
     "lastAppearance": "2026-09-30"
   },
   {
+    "name": "Continental Drifters",
+    "totalPlays": 57,
+    "uniqueSongs": 20,
+    "uniqueAlbums": 11,
+    "episodeCount": 57,
+    "firstAppearance": "2013-10-09",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "John Murry",
     "totalPlays": 57,
     "uniqueSongs": 8,
@@ -2079,13 +2088,13 @@
     "lastAppearance": "2026-10-31"
   },
   {
-    "name": "Continental Drifters",
+    "name": "Anny Celsi",
     "totalPlays": 56,
-    "uniqueSongs": 20,
-    "uniqueAlbums": 11,
+    "uniqueSongs": 17,
+    "uniqueAlbums": 4,
     "episodeCount": 56,
-    "firstAppearance": "2013-10-09",
-    "lastAppearance": "2026-10-31"
+    "firstAppearance": "2013-10-23",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Jeb Loy Nichols",
@@ -2124,15 +2133,6 @@
     "lastAppearance": "2025-11-29"
   },
   {
-    "name": "Anny Celsi",
-    "totalPlays": 55,
-    "uniqueSongs": 16,
-    "uniqueAlbums": 4,
-    "episodeCount": 55,
-    "firstAppearance": "2013-10-23",
-    "lastAppearance": "2026-09-19"
-  },
-  {
     "name": "Aoife O'Donovan",
     "totalPlays": 55,
     "uniqueSongs": 19,
@@ -2149,6 +2149,15 @@
     "episodeCount": 54,
     "firstAppearance": "2013-06-22",
     "lastAppearance": "2026-07-15"
+  },
+  {
+    "name": "Heather Eatman",
+    "totalPlays": 55,
+    "uniqueSongs": 25,
+    "uniqueAlbums": 4,
+    "episodeCount": 55,
+    "firstAppearance": "2015-01-07",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Hurray For The Riff Raff",
@@ -2194,6 +2203,15 @@
     "episodeCount": 55,
     "firstAppearance": "2015-07-04",
     "lastAppearance": "2026-03-25"
+  },
+  {
+    "name": "Laura Love",
+    "totalPlays": 55,
+    "uniqueSongs": 28,
+    "uniqueAlbums": 6,
+    "episodeCount": 55,
+    "firstAppearance": "2013-09-14",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Nancy Apple",
@@ -2250,15 +2268,6 @@
     "lastAppearance": "2026-08-29"
   },
   {
-    "name": "Heather Eatman",
-    "totalPlays": 54,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 4,
-    "episodeCount": 54,
-    "firstAppearance": "2015-01-07",
-    "lastAppearance": "2026-02-14"
-  },
-  {
     "name": "k.d. lang",
     "totalPlays": 54,
     "uniqueSongs": 22,
@@ -2266,15 +2275,6 @@
     "episodeCount": 54,
     "firstAppearance": "2013-09-04",
     "lastAppearance": "2026-09-12"
-  },
-  {
-    "name": "Laura Love",
-    "totalPlays": 54,
-    "uniqueSongs": 27,
-    "uniqueAlbums": 6,
-    "episodeCount": 54,
-    "firstAppearance": "2013-09-14",
-    "lastAppearance": "2026-06-24"
   },
   {
     "name": "Motel Mirrors",
@@ -2293,6 +2293,15 @@
     "episodeCount": 54,
     "firstAppearance": "2013-09-18",
     "lastAppearance": "2026-06-13"
+  },
+  {
+    "name": "Timbuk 3",
+    "totalPlays": 54,
+    "uniqueSongs": 21,
+    "uniqueAlbums": 8,
+    "episodeCount": 54,
+    "firstAppearance": "2013-08-08",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Warren Zevon",
@@ -2329,15 +2338,6 @@
     "episodeCount": 53,
     "firstAppearance": "2013-07-06",
     "lastAppearance": "2026-03-21"
-  },
-  {
-    "name": "Timbuk 3",
-    "totalPlays": 53,
-    "uniqueSongs": 20,
-    "uniqueAlbums": 8,
-    "episodeCount": 53,
-    "firstAppearance": "2013-08-08",
-    "lastAppearance": "2026-07-04"
   },
   {
     "name": "Daddy",
@@ -2430,6 +2430,15 @@
     "lastAppearance": "2026-09-09"
   },
   {
+    "name": "Ben Vaughn",
+    "totalPlays": 50,
+    "uniqueSongs": 26,
+    "uniqueAlbums": 8,
+    "episodeCount": 49,
+    "firstAppearance": "2013-07-24",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Buddy Miller",
     "totalPlays": 50,
     "uniqueSongs": 29,
@@ -2475,6 +2484,15 @@
     "lastAppearance": "2026-09-23"
   },
   {
+    "name": "Jonathan Byrd",
+    "totalPlays": 50,
+    "uniqueSongs": 21,
+    "uniqueAlbums": 5,
+    "episodeCount": 50,
+    "firstAppearance": "2013-08-10",
+    "lastAppearance": "2026-11-18"
+  },
+  {
     "name": "Kelly Willis & Bruce Robison",
     "totalPlays": 50,
     "uniqueSongs": 18,
@@ -2502,24 +2520,6 @@
     "lastAppearance": "2026-08-01"
   },
   {
-    "name": "Jonathan Byrd",
-    "totalPlays": 49,
-    "uniqueSongs": 21,
-    "uniqueAlbums": 5,
-    "episodeCount": 49,
-    "firstAppearance": "2013-08-10",
-    "lastAppearance": "2026-08-08"
-  },
-  {
-    "name": "Ben Vaughn",
-    "totalPlays": 48,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 8,
-    "episodeCount": 47,
-    "firstAppearance": "2013-07-24",
-    "lastAppearance": "2026-11-11"
-  },
-  {
     "name": "Caitlin Rose",
     "totalPlays": 48,
     "uniqueSongs": 18,
@@ -2545,6 +2545,24 @@
     "episodeCount": 48,
     "firstAppearance": "2013-10-19",
     "lastAppearance": "2026-08-12"
+  },
+  {
+    "name": "Margo Cilker",
+    "totalPlays": 48,
+    "uniqueSongs": 24,
+    "uniqueAlbums": 5,
+    "episodeCount": 48,
+    "firstAppearance": "2022-01-15",
+    "lastAppearance": "2026-11-21"
+  },
+  {
+    "name": "Reigning Sound",
+    "totalPlays": 48,
+    "uniqueSongs": 20,
+    "uniqueAlbums": 7,
+    "episodeCount": 48,
+    "firstAppearance": "2015-01-17",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Rev Neil Down",
@@ -2655,15 +2673,6 @@
     "lastAppearance": "2026-08-08"
   },
   {
-    "name": "Reigning Sound",
-    "totalPlays": 47,
-    "uniqueSongs": 20,
-    "uniqueAlbums": 7,
-    "episodeCount": 47,
-    "firstAppearance": "2015-01-17",
-    "lastAppearance": "2026-08-22"
-  },
-  {
     "name": "Gamble Brothers Band",
     "totalPlays": 46,
     "uniqueSongs": 12,
@@ -2671,6 +2680,15 @@
     "episodeCount": 46,
     "firstAppearance": "2013-10-09",
     "lastAppearance": "2026-09-30"
+  },
+  {
+    "name": "Jeff Hulett",
+    "totalPlays": 46,
+    "uniqueSongs": 18,
+    "uniqueAlbums": 5,
+    "episodeCount": 46,
+    "firstAppearance": "2022-07-02",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Nicki Bluhm & The Gramblers",
@@ -2709,15 +2727,6 @@
     "lastAppearance": "2025-03-08"
   },
   {
-    "name": "Jeff Hulett",
-    "totalPlays": 45,
-    "uniqueSongs": 18,
-    "uniqueAlbums": 5,
-    "episodeCount": 45,
-    "firstAppearance": "2022-07-02",
-    "lastAppearance": "2026-11-04"
-  },
-  {
     "name": "Levon Helm",
     "totalPlays": 45,
     "uniqueSongs": 16,
@@ -2725,15 +2734,6 @@
     "episodeCount": 45,
     "firstAppearance": "2013-08-08",
     "lastAppearance": "2026-08-22"
-  },
-  {
-    "name": "Margo Cilker",
-    "totalPlays": 45,
-    "uniqueSongs": 22,
-    "uniqueAlbums": 5,
-    "episodeCount": 45,
-    "firstAppearance": "2022-01-15",
-    "lastAppearance": "2026-11-11"
   },
   {
     "name": "Melody Gardot",
@@ -2770,6 +2770,15 @@
     "episodeCount": 45,
     "firstAppearance": "2014-06-21",
     "lastAppearance": "2026-11-04"
+  },
+  {
+    "name": "Watkins Family Hour",
+    "totalPlays": 45,
+    "uniqueSongs": 16,
+    "uniqueAlbums": 3,
+    "episodeCount": 45,
+    "firstAppearance": "2015-08-22",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Ashleigh Flynn",
@@ -2817,6 +2826,15 @@
     "lastAppearance": "2026-02-14"
   },
   {
+    "name": "Joan Armatrading",
+    "totalPlays": 44,
+    "uniqueSongs": 26,
+    "uniqueAlbums": 10,
+    "episodeCount": 44,
+    "firstAppearance": "2014-01-11",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Memphis Dawls",
     "totalPlays": 44,
     "uniqueSongs": 12,
@@ -2853,6 +2871,15 @@
     "lastAppearance": "2026-07-25"
   },
   {
+    "name": "Shemekia Copeland",
+    "totalPlays": 44,
+    "uniqueSongs": 25,
+    "uniqueAlbums": 7,
+    "episodeCount": 44,
+    "firstAppearance": "2021-12-15",
+    "lastAppearance": "2026-11-18"
+  },
+  {
     "name": "Tony Joe White",
     "totalPlays": 44,
     "uniqueSongs": 23,
@@ -2871,15 +2898,6 @@
     "lastAppearance": "2026-10-03"
   },
   {
-    "name": "Watkins Family Hour",
-    "totalPlays": 44,
-    "uniqueSongs": 15,
-    "uniqueAlbums": 3,
-    "episodeCount": 44,
-    "firstAppearance": "2015-08-22",
-    "lastAppearance": "2025-02-26"
-  },
-  {
     "name": "Clare Burson",
     "totalPlays": 43,
     "uniqueSongs": 18,
@@ -2887,15 +2905,6 @@
     "episodeCount": 43,
     "firstAppearance": "2013-08-03",
     "lastAppearance": "2026-11-07"
-  },
-  {
-    "name": "Joan Armatrading",
-    "totalPlays": 43,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 9,
-    "episodeCount": 43,
-    "firstAppearance": "2014-01-11",
-    "lastAppearance": "2026-03-07"
   },
   {
     "name": "Memphis Ukulele Band",
@@ -2925,15 +2934,6 @@
     "lastAppearance": "2026-05-20"
   },
   {
-    "name": "Shemekia Copeland",
-    "totalPlays": 43,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 7,
-    "episodeCount": 43,
-    "firstAppearance": "2021-12-15",
-    "lastAppearance": "2026-02-21"
-  },
-  {
     "name": "Audience",
     "totalPlays": 42,
     "uniqueSongs": 14,
@@ -2943,6 +2943,24 @@
     "lastAppearance": "2026-10-31"
   },
   {
+    "name": "Big Star",
+    "totalPlays": 42,
+    "uniqueSongs": 16,
+    "uniqueAlbums": 3,
+    "episodeCount": 42,
+    "firstAppearance": "2013-10-12",
+    "lastAppearance": "2026-11-25"
+  },
+  {
+    "name": "Brandy Zdan",
+    "totalPlays": 42,
+    "uniqueSongs": 18,
+    "uniqueAlbums": 3,
+    "episodeCount": 42,
+    "firstAppearance": "2016-01-02",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Cheri Knight",
     "totalPlays": 42,
     "uniqueSongs": 11,
@@ -2950,6 +2968,15 @@
     "episodeCount": 42,
     "firstAppearance": "2013-08-08",
     "lastAppearance": "2026-08-19"
+  },
+  {
+    "name": "Cowboy Junkies",
+    "totalPlays": 42,
+    "uniqueSongs": 26,
+    "uniqueAlbums": 7,
+    "episodeCount": 42,
+    "firstAppearance": "2016-06-25",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Crooked Still",
@@ -3024,24 +3051,6 @@
     "lastAppearance": "2026-10-10"
   },
   {
-    "name": "Brandy Zdan",
-    "totalPlays": 41,
-    "uniqueSongs": 18,
-    "uniqueAlbums": 3,
-    "episodeCount": 41,
-    "firstAppearance": "2016-01-02",
-    "lastAppearance": "2026-02-11"
-  },
-  {
-    "name": "Cowboy Junkies",
-    "totalPlays": 41,
-    "uniqueSongs": 25,
-    "uniqueAlbums": 7,
-    "episodeCount": 41,
-    "firstAppearance": "2016-06-25",
-    "lastAppearance": "2026-02-28"
-  },
-  {
     "name": "Graham Parker",
     "totalPlays": 41,
     "uniqueSongs": 17,
@@ -3114,15 +3123,6 @@
     "lastAppearance": "2026-11-07"
   },
   {
-    "name": "Big Star",
-    "totalPlays": 40,
-    "uniqueSongs": 16,
-    "uniqueAlbums": 3,
-    "episodeCount": 40,
-    "firstAppearance": "2013-10-12",
-    "lastAppearance": "2026-07-18"
-  },
-  {
     "name": "Julie Christensen",
     "totalPlays": 40,
     "uniqueSongs": 14,
@@ -3148,6 +3148,15 @@
     "episodeCount": 40,
     "firstAppearance": "2015-05-02",
     "lastAppearance": "2026-03-28"
+  },
+  {
+    "name": "Star & Micey",
+    "totalPlays": 40,
+    "uniqueSongs": 21,
+    "uniqueAlbums": 3,
+    "episodeCount": 40,
+    "firstAppearance": "2013-09-28",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Terry Allen",
@@ -3285,15 +3294,6 @@
     "lastAppearance": "2026-08-22"
   },
   {
-    "name": "Star & Micey",
-    "totalPlays": 38,
-    "uniqueSongs": 20,
-    "uniqueAlbums": 3,
-    "episodeCount": 38,
-    "firstAppearance": "2013-09-28",
-    "lastAppearance": "2026-10-28"
-  },
-  {
     "name": "Sugarcane Jane",
     "totalPlays": 38,
     "uniqueSongs": 9,
@@ -3402,6 +3402,15 @@
     "lastAppearance": "2026-11-11"
   },
   {
+    "name": "Nick Drake",
+    "totalPlays": 37,
+    "uniqueSongs": 12,
+    "uniqueAlbums": 8,
+    "episodeCount": 37,
+    "firstAppearance": "2013-11-06",
+    "lastAppearance": "2026-11-18"
+  },
+  {
     "name": "The Warren Hood Band",
     "totalPlays": 37,
     "uniqueSongs": 10,
@@ -3492,6 +3501,15 @@
     "lastAppearance": "2026-11-04"
   },
   {
+    "name": "Marti Jones",
+    "totalPlays": 36,
+    "uniqueSongs": 10,
+    "uniqueAlbums": 4,
+    "episodeCount": 36,
+    "firstAppearance": "2013-09-04",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Michael Hall",
     "totalPlays": 36,
     "uniqueSongs": 13,
@@ -3508,15 +3526,6 @@
     "episodeCount": 36,
     "firstAppearance": "2013-10-30",
     "lastAppearance": "2026-10-31"
-  },
-  {
-    "name": "Nick Drake",
-    "totalPlays": 36,
-    "uniqueSongs": 12,
-    "uniqueAlbums": 8,
-    "episodeCount": 36,
-    "firstAppearance": "2013-11-06",
-    "lastAppearance": "2026-08-15"
   },
   {
     "name": "Pure Prairie League",
@@ -3600,15 +3609,6 @@
     "lastAppearance": "2026-08-26"
   },
   {
-    "name": "Marti Jones",
-    "totalPlays": 35,
-    "uniqueSongs": 10,
-    "uniqueAlbums": 4,
-    "episodeCount": 35,
-    "firstAppearance": "2013-09-04",
-    "lastAppearance": "2026-05-30"
-  },
-  {
     "name": "Sarah Lee Guthrie & Johnny Irion",
     "totalPlays": 35,
     "uniqueSongs": 10,
@@ -3636,6 +3636,15 @@
     "lastAppearance": "2026-09-23"
   },
   {
+    "name": "Dolly Varden",
+    "totalPlays": 34,
+    "uniqueSongs": 15,
+    "uniqueAlbums": 4,
+    "episodeCount": 34,
+    "firstAppearance": "2013-08-03",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Elvis Costello & The Attractions",
     "totalPlays": 34,
     "uniqueSongs": 17,
@@ -3652,6 +3661,15 @@
     "episodeCount": 34,
     "firstAppearance": "2013-10-19",
     "lastAppearance": "2026-09-05"
+  },
+  {
+    "name": "Judy Collins",
+    "totalPlays": 34,
+    "uniqueSongs": 16,
+    "uniqueAlbums": 5,
+    "episodeCount": 34,
+    "firstAppearance": "2013-12-28",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Larry Raspberry & The High Steppers",
@@ -3744,15 +3762,6 @@
     "lastAppearance": "2026-10-28"
   },
   {
-    "name": "Dolly Varden",
-    "totalPlays": 33,
-    "uniqueSongs": 15,
-    "uniqueAlbums": 4,
-    "episodeCount": 33,
-    "firstAppearance": "2013-08-03",
-    "lastAppearance": "2026-05-27"
-  },
-  {
     "name": "Ed Romanoff",
     "totalPlays": 33,
     "uniqueSongs": 12,
@@ -3760,6 +3769,15 @@
     "episodeCount": 33,
     "firstAppearance": "2014-07-09",
     "lastAppearance": "2026-08-26"
+  },
+  {
+    "name": "Grayson Capps",
+    "totalPlays": 33,
+    "uniqueSongs": 11,
+    "uniqueAlbums": 2,
+    "episodeCount": 33,
+    "firstAppearance": "2015-02-11",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Holly And The Heathens",
@@ -3778,15 +3796,6 @@
     "episodeCount": 33,
     "firstAppearance": "2015-06-27",
     "lastAppearance": "2026-10-24"
-  },
-  {
-    "name": "Judy Collins",
-    "totalPlays": 33,
-    "uniqueSongs": 16,
-    "uniqueAlbums": 5,
-    "episodeCount": 33,
-    "firstAppearance": "2013-12-28",
-    "lastAppearance": "2026-02-28"
   },
   {
     "name": "Linda Gail Lewis & Robbie Fulks",
@@ -3879,15 +3888,6 @@
     "lastAppearance": "2026-10-28"
   },
   {
-    "name": "Grayson Capps",
-    "totalPlays": 32,
-    "uniqueSongs": 11,
-    "uniqueAlbums": 2,
-    "episodeCount": 32,
-    "firstAppearance": "2015-02-11",
-    "lastAppearance": "2026-09-16"
-  },
-  {
     "name": "Jules Shear",
     "totalPlays": 32,
     "uniqueSongs": 19,
@@ -3942,6 +3942,15 @@
     "lastAppearance": "2026-03-11"
   },
   {
+    "name": "Sugar & The Hi Lows",
+    "totalPlays": 32,
+    "uniqueSongs": 16,
+    "uniqueAlbums": 9,
+    "episodeCount": 32,
+    "firstAppearance": "2014-02-01",
+    "lastAppearance": "2026-11-18"
+  },
+  {
     "name": "Al Anderson",
     "totalPlays": 31,
     "uniqueSongs": 12,
@@ -3987,6 +3996,15 @@
     "lastAppearance": "2026-07-18"
   },
   {
+    "name": "Help Yourself",
+    "totalPlays": 31,
+    "uniqueSongs": 9,
+    "uniqueAlbums": 2,
+    "episodeCount": 31,
+    "firstAppearance": "2014-12-10",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Joy Of Cooking",
     "totalPlays": 31,
     "uniqueSongs": 10,
@@ -4014,6 +4032,15 @@
     "lastAppearance": "2026-09-30"
   },
   {
+    "name": "Ollabelle",
+    "totalPlays": 31,
+    "uniqueSongs": 11,
+    "uniqueAlbums": 4,
+    "episodeCount": 31,
+    "firstAppearance": "2013-11-30",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Plainsong",
     "totalPlays": 31,
     "uniqueSongs": 11,
@@ -4023,15 +4050,6 @@
     "lastAppearance": "2025-11-01"
   },
   {
-    "name": "Sugar & The Hi Lows",
-    "totalPlays": 31,
-    "uniqueSongs": 16,
-    "uniqueAlbums": 9,
-    "episodeCount": 31,
-    "firstAppearance": "2014-02-01",
-    "lastAppearance": "2026-02-11"
-  },
-  {
     "name": "Tim Krekel",
     "totalPlays": 31,
     "uniqueSongs": 8,
@@ -4039,6 +4057,15 @@
     "episodeCount": 31,
     "firstAppearance": "2013-08-28",
     "lastAppearance": "2026-05-13"
+  },
+  {
+    "name": "Will Sexton",
+    "totalPlays": 31,
+    "uniqueSongs": 12,
+    "uniqueAlbums": 2,
+    "episodeCount": 31,
+    "firstAppearance": "2020-03-14",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "case/lang/veirs",
@@ -4057,15 +4084,6 @@
     "episodeCount": 30,
     "firstAppearance": "2014-08-30",
     "lastAppearance": "2026-09-30"
-  },
-  {
-    "name": "Help Yourself",
-    "totalPlays": 30,
-    "uniqueSongs": 9,
-    "uniqueAlbums": 2,
-    "episodeCount": 30,
-    "firstAppearance": "2014-12-10",
-    "lastAppearance": "2026-01-28"
   },
   {
     "name": "Hoyt Axton",
@@ -4104,13 +4122,13 @@
     "lastAppearance": "2026-04-25"
   },
   {
-    "name": "Ollabelle",
+    "name": "Skip Battin",
     "totalPlays": 30,
-    "uniqueSongs": 11,
-    "uniqueAlbums": 4,
+    "uniqueSongs": 7,
+    "uniqueAlbums": 1,
     "episodeCount": 30,
-    "firstAppearance": "2013-11-30",
-    "lastAppearance": "2026-02-04"
+    "firstAppearance": "2014-10-01",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "The Be Good Tanyas",
@@ -4131,13 +4149,13 @@
     "lastAppearance": "2026-01-21"
   },
   {
-    "name": "Will Sexton",
+    "name": "Victor Mecyssne",
     "totalPlays": 30,
-    "uniqueSongs": 11,
+    "uniqueSongs": 12,
     "uniqueAlbums": 2,
     "episodeCount": 30,
-    "firstAppearance": "2020-03-14",
-    "lastAppearance": "2026-01-28"
+    "firstAppearance": "2013-10-12",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "William Bell",
@@ -4228,24 +4246,6 @@
     "episodeCount": 29,
     "firstAppearance": "2017-07-29",
     "lastAppearance": "2022-10-26"
-  },
-  {
-    "name": "Skip Battin",
-    "totalPlays": 29,
-    "uniqueSongs": 7,
-    "uniqueAlbums": 1,
-    "episodeCount": 29,
-    "firstAppearance": "2014-10-01",
-    "lastAppearance": "2026-02-07"
-  },
-  {
-    "name": "Victor Mecyssne",
-    "totalPlays": 29,
-    "uniqueSongs": 12,
-    "uniqueAlbums": 2,
-    "episodeCount": 29,
-    "firstAppearance": "2013-10-12",
-    "lastAppearance": "2025-08-16"
   },
   {
     "name": "Al Stewart",
@@ -4365,6 +4365,15 @@
     "lastAppearance": "2026-07-15"
   },
   {
+    "name": "David Crosby",
+    "totalPlays": 27,
+    "uniqueSongs": 6,
+    "uniqueAlbums": 1,
+    "episodeCount": 27,
+    "firstAppearance": "2013-12-07",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Graham Nash",
     "totalPlays": 27,
     "uniqueSongs": 9,
@@ -4464,15 +4473,6 @@
     "lastAppearance": "2026-10-24"
   },
   {
-    "name": "David Crosby",
-    "totalPlays": 26,
-    "uniqueSongs": 6,
-    "uniqueAlbums": 1,
-    "episodeCount": 26,
-    "firstAppearance": "2013-12-07",
-    "lastAppearance": "2026-04-25"
-  },
-  {
     "name": "Flying Burrito Brothers",
     "totalPlays": 26,
     "uniqueSongs": 12,
@@ -4545,6 +4545,15 @@
     "lastAppearance": "2026-09-05"
   },
   {
+    "name": "Brennen Leigh",
+    "totalPlays": 25,
+    "uniqueSongs": 20,
+    "uniqueAlbums": 7,
+    "episodeCount": 25,
+    "firstAppearance": "2023-08-16",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Colin Linden & Luther Dickinson",
     "totalPlays": 25,
     "uniqueSongs": 10,
@@ -4608,6 +4617,15 @@
     "lastAppearance": "2026-11-07"
   },
   {
+    "name": "Robert Plant",
+    "totalPlays": 25,
+    "uniqueSongs": 13,
+    "uniqueAlbums": 4,
+    "episodeCount": 25,
+    "firstAppearance": "2014-02-15",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Scott Miller & The Commonwealth",
     "totalPlays": 25,
     "uniqueSongs": 12,
@@ -4653,15 +4671,6 @@
     "lastAppearance": "2023-12-06"
   },
   {
-    "name": "Brennen Leigh",
-    "totalPlays": 24,
-    "uniqueSongs": 19,
-    "uniqueAlbums": 7,
-    "episodeCount": 24,
-    "firstAppearance": "2023-08-16",
-    "lastAppearance": "2026-09-16"
-  },
-  {
     "name": "Crazy Horse",
     "totalPlays": 24,
     "uniqueSongs": 8,
@@ -4687,15 +4696,6 @@
     "episodeCount": 24,
     "firstAppearance": "2013-08-17",
     "lastAppearance": "2023-04-19"
-  },
-  {
-    "name": "Robert Plant",
-    "totalPlays": 24,
-    "uniqueSongs": 13,
-    "uniqueAlbums": 4,
-    "episodeCount": 24,
-    "firstAppearance": "2014-02-15",
-    "lastAppearance": "2026-11-11"
   },
   {
     "name": "Robinella",
@@ -4869,6 +4869,15 @@
     "lastAppearance": "2024-11-27"
   },
   {
+    "name": "Wyly Bigger",
+    "totalPlays": 23,
+    "uniqueSongs": 11,
+    "uniqueAlbums": 2,
+    "episodeCount": 23,
+    "firstAppearance": "2024-06-01",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Aaron Neville",
     "totalPlays": 22,
     "uniqueSongs": 8,
@@ -4939,6 +4948,15 @@
     "episodeCount": 22,
     "firstAppearance": "2023-06-07",
     "lastAppearance": "2026-04-08"
+  },
+  {
+    "name": "Rick Danko",
+    "totalPlays": 22,
+    "uniqueSongs": 7,
+    "uniqueAlbums": 2,
+    "episodeCount": 22,
+    "firstAppearance": "2014-10-11",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "The Backsliders",
@@ -5020,24 +5038,6 @@
     "episodeCount": 21,
     "firstAppearance": "2014-05-31",
     "lastAppearance": "2025-02-15"
-  },
-  {
-    "name": "Rick Danko",
-    "totalPlays": 21,
-    "uniqueSongs": 6,
-    "uniqueAlbums": 2,
-    "episodeCount": 21,
-    "firstAppearance": "2014-10-11",
-    "lastAppearance": "2025-08-13"
-  },
-  {
-    "name": "Wyly Bigger",
-    "totalPlays": 21,
-    "uniqueSongs": 11,
-    "uniqueAlbums": 2,
-    "episodeCount": 21,
-    "firstAppearance": "2024-06-01",
-    "lastAppearance": "2026-11-11"
   },
   {
     "name": "Andy Grooms Living Room",
@@ -5175,6 +5175,15 @@
     "lastAppearance": "2026-08-29"
   },
   {
+    "name": "Davy Ray Bennett",
+    "totalPlays": 19,
+    "uniqueSongs": 10,
+    "uniqueAlbums": 1,
+    "episodeCount": 19,
+    "firstAppearance": "2025-01-08",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Elizabeth King & The Gospel Souls",
     "totalPlays": 19,
     "uniqueSongs": 7,
@@ -5272,15 +5281,6 @@
     "episodeCount": 18,
     "firstAppearance": "2024-10-02",
     "lastAppearance": "2026-09-23"
-  },
-  {
-    "name": "Davy Ray Bennett",
-    "totalPlays": 18,
-    "uniqueSongs": 9,
-    "uniqueAlbums": 1,
-    "episodeCount": 18,
-    "firstAppearance": "2025-01-08",
-    "lastAppearance": "2026-02-11"
   },
   {
     "name": "Eric Lewis & Tommy Burroughs",
@@ -6039,6 +6039,15 @@
     "lastAppearance": "2025-10-29"
   },
   {
+    "name": "Freakwater",
+    "totalPlays": 12,
+    "uniqueSongs": 11,
+    "uniqueAlbums": 4,
+    "episodeCount": 12,
+    "firstAppearance": "2023-01-07",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "John Prine & Mac Wiseman",
     "totalPlays": 12,
     "uniqueSongs": 4,
@@ -6183,13 +6192,13 @@
     "lastAppearance": "2021-01-09"
   },
   {
-    "name": "Freakwater",
+    "name": "Cassandra Wilson",
     "totalPlays": 11,
-    "uniqueSongs": 10,
-    "uniqueAlbums": 4,
+    "uniqueSongs": 9,
+    "uniqueAlbums": 6,
     "episodeCount": 11,
-    "firstAppearance": "2023-01-07",
-    "lastAppearance": "2026-02-25"
+    "firstAppearance": "2023-03-08",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Fred Eaglesmith & The Flying Squirrels",
@@ -6370,15 +6379,6 @@
     "episodeCount": 10,
     "firstAppearance": "2014-07-09",
     "lastAppearance": "2023-04-15"
-  },
-  {
-    "name": "Cassandra Wilson",
-    "totalPlays": 10,
-    "uniqueSongs": 8,
-    "uniqueAlbums": 5,
-    "episodeCount": 10,
-    "firstAppearance": "2023-03-08",
-    "lastAppearance": "2026-02-14"
   },
   {
     "name": "Five Chinese Brothers",
@@ -6588,6 +6588,15 @@
     "lastAppearance": "2025-01-25"
   },
   {
+    "name": "Loudon Wainwright",
+    "totalPlays": 9,
+    "uniqueSongs": 8,
+    "uniqueAlbums": 7,
+    "episodeCount": 9,
+    "firstAppearance": "2013-09-28",
+    "lastAppearance": "2026-11-25"
+  },
+  {
     "name": "Sunny Sweeney",
     "totalPlays": 9,
     "uniqueSongs": 7,
@@ -6687,6 +6696,15 @@
     "lastAppearance": "2026-05-27"
   },
   {
+    "name": "Jim Infantino",
+    "totalPlays": 8,
+    "uniqueSongs": 6,
+    "uniqueAlbums": 1,
+    "episodeCount": 8,
+    "firstAppearance": "2025-11-15",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Judee Sill",
     "totalPlays": 8,
     "uniqueSongs": 7,
@@ -6703,15 +6721,6 @@
     "episodeCount": 8,
     "firstAppearance": "2024-02-10",
     "lastAppearance": "2026-02-21"
-  },
-  {
-    "name": "Loudon Wainwright",
-    "totalPlays": 8,
-    "uniqueSongs": 7,
-    "uniqueAlbums": 7,
-    "episodeCount": 8,
-    "firstAppearance": "2013-09-28",
-    "lastAppearance": "2025-12-24"
   },
   {
     "name": "S.G. Goodman",
@@ -6795,15 +6804,6 @@
     "lastAppearance": "2025-06-18"
   },
   {
-    "name": "Jim Infantino",
-    "totalPlays": 7,
-    "uniqueSongs": 5,
-    "uniqueAlbums": 1,
-    "episodeCount": 7,
-    "firstAppearance": "2025-11-15",
-    "lastAppearance": "2026-02-14"
-  },
-  {
     "name": "Kelley Mickwee, Colin Brooks & John Chipman",
     "totalPlays": 7,
     "uniqueSongs": 3,
@@ -6838,6 +6838,15 @@
     "episodeCount": 7,
     "firstAppearance": "2021-11-13",
     "lastAppearance": "2026-09-16"
+  },
+  {
+    "name": "Miko Marks",
+    "totalPlays": 7,
+    "uniqueSongs": 7,
+    "uniqueAlbums": 2,
+    "episodeCount": 7,
+    "firstAppearance": "2024-05-22",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Nina Simone",
@@ -7425,6 +7434,15 @@
     "lastAppearance": "2025-10-11"
   },
   {
+    "name": "Circle Birds",
+    "totalPlays": 4,
+    "uniqueSongs": 4,
+    "uniqueAlbums": 1,
+    "episodeCount": 4,
+    "firstAppearance": "2026-11-11",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Darrell Scott & Tim O'Brien",
     "totalPlays": 4,
     "uniqueSongs": 1,
@@ -7477,6 +7495,15 @@
     "episodeCount": 4,
     "firstAppearance": "2022-11-26",
     "lastAppearance": "2026-10-10"
+  },
+  {
+    "name": "Floyd Mercantile",
+    "totalPlays": 4,
+    "uniqueSongs": 4,
+    "uniqueAlbums": 1,
+    "episodeCount": 4,
+    "firstAppearance": "2026-08-22",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Greg Hisky & His Dixie Whiskey Boys",
@@ -7558,15 +7585,6 @@
     "episodeCount": 4,
     "firstAppearance": "2022-07-16",
     "lastAppearance": "2026-04-08"
-  },
-  {
-    "name": "Miko Marks",
-    "totalPlays": 4,
-    "uniqueSongs": 4,
-    "uniqueAlbums": 2,
-    "episodeCount": 4,
-    "firstAppearance": "2024-05-22",
-    "lastAppearance": "2026-11-11"
   },
   {
     "name": "Miranda Lambert",
@@ -7848,6 +7866,15 @@
     "lastAppearance": "2018-10-10"
   },
   {
+    "name": "Corey Harris",
+    "totalPlays": 3,
+    "uniqueSongs": 3,
+    "uniqueAlbums": 2,
+    "episodeCount": 3,
+    "firstAppearance": "2025-09-06",
+    "lastAppearance": "2026-11-21"
+  },
+  {
     "name": "Corinne Bailey Rae",
     "totalPlays": 3,
     "uniqueSongs": 1,
@@ -7891,15 +7918,6 @@
     "episodeCount": 3,
     "firstAppearance": "2022-07-09",
     "lastAppearance": "2026-01-14"
-  },
-  {
-    "name": "Floyd Mercantile",
-    "totalPlays": 3,
-    "uniqueSongs": 3,
-    "uniqueAlbums": 1,
-    "episodeCount": 3,
-    "firstAppearance": "2026-08-22",
-    "lastAppearance": "2026-10-07"
   },
   {
     "name": "Galactic",
@@ -7981,6 +7999,15 @@
     "episodeCount": 3,
     "firstAppearance": "2016-09-21",
     "lastAppearance": "2022-03-02"
+  },
+  {
+    "name": "Jack Barksdale",
+    "totalPlays": 3,
+    "uniqueSongs": 3,
+    "uniqueAlbums": 1,
+    "episodeCount": 3,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Jerry Douglas, Russ Barenberg & Edgar Meyer",
@@ -8089,6 +8116,15 @@
     "episodeCount": 3,
     "firstAppearance": "2022-08-03",
     "lastAppearance": "2025-11-05"
+  },
+  {
+    "name": "Manzanita y su Conjunto",
+    "totalPlays": 3,
+    "uniqueSongs": 1,
+    "uniqueAlbums": 0,
+    "episodeCount": 3,
+    "firstAppearance": "2023-02-18",
+    "lastAppearance": "2026-11-18"
   },
   {
     "name": "Martin Denny",
@@ -8676,15 +8712,6 @@
     "lastAppearance": "2019-03-27"
   },
   {
-    "name": "Corey Harris",
-    "totalPlays": 2,
-    "uniqueSongs": 2,
-    "uniqueAlbums": 1,
-    "episodeCount": 2,
-    "firstAppearance": "2025-09-06",
-    "lastAppearance": "2026-02-14"
-  },
-  {
     "name": "Cotton & Coal",
     "totalPlays": 2,
     "uniqueSongs": 1,
@@ -9144,15 +9171,6 @@
     "lastAppearance": "2020-02-08"
   },
   {
-    "name": "Manzanita y su Conjunto",
-    "totalPlays": 2,
-    "uniqueSongs": 1,
-    "uniqueAlbums": 0,
-    "episodeCount": 2,
-    "firstAppearance": "2023-02-18",
-    "lastAppearance": "2025-01-15"
-  },
-  {
     "name": "Margo Price & Joshua Hedley",
     "totalPlays": 2,
     "uniqueSongs": 1,
@@ -9457,6 +9475,15 @@
     "episodeCount": 2,
     "firstAppearance": "2016-03-02",
     "lastAppearance": "2019-04-10"
+  },
+  {
+    "name": "Vince Guaraldi Trio",
+    "totalPlays": 2,
+    "uniqueSongs": 2,
+    "uniqueAlbums": 0,
+    "episodeCount": 2,
+    "firstAppearance": "2022-03-02",
+    "lastAppearance": "2026-11-25"
   },
   {
     "name": "Willie Mitchell",
@@ -9855,15 +9882,6 @@
     "lastAppearance": "2014-11-01"
   },
   {
-    "name": "Circle Birds",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "uniqueAlbums": 1,
-    "episodeCount": 1,
-    "firstAppearance": "2026-11-11",
-    "lastAppearance": "2026-11-11"
-  },
-  {
     "name": "Coleman Hawkins & Manny Alban",
     "totalPlays": 1,
     "uniqueSongs": 1,
@@ -10062,6 +10080,15 @@
     "lastAppearance": "2023-08-12"
   },
   {
+    "name": "Eddie Lang, Joe Venuti and Their All Star Orchestra",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "uniqueAlbums": 0,
+    "episodeCount": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
+  },
+  {
     "name": "Edgar Meyer & Chris Thile",
     "totalPlays": 1,
     "uniqueSongs": 1,
@@ -10078,6 +10105,15 @@
     "episodeCount": 1,
     "firstAppearance": "2026-03-14",
     "lastAppearance": "2026-03-14"
+  },
+  {
+    "name": "El Michel's Affair",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "uniqueAlbums": 0,
+    "episodeCount": 1,
+    "firstAppearance": "2026-11-21",
+    "lastAppearance": "2026-11-21"
   },
   {
     "name": "Eliza Gilkyson, John Gorka, Lynn Miles, et al",
@@ -10105,6 +10141,15 @@
     "episodeCount": 1,
     "firstAppearance": "2016-12-24",
     "lastAppearance": "2016-12-24"
+  },
+  {
+    "name": "Elizabeth Cook & Wynona",
+    "totalPlays": 1,
+    "uniqueSongs": 1,
+    "uniqueAlbums": 1,
+    "episodeCount": 1,
+    "firstAppearance": "2026-11-14",
+    "lastAppearance": "2026-11-14"
   },
   {
     "name": "Emmanuel Ax & Yo Yo Ma",
@@ -11590,15 +11635,6 @@
     "episodeCount": 1,
     "firstAppearance": "2019-06-01",
     "lastAppearance": "2019-06-01"
-  },
-  {
-    "name": "Vince Guaraldi Trio",
-    "totalPlays": 1,
-    "uniqueSongs": 1,
-    "uniqueAlbums": 0,
-    "episodeCount": 1,
-    "firstAppearance": "2022-03-02",
-    "lastAppearance": "2022-03-02"
   },
   {
     "name": "Waylon Jennings",
